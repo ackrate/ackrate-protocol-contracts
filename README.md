@@ -8,6 +8,8 @@
 [![Build](https://img.shields.io/badge/Build-Reproducible-brightgreen)](https://github.com/stellar-expert/soroban-build-workflow)
 [![Attested](https://img.shields.io/badge/Provenance-GitHub%20Attested-blue?logo=github)](https://github.com/reapp-protocol/reapp-protocol-contracts/attestations)
 
+Mainnet planning: [`docs/mainnet-roadmap.md`](docs/mainnet-roadmap.md)
+
 ---
 
 ## Trust chain: source to chain
