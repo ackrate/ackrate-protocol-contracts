@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "network": {
+    "name": "mainnet",
+    "passphrase": "Public Global Stellar Network ; September 2015",
+    "rpc_url": null
+  },
+  "source": {
+    "repository": "https://github.com/reapp-protocol/reapp-protocol-contracts",
+    "branch": "t3",
+    "commit": null,
+    "dirty": false,
+    "stellar_cli_version": "26.1.0"
+  },
+  "artifacts": {
+    "timelock_controller": {
+      "path": "target/mainnet-release/reapp_timelock_controller.wasm",
+      "sha256": "766b79bab9208677ee151721f24a12b1c215a61728eafeaa540bd6d67df920b7",
+      "size_bytes": 28324
+    },
+    "mandate_registry": {
+      "path": "target/mainnet-release/mandate_registry.wasm",
+      "sha256": "9e16748606654c900d8b98655134fed0cdb2ebc5a0c314702ed1f030ef70b9d8",
+      "size_bytes": 26954
+    }
+  },
+  "public_configuration": {
+    "deployment_source_account": null,
+    "authority_2_of_3_account": null,
+    "emergency_pauser": null,
+    "timelock_min_delay_ledgers": null,
+    "usdc_asset_code": "USDC",
+    "usdc_issuer": null,
+    "usdc_sac": null,
+    "usdc_derivation_evidence": null,
+    "usdc_independent_verifier": null
+  },
+  "constructor_arguments": {
+    "timelock": {
+      "proposers": null,
+      "executors": [],
+      "admin": null
+    },
+    "mandate_registry": {
+      "admin": null,
+      "pauser": null,
+      "unpauser": null,
+      "asset_policy": null,
+      "upgrader": null,
+      "initial_asset": null
+    }
+  },
+  "deployment": {
+    "authorized_by": null,
+    "authorized_at": null,
+    "deployed_at": null,
+    "ledger": null,
+    "timelock_transaction_hash": null,
+    "timelock_contract_id": null,
+    "timelock_observed_wasm_hash": null,
+    "registry_transaction_hash": null,
+    "registry_contract_id": null,
+    "registry_observed_wasm_hash": null
+  },
+  "verification": {
+    "artifact_hashes_match": false,
+    "constructor_arguments_match": false,
+    "timelock_self_administered": false,
+    "authority_is_proposer_and_canceller": false,
+    "executor_is_permissionless_after_delay": false,
+    "registry_admin_is_timelock": false,
+    "registry_asset_policy_is_timelock": false,
+    "registry_upgrader_is_timelock": false,
+    "registry_unpauser_is_2_of_3": false,
+    "registry_pauser_is_emergency_key": false,
+    "registry_initially_unpaused": false,
+    "registry_usdc_asset_allowed": false,
+    "independent_read_only_verifier": null,
+    "verified_at": null
+  }
+}

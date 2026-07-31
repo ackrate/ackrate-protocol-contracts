@@ -10,6 +10,9 @@
 
 Mainnet planning: [`docs/mainnet-roadmap.md`](docs/mainnet-roadmap.md)
 
+Governed mainnet release candidate and deployment handoff:
+[`contracts/mainnet/README.md`](contracts/mainnet/README.md)
+
 ---
 
 ## Trust chain: source to chain
