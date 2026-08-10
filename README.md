@@ -13,6 +13,10 @@ Mainnet planning: [`docs/mainnet-roadmap.md`](docs/mainnet-roadmap.md)
 Governed mainnet release candidate and deployment handoff:
 [`contracts/mainnet/README.md`](contracts/mainnet/README.md)
 
+The governed mainnet candidate has its own continuously enforced build, test,
+interface, fingerprint, and size gate. It is not represented by the testnet
+release table below and has not been deployed to mainnet yet.
+
 ---
 
 ## Trust chain: source to chain

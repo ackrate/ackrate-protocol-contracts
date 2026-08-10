@@ -7,7 +7,7 @@
   },
   "source": {
     "repository": "https://github.com/reapp-protocol/reapp-protocol-contracts",
-    "branch": "t3",
+    "branch": "main",
     "commit": null,
     "dirty": false,
     "stellar_cli_version": "26.1.0"
@@ -30,9 +30,9 @@
     "emergency_pauser": null,
     "timelock_min_delay_ledgers": null,
     "usdc_asset_code": "USDC",
-    "usdc_issuer": null,
-    "usdc_sac": null,
-    "usdc_derivation_evidence": null,
+    "usdc_issuer": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+    "usdc_sac": "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75",
+    "usdc_derivation_evidence": "Circle mainnet issuer reverified; Stellar CLI 26.1.0 and @stellar/stellar-sdk independently derived the same Public Network SAC.",
     "usdc_independent_verifier": null
   },
   "constructor_arguments": {

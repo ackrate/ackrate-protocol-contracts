@@ -35,6 +35,8 @@ stellar contract info interface \
     mandate_registry.wasm > SIZES
 )
 
+node "$ROOT/scripts/check-mainnet-artifacts.mjs"
+
 echo "Mainnet candidate artifacts written to $RELEASE_DIR"
 cat "$RELEASE_DIR/SHA256SUMS"
 cat "$RELEASE_DIR/SIZES"

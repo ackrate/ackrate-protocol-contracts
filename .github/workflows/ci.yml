@@ -18,3 +18,14 @@ jobs:
         run: rustup toolchain install stable --profile minimal --component clippy,rustfmt --target wasm32v1-none
       - name: Gate check both contracts
         run: ./scripts/gatecheck-contracts.sh
+
+  mainnet-candidate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Rust contract toolchain
+        run: rustup toolchain install stable --profile minimal --component clippy,rustfmt --target wasm32v1-none
+      - name: Install pinned Stellar CLI
+        run: cargo install --locked stellar-cli@26.1.0
+      - name: Gate check governed mainnet candidate
+        run: ./scripts/gatecheck-mainnet.sh

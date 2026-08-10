@@ -5,13 +5,16 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RELEASE_DIR="$ROOT/target/mainnet-release"
 TIMELOCK_WASM="$RELEASE_DIR/reapp_timelock_controller.wasm"
 REGISTRY_WASM="$RELEASE_DIR/mandate_registry.wasm"
-EXPECTED_TIMELOCK_HASH="766b79bab9208677ee151721f24a12b1c215a61728eafeaa540bd6d67df920b7"
-EXPECTED_REGISTRY_HASH="9e16748606654c900d8b98655134fed0cdb2ebc5a0c314702ed1f030ef70b9d8"
+NETWORK_PASSPHRASE="Public Global Stellar Network ; September 2015"
+MIN_TIMELOCK_DELAY_LEDGERS=17280
 
 required=(
   REAPP_DEPLOYER
+  REAPP_DEPLOYMENT_SOURCE_ACCOUNT
   REAPP_AUTHORITY_2_OF_3
+  REAPP_AUTHORITY_MANIFEST
   REAPP_EMERGENCY_PAUSER
+  REAPP_MAINNET_RPC_URL
   REAPP_MAINNET_USDC_SAC
   REAPP_TIMELOCK_DELAY_LEDGERS
 )
@@ -39,6 +42,32 @@ fi
 if [[ ! -f "$TIMELOCK_WASM" || ! -f "$REGISTRY_WASM" ]]; then
   echo "Release artifacts are missing. Run ./scripts/gatecheck-mainnet.sh first." >&2
   exit 4
+fi
+
+if [[ ! "$REAPP_DEPLOYER" =~ ^[A-Za-z0-9._-]+$ ]]; then
+  echo "REAPP_DEPLOYER must name a local Stellar CLI identity; do not pass a secret or seed phrase." >&2
+  exit 13
+fi
+
+deployer_public_key="$(stellar keys address "$REAPP_DEPLOYER")"
+if [[ "$deployer_public_key" != "$REAPP_DEPLOYMENT_SOURCE_ACCOUNT" ]]; then
+  echo "REAPP_DEPLOYER does not resolve to REAPP_DEPLOYMENT_SOURCE_ACCOUNT." >&2
+  exit 14
+fi
+
+node "$ROOT/scripts/check-mainnet-artifacts.mjs"
+IFS=' ' read -r EXPECTED_TIMELOCK_HASH EXPECTED_REGISTRY_HASH \
+  < <(node "$ROOT/scripts/check-mainnet-artifacts.mjs" --print-hashes)
+
+export REAPP_MAINNET_NETWORK_PASSPHRASE="$NETWORK_PASSPHRASE"
+node "$ROOT/scripts/preflight-mainnet.mjs"
+
+rpc_args=(
+  --rpc-url "$REAPP_MAINNET_RPC_URL"
+  --network-passphrase "$NETWORK_PASSPHRASE"
+)
+if [[ -n "${REAPP_MAINNET_RPC_HEADER:-}" ]]; then
+  rpc_args+=(--rpc-header "$REAPP_MAINNET_RPC_HEADER")
 fi
 
 actual_timelock_hash="$(shasum -a 256 "$TIMELOCK_WASM" | awk '{print $1}')"
@@ -69,13 +98,15 @@ if [[ ! "$REAPP_MAINNET_USDC_SAC" =~ ^C[A-Z2-7]{55}$ ]]; then
   exit 9
 fi
 
-if [[ ! "$REAPP_TIMELOCK_DELAY_LEDGERS" =~ ^[1-9][0-9]*$ ]]; then
-  echo "REAPP_TIMELOCK_DELAY_LEDGERS must be a positive ledger count." >&2
+if [[ ! "$REAPP_TIMELOCK_DELAY_LEDGERS" =~ ^[1-9][0-9]*$ ]] \
+  || (( REAPP_TIMELOCK_DELAY_LEDGERS < MIN_TIMELOCK_DELAY_LEDGERS )) \
+  || (( REAPP_TIMELOCK_DELAY_LEDGERS > 4294967295 )); then
+  echo "REAPP_TIMELOCK_DELAY_LEDGERS must be at least $MIN_TIMELOCK_DELAY_LEDGERS and fit u32." >&2
   exit 10
 fi
 
 timelock_id="$(stellar contract deploy \
-  --network mainnet \
+  "${rpc_args[@]}" \
   --source-account "$REAPP_DEPLOYER" \
   --wasm "$TIMELOCK_WASM" \
   --optimize=false \
@@ -90,7 +121,7 @@ echo "Timelock deployed. Record this ID before continuing: $timelock_id" >&2
 governance="{\"admin\":\"$timelock_id\",\"asset_policy\":\"$timelock_id\",\"pauser\":\"$REAPP_EMERGENCY_PAUSER\",\"unpauser\":\"$REAPP_AUTHORITY_2_OF_3\",\"upgrader\":\"$timelock_id\"}"
 
 registry_id="$(stellar contract deploy \
-  --network mainnet \
+  "${rpc_args[@]}" \
   --source-account "$REAPP_DEPLOYER" \
   --wasm "$REGISTRY_WASM" \
   --optimize=false \
@@ -99,10 +130,10 @@ registry_id="$(stellar contract deploy \
   --initial-asset "$REAPP_MAINNET_USDC_SAC")"
 
 observed_timelock_hash="$(stellar contract info hash \
-  --network mainnet \
+  "${rpc_args[@]}" \
   --contract-id "$timelock_id")"
 observed_registry_hash="$(stellar contract info hash \
-  --network mainnet \
+  "${rpc_args[@]}" \
   --contract-id "$registry_id")"
 
 if [[ "$observed_timelock_hash" != "$EXPECTED_TIMELOCK_HASH" ]]; then
