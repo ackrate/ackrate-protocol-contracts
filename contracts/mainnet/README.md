@@ -40,7 +40,8 @@ The script formats, lints, tests, and builds both contracts, inspects their
 interfaces, and writes the exact WASM files plus SHA-256 checksums beneath
 `target/mainnet-release/`. Generated files are intentionally not committed.
 
-The currently reviewed candidate hashes are recorded in
+The release recipe is pinned to Rust 1.96.0 and Stellar CLI 26.1.0. The
+currently reviewed candidate hashes are recorded in
 `deployment-manifest.template.json`. A hash mismatch is a release stop.
 The same gate runs continuously on pushes and pull requests to `main`.
 

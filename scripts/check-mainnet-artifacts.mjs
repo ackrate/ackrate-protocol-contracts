@@ -53,6 +53,9 @@ const source = objectAt(manifest, "source");
 if (textAt(source, "branch") !== "main") {
   throw new Error("candidate manifest source branch must be main");
 }
+if (textAt(source, "rust_toolchain_version") !== "1.96.0") {
+  throw new Error("candidate manifest Rust toolchain version must be 1.96.0");
+}
 if (textAt(source, "stellar_cli_version") !== "26.1.0") {
   throw new Error("candidate manifest Stellar CLI version must be 26.1.0");
 }

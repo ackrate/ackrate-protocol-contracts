@@ -8,6 +8,15 @@ TIMELOCK_MANIFEST="$ROOT/contracts/mainnet/timelock-controller/Cargo.toml"
 
 mkdir -p "$RELEASE_DIR"
 
+if [[ "$(rustc --version)" != rustc\ 1.96.0\ * ]]; then
+  echo "Mainnet release builds require Rust 1.96.0." >&2
+  exit 2
+fi
+if [[ "$(stellar --version | head -n 1)" != stellar\ 26.1.0\ * ]]; then
+  echo "Mainnet release builds require Stellar CLI 26.1.0." >&2
+  exit 3
+fi
+
 for manifest in "$TIMELOCK_MANIFEST" "$REGISTRY_MANIFEST"; do
   cargo fmt --manifest-path "$manifest" --all -- --check
   cargo clippy --manifest-path "$manifest" --all-targets -- -D warnings

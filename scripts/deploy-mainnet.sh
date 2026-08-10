@@ -44,6 +44,11 @@ if [[ ! -f "$TIMELOCK_WASM" || ! -f "$REGISTRY_WASM" ]]; then
   exit 4
 fi
 
+if [[ "$(stellar --version | head -n 1)" != stellar\ 26.1.0\ * ]]; then
+  echo "Mainnet deployment requires Stellar CLI 26.1.0." >&2
+  exit 15
+fi
+
 if [[ ! "$REAPP_DEPLOYER" =~ ^[A-Za-z0-9._-]+$ ]]; then
   echo "REAPP_DEPLOYER must name a local Stellar CLI identity; do not pass a secret or seed phrase." >&2
   exit 13

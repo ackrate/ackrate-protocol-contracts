@@ -10,6 +10,7 @@
     "branch": "main",
     "commit": null,
     "dirty": false,
+    "rust_toolchain_version": "1.96.0",
     "stellar_cli_version": "26.1.0"
   },
   "artifacts": {
