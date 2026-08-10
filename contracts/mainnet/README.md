@@ -40,10 +40,25 @@ The script formats, lints, tests, and builds both contracts, inspects their
 interfaces, and writes the exact WASM files plus SHA-256 checksums beneath
 `target/mainnet-release/`. Generated files are intentionally not committed.
 
-The release recipe is pinned to Rust 1.96.0 and Stellar CLI 26.1.0. The
-currently reviewed candidate hashes are recorded in
+The canonical release platform is Ubuntu 24.04 x86_64, pinned to Rust 1.96.0
+and Stellar CLI 26.1.0. The currently reviewed candidate hashes are recorded in
 `deployment-manifest.template.json`. A hash mismatch is a release stop.
 The same gate runs continuously on pushes and pull requests to `main`.
+
+Host operating systems can produce different WASM bytes even with equal file
+sizes and pinned tools. The workflow therefore publishes the exact canonical
+files only after the Ubuntu gate reproduces the reviewed hashes. On another
+platform, fetch the artifact for the current clean commit from a successful
+`main` run, then verify it locally:
+
+```bash
+export REAPP_MAINNET_ARTIFACT_RUN_ID=<successful-github-run-id>
+./scripts/fetch-mainnet-artifacts.sh
+```
+
+The fetcher rejects failed runs, other branches, other commits, other
+workflows, dirty worktrees, and any artifact whose hash or size differs from
+the candidate manifest.
 
 Circle's current Stellar mainnet issuer was reverified against Circle's
 published asset page. Stellar CLI 26.1.0 and `@stellar/stellar-sdk`

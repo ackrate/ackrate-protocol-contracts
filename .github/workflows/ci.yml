@@ -20,7 +20,7 @@ jobs:
         run: ./scripts/gatecheck-contracts.sh
 
   mainnet-candidate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
       - name: Install Rust contract toolchain
@@ -41,3 +41,16 @@ jobs:
           "$bin_dir/stellar" --version
       - name: Gate check governed mainnet candidate
         run: ./scripts/gatecheck-mainnet.sh
+      - name: Publish exact governed mainnet artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mainnet-release-${{ github.sha }}
+          path: |
+            target/mainnet-release/reapp_timelock_controller.wasm
+            target/mainnet-release/mandate_registry.wasm
+            target/mainnet-release/reapp_timelock_controller.interface.json
+            target/mainnet-release/mandate_registry.interface.json
+            target/mainnet-release/SHA256SUMS
+            target/mainnet-release/SIZES
+          if-no-files-found: error
+          retention-days: 90

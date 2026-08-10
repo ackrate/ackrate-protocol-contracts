@@ -10,18 +10,19 @@
     "branch": "main",
     "commit": null,
     "dirty": false,
+    "build_platform": "ubuntu-24.04-x86_64",
     "rust_toolchain_version": "1.96.0",
     "stellar_cli_version": "26.1.0"
   },
   "artifacts": {
     "timelock_controller": {
       "path": "target/mainnet-release/reapp_timelock_controller.wasm",
-      "sha256": "766b79bab9208677ee151721f24a12b1c215a61728eafeaa540bd6d67df920b7",
+      "sha256": "f03b5bd1d672ef74da1621c8cee52c55bc39cea6abc4ba8b91f0665f33d30151",
       "size_bytes": 28324
     },
     "mandate_registry": {
       "path": "target/mainnet-release/mandate_registry.wasm",
-      "sha256": "9e16748606654c900d8b98655134fed0cdb2ebc5a0c314702ed1f030ef70b9d8",
+      "sha256": "5d92abb1a047db75e6684d34df998d92a76513f46386b6961f7ebb648eb95f7e",
       "size_bytes": 26954
     }
   },

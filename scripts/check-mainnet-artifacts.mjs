@@ -7,6 +7,13 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const manifestPath = resolve(root, "contracts/mainnet/deployment-manifest.template.json");
+let releaseDir = resolve(root, "target/mainnet-release");
+const releaseDirIndex = process.argv.indexOf("--release-dir");
+if (releaseDirIndex >= 0) {
+  const requestedDir = process.argv[releaseDirIndex + 1];
+  if (!requestedDir) throw new Error("--release-dir requires a path");
+  releaseDir = resolve(requestedDir);
+}
 
 function objectAt(parent, key) {
   const value = parent[key];
@@ -53,6 +60,9 @@ const source = objectAt(manifest, "source");
 if (textAt(source, "branch") !== "main") {
   throw new Error("candidate manifest source branch must be main");
 }
+if (textAt(source, "build_platform") !== "ubuntu-24.04-x86_64") {
+  throw new Error("candidate manifest build platform must be ubuntu-24.04-x86_64");
+}
 if (textAt(source, "rust_toolchain_version") !== "1.96.0") {
   throw new Error("candidate manifest Rust toolchain version must be 1.96.0");
 }
@@ -76,7 +86,7 @@ for (const [name, expectedFilename] of candidates) {
 
   const expectedHash = sha256At(artifact, "sha256");
   const expectedSize = positiveIntegerAt(artifact, "size_bytes");
-  const artifactPath = resolve(root, expectedPath);
+  const artifactPath = resolve(releaseDir, expectedFilename);
   const actualHash = await digest(artifactPath);
   const actualSize = (await stat(artifactPath)).size;
 

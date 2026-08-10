@@ -6,6 +6,12 @@ RELEASE_DIR="$ROOT/target/mainnet-release"
 REGISTRY_MANIFEST="$ROOT/contracts/mainnet/mandate-registry/Cargo.toml"
 TIMELOCK_MANIFEST="$ROOT/contracts/mainnet/timelock-controller/Cargo.toml"
 
+if [[ "$(uname -s)-$(uname -m)" != "Linux-x86_64" ]]; then
+  echo "Canonical mainnet artifacts must be built on Ubuntu Linux x86_64." >&2
+  echo "Use a successful main-branch GitHub run and ./scripts/fetch-mainnet-artifacts.sh on other platforms." >&2
+  exit 4
+fi
+
 mkdir -p "$RELEASE_DIR"
 
 if [[ "$(rustc --version)" != rustc\ 1.96.0\ * ]]; then
