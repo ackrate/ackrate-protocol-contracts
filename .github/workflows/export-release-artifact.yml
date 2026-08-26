@@ -12,23 +12,17 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Export the attested Registry asset to a temporary branch
+      - name: Export the attested Registry bytes as checked annotations
         env:
           ASSET_URL: https://github.com/ackrate/ackrate-protocol-contracts/releases/download/mainnet-registry-v0.3.1_contracts_mainnet_mandate_registry_mandate-registry_pkg0.3.1_cli27.0.0/mandate-registry_v0.3.1.wasm
           EXPECTED_SHA256: d0e98a21f593e7d581eefc65a6f62dffdc4cb43fe16ccfeabe054bf8bfef3270
         run: |
           set -euo pipefail
-          mkdir -p .release-artifacts
           curl --fail --silent --show-error --location "$ASSET_URL" --output /tmp/mandate-registry.wasm
           echo "$EXPECTED_SHA256  /tmp/mandate-registry.wasm" | sha256sum --check
-          base64 --wrap=120 /tmp/mandate-registry.wasm > .release-artifacts/mandate-registry_v0.3.1.wasm.b64
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git switch --orphan artifact-export
-          git rm -rf .
-          mkdir -p .release-artifacts
-          cp /tmp/mandate-registry.wasm /tmp/mandate-registry-copy.wasm
-          base64 --wrap=120 /tmp/mandate-registry-copy.wasm > .release-artifacts/mandate-registry_v0.3.1.wasm.b64
-          git add .release-artifacts/mandate-registry_v0.3.1.wasm.b64
-          git commit -m "temporary: export attested Registry artifact"
-          git push --force origin HEAD:refs/heads/artifact-export
+          base64 --wrap=0 /tmp/mandate-registry.wasm > /tmp/mandate-registry.b64
+          split --bytes=3500 --numeric-suffixes=0 --suffix-length=3 /tmp/mandate-registry.b64 /tmp/chunk-
+          for chunk in /tmp/chunk-*; do
+            name="${chunk##*/chunk-}"
+            printf '::warning title=artifact-%s::%s\n' "$name" "$(cat "$chunk")"
+          done
