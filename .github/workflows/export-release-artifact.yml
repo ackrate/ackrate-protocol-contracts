@@ -1,28 +1,67 @@
-name: Export release artifact
+name: Deploy verified mainnet canary
 
 on:
   workflow_dispatch:
+    inputs:
+      signed_xdr:
+        description: Locally signed deployment transaction; leave empty to prepare and simulate
+        required: false
+        type: string
 
 permissions:
-  contents: write
+  contents: read
+
+env:
+  RPC_URL: https://mainnet.sorobanrpc.com
+  NETWORK_PASSPHRASE: Public Global Stellar Network ; September 2015
+  SOURCE_ACCOUNT: GADKNO6PXPSHPB5SEL5T7VZSBNIV7Z5WWHX5RGSZYNEUL3RKBEL2KVYK
+  CONTRACT_SALT: 760b63f50fef3d7fb6e3d626a7bb6a5da2ee72ba2c53b5ec7dfc5e5dc9fce0b8
+  EXPECTED_CONTRACT_ID: CD334LUOQBJR4YDINXQDDZ26K7ZR6LTUSLV2PIENL32ZUR3GZ2DMEU3X
+  EXPECTED_WASM_SHA256: d0e98a21f593e7d581eefc65a6f62dffdc4cb43fe16ccfeabe054bf8bfef3270
+  ASSET_URL: https://github.com/ackrate/ackrate-protocol-contracts/releases/download/mainnet-registry-v0.3.1_contracts_mainnet_mandate_registry_mandate-registry_pkg0.3.1_cli27.0.0/mandate-registry_v0.3.1.wasm
 
 jobs:
-  export:
+  prepare:
+    if: inputs.signed_xdr == ''
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
-
-      - name: Export the attested Registry bytes as checked annotations
-        env:
-          ASSET_URL: https://github.com/ackrate/ackrate-protocol-contracts/releases/download/mainnet-registry-v0.3.1_contracts_mainnet_mandate_registry_mandate-registry_pkg0.3.1_cli27.0.0/mandate-registry_v0.3.1.wasm
-          EXPECTED_SHA256: d0e98a21f593e7d581eefc65a6f62dffdc4cb43fe16ccfeabe054bf8bfef3270
+      - &install_stellar
+        name: Install and pin Stellar CLI 27.0.0
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location https://github.com/stellar/stellar-cli/releases/download/v27.0.0/stellar-cli_27.0.0_amd64.deb --output /tmp/stellar-cli.deb
+          sudo dpkg --install /tmp/stellar-cli.deb
+          stellar --version | tee /tmp/stellar-version
+          grep --fixed-strings 'stellar 27.0.0 (5a7c5fe76530bf4248477ac812fc757146b98cc4)' /tmp/stellar-version
+      - name: Download and hash-gate the official Registry artifact
         run: |
           set -euo pipefail
           curl --fail --silent --show-error --location "$ASSET_URL" --output /tmp/mandate-registry.wasm
-          echo "$EXPECTED_SHA256  /tmp/mandate-registry.wasm" | sha256sum --check
-          base64 --wrap=0 /tmp/mandate-registry.wasm > /tmp/mandate-registry.b64
-          split --bytes=4000 --numeric-suffixes=0 --suffix-length=3 /tmp/mandate-registry.b64 /tmp/chunk-
-          for chunk in /tmp/chunk-*; do
-            name="${chunk##*/chunk-}"
-            printf '::warning title=artifact-%s::%s\n' "$name" "$(cat "$chunk")"
-          done
+          echo "$EXPECTED_WASM_SHA256  /tmp/mandate-registry.wasm" | sha256sum --check
+      - name: Simulate and export the unsigned deployment transaction
+        run: |
+          set -euo pipefail
+          observed_id="$(stellar contract id wasm --source-account "$SOURCE_ACCOUNT" --salt "$CONTRACT_SALT" --rpc-url http://127.0.0.1:1 --network-passphrase "$NETWORK_PASSPHRASE")"
+          test "$observed_id" = "$EXPECTED_CONTRACT_ID"
+          governance="{\"admin\":\"CD3KRQRNCW52CZHKG2GPQAEOU6UCL426YFNHYUZ7IWUUKAOTKUQX6UUX\",\"asset_policy\":\"CD3KRQRNCW52CZHKG2GPQAEOU6UCL426YFNHYUZ7IWUUKAOTKUQX6UUX\",\"pauser\":\"GCL6IG2J5QRO4B2XBXJ6QUGKEAMOCOS2HQIRMJWBPVEBZRDM5EZPR3TY\",\"unpauser\":\"GCQNLXZSQUYVFXYTWPA6RF6KIRTGQNZYHR4JIILXE3LTMXZQAUW6PXN5\",\"upgrader\":\"CD3KRQRNCW52CZHKG2GPQAEOU6UCL426YFNHYUZ7IWUUKAOTKUQX6UUX\"}"
+          xdr="$(stellar contract deploy --build-only --rpc-url "$RPC_URL" --network-passphrase "$NETWORK_PASSPHRASE" --source-account "$SOURCE_ACCOUNT" --salt "$CONTRACT_SALT" --wasm /tmp/mandate-registry.wasm --optimize=false -- --governance "$governance" --initial-asset CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75)"
+          printf '%s' "$xdr" | base64 --decode >/dev/null
+          printf '%s' "$xdr" > /tmp/deploy.xdr
+          split --bytes=4000 --numeric-suffixes=0 --suffix-length=3 /tmp/deploy.xdr /tmp/xdr-
+          printf '::notice title=contract-id::%s\n' "$EXPECTED_CONTRACT_ID"
+          for chunk in /tmp/xdr-*; do name="${chunk##*/xdr-}"; printf '::warning title=xdr-%s::%s\n' "$name" "$(cat "$chunk")"; done
+
+  submit:
+    if: inputs.signed_xdr != ''
+    runs-on: ubuntu-24.04
+    steps:
+      - *install_stellar
+      - name: Submit the locally signed transaction
+        env:
+          SIGNED_XDR: ${{ inputs.signed_xdr }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$SIGNED_XDR" | base64 --decode >/dev/null
+          result="$(stellar tx send "$SIGNED_XDR" --rpc-url "$RPC_URL" --network-passphrase "$NETWORK_PASSPHRASE")"
+          printf '::notice title=deployment-result::%s\n' "$result"
+          printf '::notice title=contract-id::%s\n' "$EXPECTED_CONTRACT_ID"
