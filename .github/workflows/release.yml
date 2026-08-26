@@ -7,6 +7,7 @@ on:
       - 'composites-v*'
       - 'mainnet-canary-v*'
       - 'mainnet-v*'
+      - 'mainnet-registry-v*'
       - 'source-verify-v*'
 permissions:
   id-token: write
@@ -47,7 +48,7 @@ jobs:
       release_token: ${{ secrets.GITHUB_TOKEN }}
 
   gatecheck-mainnet-contracts:
-    if: startsWith(github.ref_name, 'mainnet-canary-v') || startsWith(github.ref_name, 'mainnet-v') || startsWith(github.ref_name, 'source-verify-v')
+    if: startsWith(github.ref_name, 'mainnet-canary-v') || startsWith(github.ref_name, 'mainnet-v') || startsWith(github.ref_name, 'mainnet-registry-v') || startsWith(github.ref_name, 'source-verify-v')
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
@@ -78,8 +79,8 @@ jobs:
 
   release-mainnet-mandate-registry:
     needs: gatecheck-mainnet-contracts
-    if: startsWith(github.ref_name, 'mainnet-canary-v') || startsWith(github.ref_name, 'mainnet-v')
-    uses: stellar-expert/soroban-build-workflow/.github/workflows/release.yml@v27.0.0
+    if: startsWith(github.ref_name, 'mainnet-canary-v') || startsWith(github.ref_name, 'mainnet-v') || startsWith(github.ref_name, 'mainnet-registry-v')
+    uses: stellar-expert/soroban-build-workflow/.github/workflows/release.yml@main
     with:
       release_name: ${{ github.ref_name }}
       release_description: 'Ackrate governed mainnet MandateRegistry release'
