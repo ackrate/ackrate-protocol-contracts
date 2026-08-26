@@ -27,14 +27,30 @@ for manifest in "$TIMELOCK_MANIFEST" "$REGISTRY_MANIFEST"; do
   cargo fmt --manifest-path "$manifest" --all -- --check
   cargo clippy --manifest-path "$manifest" --all-targets -- -D warnings
   cargo test --manifest-path "$manifest"
-  stellar contract build \
-    --locked \
-    --optimize \
-    --meta source_repo=github:ackrate/ackrate-protocol-contracts \
-    --meta home_domain=ackrate.xyz \
-    --manifest-path "$manifest" \
-    --out-dir "$RELEASE_DIR"
 done
+
+# Reproduce the official StellarExpert release builder exactly: build from each
+# package directory, select the package explicitly, and let Cargo use the
+# checked-in lockfile by default. Changing the working directory or adding
+# manifest flags changes the optimized WASM bytes even with the same sources.
+(
+  cd "$(dirname "$TIMELOCK_MANIFEST")"
+  stellar contract build \
+    --optimize \
+    --package ackrate-timelock-controller \
+    --out-dir "$RELEASE_DIR" \
+    --meta source_repo=github:ackrate/ackrate-protocol-contracts \
+    --meta home_domain=ackrate.xyz
+)
+(
+  cd "$(dirname "$REGISTRY_MANIFEST")"
+  stellar contract build \
+    --optimize \
+    --package mandate-registry \
+    --out-dir "$RELEASE_DIR" \
+    --meta source_repo=github:ackrate/ackrate-protocol-contracts \
+    --meta home_domain=ackrate.xyz
+)
 
 stellar contract info interface \
   --wasm "$RELEASE_DIR/ackrate_timelock_controller.wasm" \
