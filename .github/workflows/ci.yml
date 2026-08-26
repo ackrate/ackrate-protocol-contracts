@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Install Rust contract toolchain
-        run: rustup toolchain install 1.96.0 --profile minimal --component clippy,rustfmt --target wasm32v1-none
+        run: rustup toolchain install 1.98.0 --profile minimal --component clippy,rustfmt --target wasm32v1-none
       - name: Gate check both contracts
         run: ./scripts/gatecheck-contracts.sh
 
@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Install Rust contract toolchain
-        run: rustup toolchain install 1.96.0 --profile minimal --component clippy,rustfmt --target wasm32v1-none
+        run: rustup toolchain install 1.98.0 --profile minimal --component clippy,rustfmt --target wasm32v1-none
       - name: Install verified Stellar CLI 27.0.0 release
         env:
           STELLAR_CLI_SHA256: 357bf712f6353c28cd33c794402a3c87231757a5b305e6ef1604365af4fdd556

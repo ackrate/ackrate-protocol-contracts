@@ -40,12 +40,25 @@ The script formats, lints, tests, and builds both contracts, inspects their
 interfaces, and writes the exact WASM files plus SHA-256 checksums beneath
 `target/mainnet-release/`. Generated files are intentionally not committed.
 
-The canonical release platform is Ubuntu 24.04 x86_64, pinned to Rust 1.96.0
+The canonical release platform is Ubuntu 24.04 x86_64, pinned to Rust 1.98.0
 and Stellar CLI 27.0.0. The source-verification release uses the pinned
 StellarExpert build workflow and embeds the canonical Ackrate repository and
 home-domain metadata. The currently reviewed candidate hashes are recorded in
 `deployment-manifest.template.json`. A hash mismatch is a release stop.
 The same gate runs continuously on pushes and pull requests to `main`.
+
+The `mainnet-canary-v0.1.0` source tag produced the reviewed canary artifacts
+through the official StellarExpert v27.0.0 builder. Both release assets have
+GitHub SLSA provenance signed for source commit
+`51b93159d5a4e29d9e48fe99f489d70271703494`, witnessed by the Sigstore
+transparency log, and verified locally against GitHub CLI's signed trust root:
+
+| Artifact | SHA-256 | Release | Attestation |
+|---|---|---|---|
+| Timelock Controller | `99a32170feaf3521338adfadb25d1a2ea573e6d29ec5de97e9d9cc3e4a99da97` | [v0.1.0 WASM](https://github.com/ackrate/ackrate-protocol-contracts/releases/tag/mainnet-canary-v0.1.0_contracts_mainnet_timelock_controller_ackrate-timelock-controller_pkg0.1.0_cli27.0.0) | [GitHub provenance](https://github.com/ackrate/ackrate-protocol-contracts/attestations/43110888) |
+| MandateRegistry | `3656430ac7cf5e7cf1c26948b46314c37866c2d7e928ea89d7d1f89b8aa0ef3c` | [v0.3.0 WASM](https://github.com/ackrate/ackrate-protocol-contracts/releases/tag/mainnet-canary-v0.1.0_contracts_mainnet_mandate_registry_mandate-registry_pkg0.3.0_cli27.0.0) | [GitHub provenance](https://github.com/ackrate/ackrate-protocol-contracts/attestations/43110909) |
+
+[View the successful source build and attestation run](https://github.com/ackrate/ackrate-protocol-contracts/actions/runs/32963207324).
 
 Host operating systems can produce different WASM bytes even with equal file
 sizes and pinned tools. The workflow therefore publishes the exact canonical

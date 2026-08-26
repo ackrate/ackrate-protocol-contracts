@@ -8,22 +8,31 @@
   "source": {
     "repository": "https://github.com/ackrate/ackrate-protocol-contracts",
     "branch": "main",
-    "commit": null,
+    "commit": "51b93159d5a4e29d9e48fe99f489d70271703494",
     "dirty": false,
     "build_platform": "ubuntu-24.04-x86_64",
-    "rust_toolchain_version": "1.96.0",
+    "rust_toolchain_version": "1.98.0",
     "stellar_cli_version": "27.0.0"
+  },
+  "provenance": {
+    "source_tag": "mainnet-canary-v0.1.0",
+    "build_workflow": "https://github.com/stellar-expert/soroban-build-workflow/.github/workflows/release.yml@refs/tags/v27.0.0",
+    "build_run": "https://github.com/ackrate/ackrate-protocol-contracts/actions/runs/32963207324",
+    "timelock_release": "https://github.com/ackrate/ackrate-protocol-contracts/releases/tag/mainnet-canary-v0.1.0_contracts_mainnet_timelock_controller_ackrate-timelock-controller_pkg0.1.0_cli27.0.0",
+    "timelock_attestation": "https://github.com/ackrate/ackrate-protocol-contracts/attestations/43110888",
+    "registry_release": "https://github.com/ackrate/ackrate-protocol-contracts/releases/tag/mainnet-canary-v0.1.0_contracts_mainnet_mandate_registry_mandate-registry_pkg0.3.0_cli27.0.0",
+    "registry_attestation": "https://github.com/ackrate/ackrate-protocol-contracts/attestations/43110909"
   },
   "artifacts": {
     "timelock_controller": {
       "path": "target/mainnet-release/ackrate_timelock_controller.wasm",
-      "sha256": null,
-      "size_bytes": null
+      "sha256": "99a32170feaf3521338adfadb25d1a2ea573e6d29ec5de97e9d9cc3e4a99da97",
+      "size_bytes": 28429
     },
     "mandate_registry": {
       "path": "target/mainnet-release/mandate_registry.wasm",
-      "sha256": null,
-      "size_bytes": null
+      "sha256": "3656430ac7cf5e7cf1c26948b46314c37866c2d7e928ea89d7d1f89b8aa0ef3c",
+      "size_bytes": 27059
     }
   },
   "public_configuration": {

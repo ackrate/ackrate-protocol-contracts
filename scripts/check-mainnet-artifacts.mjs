@@ -63,8 +63,8 @@ if (textAt(source, "branch") !== "main") {
 if (textAt(source, "build_platform") !== "ubuntu-24.04-x86_64") {
   throw new Error("candidate manifest build platform must be ubuntu-24.04-x86_64");
 }
-if (textAt(source, "rust_toolchain_version") !== "1.96.0") {
-  throw new Error("candidate manifest Rust toolchain version must be 1.96.0");
+if (textAt(source, "rust_toolchain_version") !== "1.98.0") {
+  throw new Error("candidate manifest Rust toolchain version must be 1.98.0");
 }
 if (textAt(source, "stellar_cli_version") !== "27.0.0") {
   throw new Error("candidate manifest Stellar CLI version must be 27.0.0");

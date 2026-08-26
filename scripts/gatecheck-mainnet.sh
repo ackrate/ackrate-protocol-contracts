@@ -14,8 +14,8 @@ fi
 
 mkdir -p "$RELEASE_DIR"
 
-if [[ "$(rustc --version)" != rustc\ 1.96.0\ * ]]; then
-  echo "Mainnet release builds require Rust 1.96.0." >&2
+if [[ "$(rustc --version)" != rustc\ 1.98.0\ * ]]; then
+  echo "Mainnet release builds require Rust 1.98.0." >&2
   exit 2
 fi
 if [[ "$(stellar --version | head -n 1)" != stellar\ 27.0.0\ * ]]; then
