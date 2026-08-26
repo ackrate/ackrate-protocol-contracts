@@ -2,9 +2,11 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SOURCE_ROOT="${ACKRATE_MAINNET_SOURCE_ROOT:-$ROOT}"
 RELEASE_DIR="$ROOT/target/mainnet-release"
-REGISTRY_MANIFEST="$ROOT/contracts/mainnet/mandate-registry/Cargo.toml"
-TIMELOCK_MANIFEST="$ROOT/contracts/mainnet/timelock-controller/Cargo.toml"
+REGISTRY_MANIFEST="$SOURCE_ROOT/contracts/mainnet/mandate-registry/Cargo.toml"
+TIMELOCK_MANIFEST="$SOURCE_ROOT/contracts/mainnet/timelock-controller/Cargo.toml"
+EXPECTED_SOURCE_COMMIT="$(node -p "JSON.parse(require('node:fs').readFileSync('$ROOT/contracts/mainnet/deployment-manifest.template.json', 'utf8')).source.commit")"
 
 if [[ "$(uname -s)-$(uname -m)" != "Linux-x86_64" ]]; then
   echo "Canonical mainnet artifacts must be built on Ubuntu Linux x86_64." >&2
@@ -14,8 +16,16 @@ fi
 
 mkdir -p "$RELEASE_DIR"
 
-if [[ "$(rustc --version)" != rustc\ 1.98.0\ * ]]; then
-  echo "Mainnet release builds require Rust 1.98.0." >&2
+if [[ "$(git -C "$SOURCE_ROOT" rev-parse HEAD)" != "$EXPECTED_SOURCE_COMMIT" ]]; then
+  echo "Mainnet release source must be the exact reviewed commit $EXPECTED_SOURCE_COMMIT." >&2
+  exit 5
+fi
+if [[ -n "$(git -C "$SOURCE_ROOT" status --porcelain)" ]]; then
+  echo "Mainnet release source checkout must be clean." >&2
+  exit 6
+fi
+if [[ "$(cd "$SOURCE_ROOT" && rustc --version)" != rustc\ 1.96.0\ * ]]; then
+  echo "The reviewed canary source build requires Rust 1.96.0." >&2
   exit 2
 fi
 if [[ "$(stellar --version | head -n 1)" != stellar\ 27.0.0\ * ]]; then
@@ -24,9 +34,12 @@ if [[ "$(stellar --version | head -n 1)" != stellar\ 27.0.0\ * ]]; then
 fi
 
 for manifest in "$TIMELOCK_MANIFEST" "$REGISTRY_MANIFEST"; do
-  cargo fmt --manifest-path "$manifest" --all -- --check
-  cargo clippy --manifest-path "$manifest" --all-targets -- -D warnings
-  cargo test --manifest-path "$manifest"
+  (
+    cd "$SOURCE_ROOT"
+    cargo fmt --manifest-path "$manifest" --all -- --check
+    cargo clippy --manifest-path "$manifest" --all-targets -- -D warnings
+    cargo test --manifest-path "$manifest"
+  )
 done
 
 # Reproduce the official StellarExpert release builder exactly: build from each

@@ -23,8 +23,22 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
+      - name: Read reviewed source identity
+        id: reviewed-source
+        run: |
+          source_commit="$(jq -r '.source.commit' contracts/mainnet/deployment-manifest.template.json)"
+          rust_toolchain="$(jq -r '.source.rust_toolchain_version' contracts/mainnet/deployment-manifest.template.json)"
+          [[ "$source_commit" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$rust_toolchain" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          echo "commit=$source_commit" >> "$GITHUB_OUTPUT"
+          echo "rust_toolchain=$rust_toolchain" >> "$GITHUB_OUTPUT"
+      - name: Check out exact reviewed source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.reviewed-source.outputs.commit }}
+          path: reviewed-source
       - name: Install Rust contract toolchain
-        run: rustup toolchain install 1.98.0 --profile minimal --component clippy,rustfmt --target wasm32v1-none
+        run: rustup toolchain install ${{ steps.reviewed-source.outputs.rust_toolchain }} --profile minimal --component clippy,rustfmt --target wasm32v1-none
       - name: Install verified Stellar CLI 27.0.0 release
         env:
           STELLAR_CLI_SHA256: 357bf712f6353c28cd33c794402a3c87231757a5b305e6ef1604365af4fdd556
@@ -40,6 +54,8 @@ jobs:
           echo "$bin_dir" >> "$GITHUB_PATH"
           "$bin_dir/stellar" --version
       - name: Gate check governed mainnet candidate
+        env:
+          ACKRATE_MAINNET_SOURCE_ROOT: ${{ github.workspace }}/reviewed-source
         run: ./scripts/gatecheck-mainnet.sh
       - name: Publish exact governed mainnet artifacts
         uses: actions/upload-artifact@v4

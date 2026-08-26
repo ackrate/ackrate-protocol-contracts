@@ -11,7 +11,7 @@
     "commit": "51b93159d5a4e29d9e48fe99f489d70271703494",
     "dirty": false,
     "build_platform": "ubuntu-24.04-x86_64",
-    "rust_toolchain_version": "1.98.0",
+    "rust_toolchain_version": "1.96.0",
     "stellar_cli_version": "27.0.0"
   },
   "provenance": {

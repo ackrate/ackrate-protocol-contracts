@@ -40,7 +40,8 @@ The script formats, lints, tests, and builds both contracts, inspects their
 interfaces, and writes the exact WASM files plus SHA-256 checksums beneath
 `target/mainnet-release/`. Generated files are intentionally not committed.
 
-The canonical release platform is Ubuntu 24.04 x86_64, pinned to Rust 1.98.0
+The reviewed canary artifact was built on Ubuntu 24.04 x86_64 with the tagged
+source's pinned Rust 1.96.0 toolchain
 and Stellar CLI 27.0.0. The source-verification release uses the pinned
 StellarExpert build workflow and embeds the canonical Ackrate repository and
 home-domain metadata. The currently reviewed candidate hashes are recorded in
