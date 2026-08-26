@@ -30,22 +30,38 @@ fees, constructor arguments, public authorities, contract IDs, and links are in
 
 | Contract | Observed mainnet WASM SHA-256 | Source evidence |
 |---|---|---|
-| TimelockController | `99a32170feaf3521338adfadb25d1a2ea573e6d29ec5de97e9d9cc3e4a99da97` | [release](https://github.com/ackrate/ackrate-protocol-contracts/releases/tag/mainnet-canary-v0.1.0_contracts_mainnet_timelock_controller_ackrate-timelock-controller_pkg0.1.0_cli27.0.0), [attestation](https://github.com/ackrate/ackrate-protocol-contracts/attestations/43110888) |
-| MandateRegistry | `3656430ac7cf5e7cf1c26948b46314c37866c2d7e928ea89d7d1f89b8aa0ef3c` | [release](https://github.com/ackrate/ackrate-protocol-contracts/releases/tag/mainnet-canary-v0.1.0_contracts_mainnet_mandate_registry_mandate-registry_pkg0.3.0_cli27.0.0), [attestation](https://github.com/ackrate/ackrate-protocol-contracts/attestations/43110909) |
+| TimelockController | `99a32170feaf3521338adfadb25d1a2ea573e6d29ec5de97e9d9cc3e4a99da97` | [release](https://github.com/ackrate/ackrate-protocol-contracts/releases/tag/source-verify-v0.1.0.3_contracts_mainnet_timelock_controller_ackrate-timelock-controller_pkg0.1.0_cli27.0.0), [attestation](https://github.com/ackrate/ackrate-protocol-contracts/attestations/43140069) |
+| MandateRegistry | `3656430ac7cf5e7cf1c26948b46314c37866c2d7e928ea89d7d1f89b8aa0ef3c` | [release](https://github.com/ackrate/ackrate-protocol-contracts/releases/tag/source-verify-v0.1.0.3_contracts_mainnet_mandate_registry_mandate-registry_pkg0.3.0_cli27.0.0), [attestation](https://github.com/ackrate/ackrate-protocol-contracts/attestations/43140083) |
 
 The official build is [run 32963207324](https://github.com/ackrate/ackrate-protocol-contracts/actions/runs/32963207324).
 The exact-byte independent rebuild is [run 32966147370](https://github.com/ackrate/ackrate-protocol-contracts/actions/runs/32966147370).
+The canonical Explorer source-validation rerun is
+[run 32974608162](https://github.com/ackrate/ackrate-protocol-contracts/actions/runs/32974608162).
 
 The live MandateRegistry bytecode embeds
 `source_repo: github:ackrate/ackrate-protocol-contracts` and
-`home_domain: ackrate.xyz`. Its source mapping is the exact repository commit
-[`51b9315`](https://github.com/ackrate/ackrate-protocol-contracts/commit/51b93159d5a4e29d9e48fe99f489d70271703494),
-path `contracts/mainnet/mandate-registry`, package `mandate-registry`, and
-[successful build job](https://github.com/ackrate/ackrate-protocol-contracts/actions/runs/32963207324/job/98160946789).
+`home_domain: ackrate.xyz`. The reviewed deployment source is commit
+[`51b9315`](https://github.com/ackrate/ackrate-protocol-contracts/commit/51b93159d5a4e29d9e48fe99f489d70271703494). The canonical Explorer proof maps
+the unchanged contract source to commit
+[`71770a5`](https://github.com/ackrate/ackrate-protocol-contracts/commit/71770a55e7d1ca1ec7d0c97930363a93a5540851),
+path `contracts/mainnet/mandate-registry`, package `mandate-registry`, and the
+[successful exact-byte build job](https://github.com/ackrate/ackrate-protocol-contracts/actions/runs/32974608162/job/98196647495).
 The downloaded release artifact has SHA-256
 `3656430ac7cf5e7cf1c26948b46314c37866c2d7e928ea89d7d1f89b8aa0ef3c`,
 identical to the live mainnet WASM. GitHub attestation verification passes with
 the source digest and tag pinned and the StellarExpert reusable builder pinned.
+
+The canonical rerun uses the same caller path as the verified testnet release,
+`.github/workflows/release.yml`, pins Rust 1.96.0 and Stellar CLI 27.0.0,
+requires both deployed hashes before releasing, and signs through the trusted
+StellarExpert builder at `refs/heads/main`. Every job passed and StellarExpert
+accepted the match records for both hashes. As of the last recorded check, the
+Explorer API had not promoted either accepted record from `unverified`; the
+manifest therefore records `pending_external_index` rather than claiming a
+source badge that is not yet visible. The repository owner removed obsolete
+duplicate attestations, retained one exact-byte proof per hash, resubmitted both
+records, and documented the remaining private-worker failure in
+[StellarExpert workflow issue #8](https://github.com/stellar-expert/soroban-build-workflow/issues/8#issuecomment-5426282212).
 
 ## Independent read-only verification
 
