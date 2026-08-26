@@ -445,3 +445,87 @@ fn execute_before_ready() {
         &Some(executor),
     );
 }
+
+#[test]
+fn every_timelock_mutator_rejects_wrong_roles_and_missing_authorization() {
+    let e = Env::default();
+    e.mock_all_auths();
+
+    let proposer = Address::generate(&e);
+    let executor = Address::generate(&e);
+    let admin = Address::generate(&e);
+    let attacker = Address::generate(&e);
+    let target = e.register(TargetContract, ());
+    let timelock = e.register(
+        TimelockController,
+        (
+            10u32,
+            vec![&e, proposer.clone()],
+            vec![&e, executor.clone()],
+            Some(admin.clone()),
+        ),
+    );
+    let client = TimelockControllerClient::new(&e, &timelock);
+    let args = vec![&e, 42u32.into_val(&e)];
+    let predecessor = empty(&e);
+    let salt = BytesN::from_array(&e, &[3; 32]);
+
+    assert!(client
+        .try_schedule(
+            &target,
+            &symbol_short!("set_value"),
+            &args,
+            &predecessor,
+            &salt,
+            &10,
+            &attacker,
+        )
+        .is_err());
+    let operation_id = client.schedule(
+        &target,
+        &symbol_short!("set_value"),
+        &args,
+        &predecessor,
+        &salt,
+        &10,
+        &proposer,
+    );
+    assert!(client.try_cancel(&operation_id, &attacker).is_err());
+    e.ledger().with_mut(|li| li.sequence_number += 10);
+    assert!(client
+        .try_execute(
+            &target,
+            &symbol_short!("set_value"),
+            &args,
+            &predecessor,
+            &salt,
+            &Some(attacker),
+        )
+        .is_err());
+
+    e.set_auths(&[]);
+    let second_salt = BytesN::from_array(&e, &[4; 32]);
+    assert!(client
+        .try_schedule(
+            &target,
+            &symbol_short!("set_value"),
+            &args,
+            &predecessor,
+            &second_salt,
+            &10,
+            &proposer,
+        )
+        .is_err());
+    assert!(client.try_cancel(&operation_id, &proposer).is_err());
+    assert!(client
+        .try_execute(
+            &target,
+            &symbol_short!("set_value"),
+            &args,
+            &predecessor,
+            &salt,
+            &Some(executor),
+        )
+        .is_err());
+    assert!(client.try_update_delay(&20, &admin).is_err());
+}

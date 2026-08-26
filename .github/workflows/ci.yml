@@ -10,6 +10,17 @@ permissions:
   contents: read
 
 jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Rust contract toolchain
+        run: rustup toolchain install 1.98.0 --profile minimal --target wasm32v1-none
+      - name: Install pinned dependency scanner
+        run: cargo install cargo-audit --version 0.22.2 --locked
+      - name: Enforce Mainnet dependency security policy
+        run: ./scripts/security-scan.sh
+
   contracts:
     runs-on: ubuntu-latest
     steps:

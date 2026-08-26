@@ -12,6 +12,13 @@ Mainnet canary deployment: [`docs/mainnet-canary-deployment.md`](docs/mainnet-ca
 
 Mainnet planning: [`docs/mainnet-roadmap.md`](docs/mainnet-roadmap.md)
 
+Mainnet security review:
+
+- [Threat model and control-to-test matrix](docs/security-threat-model.md)
+- [Trust boundaries and mandate lifecycle data flows](docs/security-data-flow.md)
+- [Published dependency scan and remediation report](docs/security-scan-report.md)
+- [Continuous security scan](scripts/security-scan.sh)
+
 Governed mainnet release candidate and deployment handoff:
 [`contracts/mainnet/README.md`](contracts/mainnet/README.md)
 
@@ -19,6 +26,12 @@ The governed mainnet canary is live and independently read-verified. Its exact
 contract IDs, four deployment transactions, constructor arguments, observed
 WASM hashes, GitHub attestations, and StellarExpert links are recorded in the
 [completed deployment manifest](contracts/mainnet/deployment-manifest.json).
+
+The SDK, CLI, agents, merchant server, web UI, database, RPC provider, and x402
+wire format are treated as untrusted. Only the contract's atomic
+`execute_payment` path can consume a mandate and move value. The negative suite,
+threat model, data flows, dependency scan, and exact-byte artifact checks are
+release gates on every change.
 
 ---
 
