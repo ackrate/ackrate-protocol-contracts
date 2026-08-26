@@ -21,7 +21,7 @@ jobs:
           curl --fail --silent --show-error --location "$ASSET_URL" --output /tmp/mandate-registry.wasm
           echo "$EXPECTED_SHA256  /tmp/mandate-registry.wasm" | sha256sum --check
           base64 --wrap=0 /tmp/mandate-registry.wasm > /tmp/mandate-registry.b64
-          split --bytes=3500 --numeric-suffixes=0 --suffix-length=3 /tmp/mandate-registry.b64 /tmp/chunk-
+          split --bytes=4000 --numeric-suffixes=0 --suffix-length=3 /tmp/mandate-registry.b64 /tmp/chunk-
           for chunk in /tmp/chunk-*; do
             name="${chunk##*/chunk-}"
             printf '::warning title=artifact-%s::%s\n' "$name" "$(cat "$chunk")"
