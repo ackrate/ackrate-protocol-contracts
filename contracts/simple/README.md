@@ -1,11 +1,11 @@
 # Simple MandateRegistry
 
-`contracts/simple/mandate-registry` is REAPP's minimal mandate contract and the
+`contracts/simple/mandate-registry` is ACKRATE's minimal mandate contract and the
 reference contract for the public SDK. Release `0.2.3` keeps the original
 mandate interface intact and adds an admin-authorized emergency stop, authority
 rotation, and same-address WASM upgrades.
 
-It is REAPP's minimal enforcement layer: a user signs a mandate, the contract
+It is ACKRATE's minimal enforcement layer: a user signs a mandate, the contract
 stores it, and funds can move only through `execute_payment`, which validates
 and consumes the mandate atomically before transferring. The SDK is untrusted;
 this contract is the source of truth.
@@ -226,13 +226,13 @@ validation and execution.
 |---|---|
 | Status | Deployed, live-checked, and source-verified on Stellar testnet |
 | Source tag | `simple-v0.2.1` at `7e388ddab9f52b2a9d9ac97e0ad358f63835d452` |
-| SDK role | Default simple MandateRegistry for `@reapp-sdk/stellar` |
+| SDK role | Default simple MandateRegistry for `@ackrate-sdk/stellar` |
 | Constructor | `admin: Address` |
 | Admin | `GA2B3YY27OY6AWT2VXMXUDBSAHVOLU2ST6QWJJJLOIGDQHJDXO4RL4XH` |
 | Contract id | [`CCHQ5G4Y4YBMY6D3TYYJSVJVCKUM22Q6TMKCCHVAHY4X7K6QELQACZRM`](https://stellar.expert/explorer/testnet/contract/CCHQ5G4Y4YBMY6D3TYYJSVJVCKUM22Q6TMKCCHVAHY4X7K6QELQACZRM) |
-| Release artifact | [`mandate-registry_v0.2.1.wasm`](https://github.com/reapp-protocol/reapp-protocol-contracts/releases/download/simple-v0.2.1_contracts_simple_mandate_registry_mandate-registry_pkg0.2.1_cli25.1.0/mandate-registry_v0.2.1.wasm) |
+| Release artifact | [`mandate-registry_v0.2.1.wasm`](https://github.com/ackrate/ackrate-protocol-contracts/releases/download/simple-v0.2.1_contracts_simple_mandate_registry_mandate-registry_pkg0.2.1_cli25.1.0/mandate-registry_v0.2.1.wasm) |
 | Artifact and on-chain hash | `ba370a80369daa0a0dea2554410dca6f2a9f7a76ba707cb92a83434e2fe76e87` |
-| Build attestation | [GitHub provenance](https://github.com/reapp-protocol/reapp-protocol-contracts/attestations/36124459) |
+| Build attestation | [GitHub provenance](https://github.com/ackrate/ackrate-protocol-contracts/attestations/36124459) |
 | Fixed upgrade delay | `3,600` seconds (one hour) |
 | WASM upload transaction | [`806b83b1bfb91155bce6fbcaae154943391a49d1ec1a8f606a2508ea8e6b3cea`](https://stellar.expert/explorer/testnet/tx/806b83b1bfb91155bce6fbcaae154943391a49d1ec1a8f606a2508ea8e6b3cea) |
 | Deployment transaction | [`46679351ed75b3b07d7aa90dfbc2a58e7d3695d71d8fffa9fbcf89bff27f9317`](https://stellar.expert/explorer/testnet/tx/46679351ed75b3b07d7aa90dfbc2a58e7d3695d71d8fffa9fbcf89bff27f9317) |
@@ -264,13 +264,13 @@ address, administrator, storage, payment behavior, and `3,600`-second delay.
 
 | State | Release | WASM hash | Marker | Contract id |
 |---|---|---|---|---|
-| Baseline | [`simple-v0.2.1`](https://github.com/reapp-protocol/reapp-protocol-contracts/releases/tag/simple-v0.2.1_contracts_simple_mandate_registry_mandate-registry_pkg0.2.1_cli25.1.0) | `ba370a80369daa0a0dea2554410dca6f2a9f7a76ba707cb92a83434e2fe76e87` | absent | `CCHQ5G4Y4YBMY6D3TYYJSVJVCKUM22Q6TMKCCHVAHY4X7K6QELQACZRM` |
-| Step 1 verified live | [`simple-v0.2.2`](https://github.com/reapp-protocol/reapp-protocol-contracts/releases/tag/simple-v0.2.2_contracts_simple_mandate_registry_mandate-registry_pkg0.2.2_cli25.1.0) | `627a4db17dff863a1520eda9774b11a3c10a101554ef7dcaf406de8a53906760` | `upgrade_test_version() -> 1` | `CCHQ5G4Y4YBMY6D3TYYJSVJVCKUM22Q6TMKCCHVAHY4X7K6QELQACZRM` |
-| Step 2 verified live | [`simple-v0.2.3`](https://github.com/reapp-protocol/reapp-protocol-contracts/releases/tag/simple-v0.2.3_contracts_simple_mandate_registry_mandate-registry_pkg0.2.3_cli25.1.0) | `ba370a80369daa0a0dea2554410dca6f2a9f7a76ba707cb92a83434e2fe76e87` | absent | `CCHQ5G4Y4YBMY6D3TYYJSVJVCKUM22Q6TMKCCHVAHY4X7K6QELQACZRM` |
+| Baseline | [`simple-v0.2.1`](https://github.com/ackrate/ackrate-protocol-contracts/releases/tag/simple-v0.2.1_contracts_simple_mandate_registry_mandate-registry_pkg0.2.1_cli25.1.0) | `ba370a80369daa0a0dea2554410dca6f2a9f7a76ba707cb92a83434e2fe76e87` | absent | `CCHQ5G4Y4YBMY6D3TYYJSVJVCKUM22Q6TMKCCHVAHY4X7K6QELQACZRM` |
+| Step 1 verified live | [`simple-v0.2.2`](https://github.com/ackrate/ackrate-protocol-contracts/releases/tag/simple-v0.2.2_contracts_simple_mandate_registry_mandate-registry_pkg0.2.2_cli25.1.0) | `627a4db17dff863a1520eda9774b11a3c10a101554ef7dcaf406de8a53906760` | `upgrade_test_version() -> 1` | `CCHQ5G4Y4YBMY6D3TYYJSVJVCKUM22Q6TMKCCHVAHY4X7K6QELQACZRM` |
+| Step 2 verified live | [`simple-v0.2.3`](https://github.com/ackrate/ackrate-protocol-contracts/releases/tag/simple-v0.2.3_contracts_simple_mandate_registry_mandate-registry_pkg0.2.3_cli25.1.0) | `ba370a80369daa0a0dea2554410dca6f2a9f7a76ba707cb92a83434e2fe76e87` | absent | `CCHQ5G4Y4YBMY6D3TYYJSVJVCKUM22Q6TMKCCHVAHY4X7K6QELQACZRM` |
 
 ### Step 1 execution evidence
 
-- Source commit: [`cecef5c5ffafd367cb97cccb4ddf84dd5b5191e3`](https://github.com/reapp-protocol/reapp-protocol-contracts/commit/cecef5c5ffafd367cb97cccb4ddf84dd5b5191e3)
+- Source commit: [`cecef5c5ffafd367cb97cccb4ddf84dd5b5191e3`](https://github.com/ackrate/ackrate-protocol-contracts/commit/cecef5c5ffafd367cb97cccb4ddf84dd5b5191e3)
 - Schedule transaction: [`a979c6c01845d52c835b4ad902f8ec6c1be1002d281491ffa7c21e46167fa1f2`](https://stellar.expert/explorer/testnet/tx/a979c6c01845d52c835b4ad902f8ec6c1be1002d281491ffa7c21e46167fa1f2), with `execute_after = 1784544441`
 - Early execute simulation: rejected with `Error(Contract,#12)`
 - Pause transaction: [`0f819c419b2591e3baeaefdf3917458e12a3a5c889416d66fca41e9acf1d65a1`](https://stellar.expert/explorer/testnet/tx/0f819c419b2591e3baeaefdf3917458e12a3a5c889416d66fca41e9acf1d65a1)
@@ -285,8 +285,8 @@ unchanged admin `GA2B3YY27OY6AWT2VXMXUDBSAHVOLU2ST6QWJJJLOIGDQHJDXO4RL4XH`,
 
 ### Step 2 cleanup execution evidence
 
-- Cleanup source commit: [`eab02453cf06efa914d043df5295995c4dbc7b57`](https://github.com/reapp-protocol/reapp-protocol-contracts/commit/eab02453cf06efa914d043df5295995c4dbc7b57)
-- Cleanup artifact attestation: [GitHub provenance](https://github.com/reapp-protocol/reapp-protocol-contracts/attestations/36127795)
+- Cleanup source commit: [`eab02453cf06efa914d043df5295995c4dbc7b57`](https://github.com/ackrate/ackrate-protocol-contracts/commit/eab02453cf06efa914d043df5295995c4dbc7b57)
+- Cleanup artifact attestation: [GitHub provenance](https://github.com/ackrate/ackrate-protocol-contracts/attestations/36127795)
 - Cleanup artifact hash: `ba370a80369daa0a0dea2554410dca6f2a9f7a76ba707cb92a83434e2fe76e87`
 - Schedule transaction: [`a71f34c64ea158bd66aade1572262df591d88e76f5b5027d9572c3be8c790346`](https://stellar.expert/explorer/testnet/tx/a71f34c64ea158bd66aade1572262df591d88e76f5b5027d9572c3be8c790346), with `execute_after = 1784553702`
 - Normal early execution: rejected during simulation with `Error(Contract,#12)`
@@ -312,9 +312,9 @@ one-hour timelock. npm packages were not changed or published.
 |---|---|
 | Source tag | `simple-v0.2.0` at `eed2fc012b1eee9a7345d353c55e7f575167dcfc` |
 | Contract id | [`CC6JMPDHRPBR2HBLJKRCIKV54HXDV2RFXDKW6MALQKWM6JEAJQHICRWE`](https://stellar.expert/explorer/testnet/contract/CC6JMPDHRPBR2HBLJKRCIKV54HXDV2RFXDKW6MALQKWM6JEAJQHICRWE) |
-| Release artifact | [`mandate-registry_v0.2.0.wasm`](https://github.com/reapp-protocol/reapp-protocol-contracts/releases/tag/simple-v0.2.0_contracts_simple_mandate_registry_mandate-registry_pkg0.2.0_cli25.1.0) |
+| Release artifact | [`mandate-registry_v0.2.0.wasm`](https://github.com/ackrate/ackrate-protocol-contracts/releases/tag/simple-v0.2.0_contracts_simple_mandate_registry_mandate-registry_pkg0.2.0_cli25.1.0) |
 | Artifact and on-chain hash | `13f7023d4a361b6e49d3d39f61f55c5eeece51a602013a3cddae420d2ce8552b` |
-| Build attestation | [GitHub provenance](https://github.com/reapp-protocol/reapp-protocol-contracts/attestations/34875671) |
+| Build attestation | [GitHub provenance](https://github.com/ackrate/ackrate-protocol-contracts/attestations/34875671) |
 | Deployment transaction | [`8de14e51a41aaad7a59d91efdff8e587d6f8d31e30688b992257f9dd84c5f066`](https://stellar.expert/explorer/testnet/tx/8de14e51a41aaad7a59d91efdff8e587d6f8d31e30688b992257f9dd84c5f066) |
 
 ## Historical Verified Deployment

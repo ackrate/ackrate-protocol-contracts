@@ -1,7 +1,7 @@
-# REAPP Mainnet Delivery Roadmap
+# ACKRATE Mainnet Delivery Roadmap
 
 The canonical cross-repository roadmap is maintained in
-[`reapp-protocol/docs/mainnet-roadmap.md`](https://github.com/reapp-protocol/reapp-protocol/blob/992e1a70035bf324ad942ed947e83265dfb5cca8/docs/mainnet-roadmap.md).
+[`ackrate-protocol/docs/mainnet-roadmap.md`](https://github.com/ackrate/ackrate-protocol/blob/992e1a70035bf324ad942ed947e83265dfb5cca8/docs/mainnet-roadmap.md).
 The link is pinned to the exact planning commit so its content cannot drift.
 
 This repository owns the on-chain work described in Work packages 2 and 3 and

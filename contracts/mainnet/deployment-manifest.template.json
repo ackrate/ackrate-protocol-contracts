@@ -6,24 +6,24 @@
     "rpc_url": null
   },
   "source": {
-    "repository": "https://github.com/reapp-protocol/reapp-protocol-contracts",
+    "repository": "https://github.com/ackrate/ackrate-protocol-contracts",
     "branch": "main",
     "commit": null,
     "dirty": false,
     "build_platform": "ubuntu-24.04-x86_64",
     "rust_toolchain_version": "1.96.0",
-    "stellar_cli_version": "26.1.0"
+    "stellar_cli_version": "27.0.0"
   },
   "artifacts": {
     "timelock_controller": {
-      "path": "target/mainnet-release/reapp_timelock_controller.wasm",
-      "sha256": "f03b5bd1d672ef74da1621c8cee52c55bc39cea6abc4ba8b91f0665f33d30151",
-      "size_bytes": 28324
+      "path": "target/mainnet-release/ackrate_timelock_controller.wasm",
+      "sha256": null,
+      "size_bytes": null
     },
     "mandate_registry": {
       "path": "target/mainnet-release/mandate_registry.wasm",
-      "sha256": "5d92abb1a047db75e6684d34df998d92a76513f46386b6961f7ebb648eb95f7e",
-      "size_bytes": 26954
+      "sha256": null,
+      "size_bytes": null
     }
   },
   "public_configuration": {

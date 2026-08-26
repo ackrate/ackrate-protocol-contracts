@@ -18,8 +18,8 @@ if [[ "$(rustc --version)" != rustc\ 1.96.0\ * ]]; then
   echo "Mainnet release builds require Rust 1.96.0." >&2
   exit 2
 fi
-if [[ "$(stellar --version | head -n 1)" != stellar\ 26.1.0\ * ]]; then
-  echo "Mainnet release builds require Stellar CLI 26.1.0." >&2
+if [[ "$(stellar --version | head -n 1)" != stellar\ 27.0.0\ * ]]; then
+  echo "Mainnet release builds require Stellar CLI 27.0.0." >&2
   exit 3
 fi
 
@@ -29,13 +29,16 @@ for manifest in "$TIMELOCK_MANIFEST" "$REGISTRY_MANIFEST"; do
   cargo test --manifest-path "$manifest"
   stellar contract build \
     --locked \
+    --optimize \
+    --meta source_repo=github:ackrate/ackrate-protocol-contracts \
+    --meta home_domain=ackrate.xyz \
     --manifest-path "$manifest" \
     --out-dir "$RELEASE_DIR"
 done
 
 stellar contract info interface \
-  --wasm "$RELEASE_DIR/reapp_timelock_controller.wasm" \
-  --output json-formatted > "$RELEASE_DIR/reapp_timelock_controller.interface.json"
+  --wasm "$RELEASE_DIR/ackrate_timelock_controller.wasm" \
+  --output json-formatted > "$RELEASE_DIR/ackrate_timelock_controller.interface.json"
 stellar contract info interface \
   --wasm "$RELEASE_DIR/mandate_registry.wasm" \
   --output json-formatted > "$RELEASE_DIR/mandate_registry.interface.json"
@@ -43,10 +46,10 @@ stellar contract info interface \
 (
   cd "$RELEASE_DIR"
   shasum -a 256 \
-    reapp_timelock_controller.wasm \
+    ackrate_timelock_controller.wasm \
     mandate_registry.wasm > SHA256SUMS
   wc -c \
-    reapp_timelock_controller.wasm \
+    ackrate_timelock_controller.wasm \
     mandate_registry.wasm > SIZES
 )
 

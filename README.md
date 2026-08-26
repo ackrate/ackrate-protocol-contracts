@@ -1,12 +1,12 @@
-# reapp-protocol-contracts
+# ackrate-protocol-contracts
 
-**The on-chain enforcement layer for REAPP — published so anyone can prove the bytecode on Stellar matches this source.**
+**The on-chain enforcement layer for ACKRATE — published so anyone can prove the bytecode on Stellar matches this source.**
 
 [![Stellar](https://img.shields.io/badge/Stellar-Testnet-7B73FF?logo=stellar&logoColor=white)](https://stellar.expert/explorer/testnet)
 [![Soroban](https://img.shields.io/badge/Soroban-Smart%20Contracts-0F0F23)](https://soroban.stellar.org)
 [![Rust](https://img.shields.io/badge/Rust-wasm32v1--none-orange?logo=rust)](https://www.rust-lang.org)
 [![Build](https://img.shields.io/badge/Build-Reproducible-brightgreen)](https://github.com/stellar-expert/soroban-build-workflow)
-[![Attested](https://img.shields.io/badge/Provenance-GitHub%20Attested-blue?logo=github)](https://github.com/reapp-protocol/reapp-protocol-contracts/attestations)
+[![Attested](https://img.shields.io/badge/Provenance-GitHub%20Attested-blue?logo=github)](https://github.com/ackrate/ackrate-protocol-contracts/attestations)
 
 Mainnet planning: [`docs/mainnet-roadmap.md`](docs/mainnet-roadmap.md)
 
@@ -207,8 +207,8 @@ same-address upgrade flow; the Composite release comes from commit
 
 | Contract | Release artifact | SHA-256 and on-chain hash | Deployment | Attestation |
 |---|---|---|---|---|
-| Simple `0.2.3` cleanup | [`mandate-registry_v0.2.3.wasm`](https://github.com/reapp-protocol/reapp-protocol-contracts/releases/download/simple-v0.2.3_contracts_simple_mandate_registry_mandate-registry_pkg0.2.3_cli25.1.0/mandate-registry_v0.2.3.wasm) | `ba370a80369daa0a0dea2554410dca6f2a9f7a76ba707cb92a83434e2fe76e87` | [`afaa1811…4f828`](https://stellar.expert/explorer/testnet/tx/afaa181115a6a1fd19c1ef22f70243dac9da333db99ef36bd0d6d4d90964f828) | [GitHub provenance](https://github.com/reapp-protocol/reapp-protocol-contracts/attestations/36127795) |
-| Composite `0.3.0` | [`mandate-registry_v0.3.0.wasm`](https://github.com/reapp-protocol/reapp-protocol-contracts/releases/tag/composites-v0.3.0_contracts_composites_mandate_registry_mandate-registry_pkg0.3.0_cli25.1.0) | `b3368d7fb68017d078792b125dff0389d4c4c893c86fb075baeb9100f0e0f0a1` | [`a93d1d7d…35bbb`](https://stellar.expert/explorer/testnet/tx/a93d1d7d34132cc185d1a89f4fa2c669fba7ff4b1ca1798ab921250776b35bbb) | [GitHub provenance](https://github.com/reapp-protocol/reapp-protocol-contracts/attestations/34875680) |
+| Simple `0.2.3` cleanup | [`mandate-registry_v0.2.3.wasm`](https://github.com/ackrate/ackrate-protocol-contracts/releases/download/simple-v0.2.3_contracts_simple_mandate_registry_mandate-registry_pkg0.2.3_cli25.1.0/mandate-registry_v0.2.3.wasm) | `ba370a80369daa0a0dea2554410dca6f2a9f7a76ba707cb92a83434e2fe76e87` | [`afaa1811…4f828`](https://stellar.expert/explorer/testnet/tx/afaa181115a6a1fd19c1ef22f70243dac9da333db99ef36bd0d6d4d90964f828) | [GitHub provenance](https://github.com/ackrate/ackrate-protocol-contracts/attestations/36127795) |
+| Composite `0.3.0` | [`mandate-registry_v0.3.0.wasm`](https://github.com/ackrate/ackrate-protocol-contracts/releases/tag/composites-v0.3.0_contracts_composites_mandate_registry_mandate-registry_pkg0.3.0_cli25.1.0) | `b3368d7fb68017d078792b125dff0389d4c4c893c86fb075baeb9100f0e0f0a1` | [`a93d1d7d…35bbb`](https://stellar.expert/explorer/testnet/tx/a93d1d7d34132cc185d1a89f4fa2c669fba7ff4b1ca1798ab921250776b35bbb) | [GitHub provenance](https://github.com/ackrate/ackrate-protocol-contracts/attestations/34875680) |
 
 **Historical and previous deployment hashes:**
 
@@ -226,4 +226,4 @@ Every future release follows the same pipeline: tagged build → hash + interfac
 
 This repo is **just the enforcement contract**. The full protocol, SDK, x402 round-trip, reference apps, security gate checks, and clause-by-clause on-chain proof live in:
 
-**[`reapp-protocol/reapp-protocol`](https://github.com/reapp-protocol/reapp-protocol)**
+**[`ackrate-protocol/ackrate-protocol`](https://github.com/ackrate/ackrate-protocol)**

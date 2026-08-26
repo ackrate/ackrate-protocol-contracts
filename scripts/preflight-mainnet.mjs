@@ -54,16 +54,16 @@ async function getJson(url, label) {
 
 async function checkRpc(rpcUrl) {
   const headers = { "content-type": "application/json" };
-  const rpcHeader = process.env.REAPP_MAINNET_RPC_HEADER;
+  const rpcHeader = process.env.ACKRATE_MAINNET_RPC_HEADER;
   if (rpcHeader) {
     const separator = rpcHeader.indexOf(":");
     if (separator <= 0 || separator === rpcHeader.length - 1) {
-      throw new Error("REAPP_MAINNET_RPC_HEADER must use the form 'Header-Name: value'");
+      throw new Error("ACKRATE_MAINNET_RPC_HEADER must use the form 'Header-Name: value'");
     }
     const name = rpcHeader.slice(0, separator).trim();
     const value = rpcHeader.slice(separator + 1).trim();
     if (!/^[A-Za-z0-9-]+$/.test(name) || !value || /[\r\n]/.test(value)) {
-      throw new Error("REAPP_MAINNET_RPC_HEADER is invalid");
+      throw new Error("ACKRATE_MAINNET_RPC_HEADER is invalid");
     }
     headers[name] = value;
   }
@@ -93,16 +93,17 @@ function assertTwoOfThree(accountRecord, expectedSigners) {
     throw new Error("authority account signer set differs from the authority manifest");
   }
 
+  const low = accountRecord.thresholds?.low_threshold;
   const medium = accountRecord.thresholds?.med_threshold;
   const high = accountRecord.thresholds?.high_threshold;
-  if (!Number.isInteger(medium) || !Number.isInteger(high) || medium <= 0 || high <= 0) {
-    throw new Error("authority account thresholds are invalid");
+  if (low !== 2 || medium !== 2 || high !== 2) {
+    throw new Error("authority account low, medium, and high thresholds must each equal 2");
   }
 
   const weights = expectedSigners.map((key) => observed.get(key));
   for (const weight of weights) {
-    if (!Number.isInteger(weight) || weight <= 0 || weight >= medium || weight >= high) {
-      throw new Error("each authority signer must be positive but insufficient alone");
+    if (weight !== 1) {
+      throw new Error("each authority signer must have weight 1");
     }
   }
   for (let left = 0; left < weights.length; left += 1) {
@@ -114,24 +115,24 @@ function assertTwoOfThree(accountRecord, expectedSigners) {
   }
 }
 
-const authority = account("REAPP_AUTHORITY_2_OF_3");
-const pauser = account("REAPP_EMERGENCY_PAUSER");
-const deploymentSource = account("REAPP_DEPLOYMENT_SOURCE_ACCOUNT");
+const authority = account("ACKRATE_AUTHORITY_2_OF_3");
+const pauser = account("ACKRATE_EMERGENCY_PAUSER");
+const deploymentSource = account("ACKRATE_DEPLOYMENT_SOURCE_ACCOUNT");
 if (pauser === authority) throw new Error("emergency pauser must be separate from the 2-of-3 authority");
 
-if (required("REAPP_MAINNET_USDC_SAC") !== USDC_SAC) {
-  throw new Error("REAPP_MAINNET_USDC_SAC does not match the independently derived Circle USDC SAC");
+if (required("ACKRATE_MAINNET_USDC_SAC") !== USDC_SAC) {
+  throw new Error("ACKRATE_MAINNET_USDC_SAC does not match the independently derived Circle USDC SAC");
 }
-if (required("REAPP_MAINNET_NETWORK_PASSPHRASE") !== PUBLIC_PASSPHRASE) {
-  throw new Error("REAPP_MAINNET_NETWORK_PASSPHRASE is not the Stellar Public Network passphrase");
+if (required("ACKRATE_MAINNET_NETWORK_PASSPHRASE") !== PUBLIC_PASSPHRASE) {
+  throw new Error("ACKRATE_MAINNET_NETWORK_PASSPHRASE is not the Stellar Public Network passphrase");
 }
-const delay = Number(required("REAPP_TIMELOCK_DELAY_LEDGERS"));
+const delay = Number(required("ACKRATE_TIMELOCK_DELAY_LEDGERS"));
 if (!Number.isInteger(delay) || delay < MIN_DELAY_LEDGERS || delay > 0xffff_ffff) {
-  throw new Error(`REAPP_TIMELOCK_DELAY_LEDGERS must be between ${MIN_DELAY_LEDGERS} and 4294967295`);
+  throw new Error(`ACKRATE_TIMELOCK_DELAY_LEDGERS must be between ${MIN_DELAY_LEDGERS} and 4294967295`);
 }
 
 const authorityManifest = JSON.parse(
-  await readFile(required("REAPP_AUTHORITY_MANIFEST"), "utf8"),
+  await readFile(required("ACKRATE_AUTHORITY_MANIFEST"), "utf8"),
 );
 exactObject(
   authorityManifest,
@@ -162,8 +163,8 @@ if (labels.size !== 3 || publicKeys.size !== 3 || !publicKeys.has(authority)) {
   throw new Error("authority manifest must contain unique A/B/C signers including the account master key");
 }
 
-const horizonUrl = publicHttps("REAPP_MAINNET_HORIZON_URL", "https://horizon.stellar.org");
-const rpcUrl = publicHttps("REAPP_MAINNET_RPC_URL");
+const horizonUrl = publicHttps("ACKRATE_MAINNET_HORIZON_URL", "https://horizon.stellar.org");
+const rpcUrl = publicHttps("ACKRATE_MAINNET_RPC_URL");
 const [authorityRecord, sourceRecord, assets] = await Promise.all([
   getJson(new URL(`/accounts/${authority}`, horizonUrl), "authority account lookup"),
   getJson(new URL(`/accounts/${deploymentSource}`, horizonUrl), "deployment source lookup"),
@@ -184,7 +185,7 @@ if (!Array.isArray(assets?._embedded?.records) || assets._embedded.records.lengt
 }
 
 process.stdout.write("Mainnet preflight passed.\n");
-process.stdout.write(`Authority: ${authority} (verified 2-of-3 medium/high thresholds)\n`);
+process.stdout.write(`Authority: ${authority} (verified exact 2-of-3 low/medium/high thresholds)\n`);
 process.stdout.write(`Deployment source: ${deploymentSource} (${nativeBalance.balance} XLM)\n`);
 process.stdout.write(`Circle USDC SAC: ${USDC_SAC}\n`);
 process.stdout.write(`Timelock minimum: ${delay} ledgers\n`);

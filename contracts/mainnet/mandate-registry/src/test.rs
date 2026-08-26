@@ -4,7 +4,7 @@
 
 extern crate std;
 
-use reapp_timelock_controller::{TimelockController, TimelockControllerClient};
+use ackrate_timelock_controller::{TimelockController, TimelockControllerClient};
 use soroban_sdk::testutils::{Address as _, Ledger as _};
 use soroban_sdk::token::{StellarAssetClient, TokenClient};
 use soroban_sdk::{vec, Address, BytesN, Env, IntoVal, Symbol, Val, Vec};

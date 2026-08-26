@@ -1,6 +1,6 @@
 # Composite MandateRegistry
 
-`contracts/composites/mandate-registry` is REAPP's composite mandate contract
+`contracts/composites/mandate-registry` is ACKRATE's composite mandate contract
 with deterministic clearing pools. Release `0.3.0` keeps the full `0.2.0`
 mandate and pool interface intact and adds admin-authorized emergency controls,
 authority rotation, and same-address WASM upgrades.
@@ -316,9 +316,9 @@ price that satisfies the pool thresholds.
 | Constructor | `admin: Address` |
 | Admin | `GA2B3YY27OY6AWT2VXMXUDBSAHVOLU2ST6QWJJJLOIGDQHJDXO4RL4XH` |
 | Contract id | [`CCYRF7FKYGSNWX5I7WLYXZ6LNUNVCSPE4BOTQFVWVTABOHAP52DYHEYW`](https://stellar.expert/explorer/testnet/contract/CCYRF7FKYGSNWX5I7WLYXZ6LNUNVCSPE4BOTQFVWVTABOHAP52DYHEYW) |
-| Release artifact | [`mandate-registry_v0.3.0.wasm`](https://github.com/reapp-protocol/reapp-protocol-contracts/releases/tag/composites-v0.3.0_contracts_composites_mandate_registry_mandate-registry_pkg0.3.0_cli25.1.0) |
+| Release artifact | [`mandate-registry_v0.3.0.wasm`](https://github.com/ackrate/ackrate-protocol-contracts/releases/tag/composites-v0.3.0_contracts_composites_mandate_registry_mandate-registry_pkg0.3.0_cli25.1.0) |
 | Artifact and on-chain hash | `b3368d7fb68017d078792b125dff0389d4c4c893c86fb075baeb9100f0e0f0a1` |
-| Build attestation | [GitHub provenance](https://github.com/reapp-protocol/reapp-protocol-contracts/attestations/34875680) |
+| Build attestation | [GitHub provenance](https://github.com/ackrate/ackrate-protocol-contracts/attestations/34875680) |
 | Deployment transaction | [`a93d1d7d34132cc185d1a89f4fa2c669fba7ff4b1ca1798ab921250776b35bbb`](https://stellar.expert/explorer/testnet/tx/a93d1d7d34132cc185d1a89f4fa2c669fba7ff4b1ca1798ab921250776b35bbb) |
 | Live pause transaction | [`8f88917148e8c731b666e9d3126b6ad80a25e7d88beebc2b640d966abb03f70f`](https://stellar.expert/explorer/testnet/tx/8f88917148e8c731b666e9d3126b6ad80a25e7d88beebc2b640d966abb03f70f) |
 | Live unpause transaction | [`0e92c65468890cbf5e023da8f2875cf5885c12de86d95b2d9a1a3c7f2560e4f2`](https://stellar.expert/explorer/testnet/tx/0e92c65468890cbf5e023da8f2875cf5885c12de86d95b2d9a1a3c7f2560e4f2) |

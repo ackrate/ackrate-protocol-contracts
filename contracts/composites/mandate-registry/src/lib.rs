@@ -3,7 +3,7 @@
 // (each is a signed term, not a tunable); the lint also fires inside
 // soroban's #[contractimpl] expansion where a per-fn allow cannot reach.
 #![allow(clippy::too_many_arguments)]
-//! MandateRegistry — REAPP's on-chain enforcement layer.
+//! MandateRegistry — ACKRATE's on-chain enforcement layer.
 //!
 //! The contract is the entire protocol and is small by design: a small
 //! interface is easy to review. Money moves only through `execute_payment` (solo)

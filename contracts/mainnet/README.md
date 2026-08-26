@@ -41,7 +41,9 @@ interfaces, and writes the exact WASM files plus SHA-256 checksums beneath
 `target/mainnet-release/`. Generated files are intentionally not committed.
 
 The canonical release platform is Ubuntu 24.04 x86_64, pinned to Rust 1.96.0
-and Stellar CLI 26.1.0. The currently reviewed candidate hashes are recorded in
+and Stellar CLI 27.0.0. The source-verification release uses the pinned
+StellarExpert build workflow and embeds the canonical Ackrate repository and
+home-domain metadata. The currently reviewed candidate hashes are recorded in
 `deployment-manifest.template.json`. A hash mismatch is a release stop.
 The same gate runs continuously on pushes and pull requests to `main`.
 
@@ -52,7 +54,7 @@ platform, fetch the artifact for the current clean commit from a successful
 `main` run, then verify it locally:
 
 ```bash
-export REAPP_MAINNET_ARTIFACT_RUN_ID=<successful-github-run-id>
+export ACKRATE_MAINNET_ARTIFACT_RUN_ID=<successful-github-run-id>
 ./scripts/fetch-mainnet-artifacts.sh
 ```
 
@@ -80,23 +82,23 @@ The deployment runner reads only public addresses or local identity aliases.
 Review the runner and completed manifest together before use:
 
 ```bash
-export REAPP_DEPLOYER=<local-stellar-cli-identity-alias>
-export REAPP_DEPLOYMENT_SOURCE_ACCOUNT=<public-G-address-for-that-alias>
-export REAPP_AUTHORITY_2_OF_3=<public-G-address>
-export REAPP_AUTHORITY_MANIFEST=<absolute-path-to-public-authority-manifest.json>
-export REAPP_EMERGENCY_PAUSER=<public-G-address>
-export REAPP_MAINNET_RPC_URL=<credential-free-https-rpc-url>
+export ACKRATE_DEPLOYER=<local-stellar-cli-identity-alias>
+export ACKRATE_DEPLOYMENT_SOURCE_ACCOUNT=<public-G-address-for-that-alias>
+export ACKRATE_AUTHORITY_2_OF_3=<public-G-address>
+export ACKRATE_AUTHORITY_MANIFEST=<absolute-path-to-public-authority-manifest.json>
+export ACKRATE_EMERGENCY_PAUSER=<public-G-address>
+export ACKRATE_MAINNET_RPC_URL=<credential-free-https-rpc-url>
 # Optional; keep private and never add it to the deployment manifest or repo:
-export REAPP_MAINNET_RPC_HEADER='X-API-Key: <provider-secret>'
-export REAPP_MAINNET_USDC_SAC=CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75
-export REAPP_TIMELOCK_DELAY_LEDGERS=17280
+export ACKRATE_MAINNET_RPC_HEADER='X-API-Key: <provider-secret>'
+export ACKRATE_MAINNET_USDC_SAC=CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75
+export ACKRATE_TIMELOCK_DELAY_LEDGERS=17280
 
 node ./scripts/preflight-mainnet.mjs
 ./scripts/deploy-mainnet.sh
 ```
 
 With no environment configuration, it prints the required inputs and exits.
-It refuses to submit unless `REAPP_MAINNET_CONFIRM=DEPLOY_EXACT_REVIEWED_BUILD`
+It refuses to submit unless `ACKRATE_MAINNET_CONFIRM=DEPLOY_EXACT_REVIEWED_BUILD`
 is set. Setting that guard is an operational authorization step, not a
 substitute for review or approval.
 
@@ -107,7 +109,7 @@ high thresholds while every single signer remains insufficient. The deployment
 runner accepts only a local identity alias and verifies that its public key is
 the recorded deployment source; secrets and seed phrases are not accepted as
 arguments or environment values. If the selected RPC provider requires an
-access header, it may be supplied only through `REAPP_MAINNET_RPC_HEADER`; the
+access header, it may be supplied only through `ACKRATE_MAINNET_RPC_HEADER`; the
 runner passes it to the provider without printing or recording it.
 
 The initial timelock must be at least 17,280 ledgers, approximately 24 hours at

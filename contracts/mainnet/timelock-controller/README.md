@@ -1,4 +1,4 @@
-# REAPP Timelock Controller
+# ACKRATE Timelock Controller
 
 This crate vendors the OpenZeppelin Stellar Contracts `timelock-controller`
 example from version `0.7.2` at commit

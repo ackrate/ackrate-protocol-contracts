@@ -14,7 +14,7 @@ stellar-access = "=0.7.2"
 stellar-contract-utils = "=0.7.2"
 
 [dev-dependencies]
-reapp-timelock-controller = { path = "../timelock-controller" }
+ackrate-timelock-controller = { path = "../timelock-controller" }
 soroban-sdk = { version = "=26.1.0", features = ["testutils"] }
 stellar-governance = "=0.7.2"
 

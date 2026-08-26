@@ -66,13 +66,13 @@ if (textAt(source, "build_platform") !== "ubuntu-24.04-x86_64") {
 if (textAt(source, "rust_toolchain_version") !== "1.96.0") {
   throw new Error("candidate manifest Rust toolchain version must be 1.96.0");
 }
-if (textAt(source, "stellar_cli_version") !== "26.1.0") {
-  throw new Error("candidate manifest Stellar CLI version must be 26.1.0");
+if (textAt(source, "stellar_cli_version") !== "27.0.0") {
+  throw new Error("candidate manifest Stellar CLI version must be 27.0.0");
 }
 
 const artifacts = objectAt(manifest, "artifacts");
 const candidates = [
-  ["timelock_controller", "reapp_timelock_controller.wasm"],
+  ["timelock_controller", "ackrate_timelock_controller.wasm"],
   ["mandate_registry", "mandate_registry.wasm"],
 ];
 const hashes = [];

@@ -1,5 +1,5 @@
 #![no_std]
-//! MandateRegistry — REAPP's on-chain enforcement layer.
+//! MandateRegistry — ACKRATE's on-chain enforcement layer.
 //!
 //! The contract is the entire protocol and is small by design: a small
 //! interface is reviewable. Money moves only through `execute_payment`, which

@@ -3,10 +3,10 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RELEASE_DIR="$ROOT/target/mainnet-release"
-RUN_ID="${REAPP_MAINNET_ARTIFACT_RUN_ID:-}"
+RUN_ID="${ACKRATE_MAINNET_ARTIFACT_RUN_ID:-}"
 
 if [[ ! "$RUN_ID" =~ ^[1-9][0-9]*$ ]]; then
-  echo "Set REAPP_MAINNET_ARTIFACT_RUN_ID to a successful Contract Gate Check run on main." >&2
+  echo "Set ACKRATE_MAINNET_ARTIFACT_RUN_ID to a successful Contract Gate Check run on main." >&2
   exit 2
 fi
 if ! command -v gh >/dev/null 2>&1; then
@@ -45,9 +45,9 @@ node "$ROOT/scripts/check-mainnet-artifacts.mjs" --release-dir "$download_dir"
 
 mkdir -p "$RELEASE_DIR"
 for filename in \
-  reapp_timelock_controller.wasm \
+  ackrate_timelock_controller.wasm \
   mandate_registry.wasm \
-  reapp_timelock_controller.interface.json \
+  ackrate_timelock_controller.interface.json \
   mandate_registry.interface.json \
   SHA256SUMS \
   SIZES; do

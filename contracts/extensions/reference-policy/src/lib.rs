@@ -26,8 +26,8 @@ use soroban_sdk::{
     contract, contractimpl, xdr::ToXdr, Address, Bytes, BytesN, Env, IntoVal, Symbol,
 };
 
-const POLICY_DOMAIN: &[u8] = b"REAPP\0EXTENSION\0POLICY\0V1\0";
-const REQUEST_DOMAIN: &[u8] = b"REAPP\0EXTENSION\0REQUEST\0V1\0";
+const POLICY_DOMAIN: &[u8] = b"ACKRATE\0EXTENSION\0POLICY\0V1\0";
+const REQUEST_DOMAIN: &[u8] = b"ACKRATE\0EXTENSION\0REQUEST\0V1\0";
 
 #[contract]
 pub struct ReferenceMandateExtension;
