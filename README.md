@@ -8,15 +8,17 @@
 [![Build](https://img.shields.io/badge/Build-Reproducible-brightgreen)](https://github.com/stellar-expert/soroban-build-workflow)
 [![Attested](https://img.shields.io/badge/Provenance-GitHub%20Attested-blue?logo=github)](https://github.com/ackrate/ackrate-protocol-contracts/attestations)
 
+Mainnet canary deployment: [`docs/mainnet-canary-deployment.md`](docs/mainnet-canary-deployment.md)
+
 Mainnet planning: [`docs/mainnet-roadmap.md`](docs/mainnet-roadmap.md)
 
 Governed mainnet release candidate and deployment handoff:
 [`contracts/mainnet/README.md`](contracts/mainnet/README.md)
 
-The governed mainnet candidate has its own continuously enforced build, test,
-interface, fingerprint, and size gate on its canonical Ubuntu x86_64 release
-platform. It is not represented by the testnet release table below and has not
-been deployed to mainnet yet.
+The governed mainnet canary is live and independently read-verified. Its exact
+contract IDs, four deployment transactions, constructor arguments, observed
+WASM hashes, GitHub attestations, and StellarExpert links are recorded in the
+[completed deployment manifest](contracts/mainnet/deployment-manifest.json).
 
 ---
 

@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "network": {
+    "name": "mainnet",
+    "passphrase": "Public Global Stellar Network ; September 2015",
+    "rpc_url": "https://mainnet.sorobanrpc.com"
+  },
+  "source": {
+    "repository": "https://github.com/ackrate/ackrate-protocol-contracts",
+    "branch": "main",
+    "commit": "51b93159d5a4e29d9e48fe99f489d70271703494",
+    "dirty": false,
+    "build_platform": "ubuntu-24.04-x86_64",
+    "rust_toolchain_version": "1.96.0",
+    "stellar_cli_version": "27.0.0"
+  },
+  "provenance": {
+    "source_tag": "mainnet-canary-v0.1.0",
+    "build_workflow": "https://github.com/stellar-expert/soroban-build-workflow/.github/workflows/release.yml@refs/tags/v27.0.0",
+    "build_run": "https://github.com/ackrate/ackrate-protocol-contracts/actions/runs/32963207324",
+    "exact_byte_rebuild_run": "https://github.com/ackrate/ackrate-protocol-contracts/actions/runs/32966147370",
+    "timelock_release": "https://github.com/ackrate/ackrate-protocol-contracts/releases/tag/mainnet-canary-v0.1.0_contracts_mainnet_timelock_controller_ackrate-timelock-controller_pkg0.1.0_cli27.0.0",
+    "timelock_attestation": "https://github.com/ackrate/ackrate-protocol-contracts/attestations/43110888",
+    "registry_release": "https://github.com/ackrate/ackrate-protocol-contracts/releases/tag/mainnet-canary-v0.1.0_contracts_mainnet_mandate_registry_mandate-registry_pkg0.3.0_cli27.0.0",
+    "registry_attestation": "https://github.com/ackrate/ackrate-protocol-contracts/attestations/43110909",
+    "registry_source_mapping": {
+      "repository": "https://github.com/ackrate/ackrate-protocol-contracts",
+      "commit": "51b93159d5a4e29d9e48fe99f489d70271703494",
+      "path": "contracts/mainnet/mandate-registry",
+      "package": "mandate-registry",
+      "build_job": "https://github.com/ackrate/ackrate-protocol-contracts/actions/runs/32963207324/job/98160946789",
+      "embedded_source_repo": "github:ackrate/ackrate-protocol-contracts",
+      "embedded_home_domain": "ackrate.xyz"
+    }
+  },
+  "artifacts": {
+    "timelock_controller": {
+      "path": "target/mainnet-release/ackrate_timelock_controller.wasm",
+      "sha256": "99a32170feaf3521338adfadb25d1a2ea573e6d29ec5de97e9d9cc3e4a99da97",
+      "size_bytes": 28429
+    },
+    "mandate_registry": {
+      "path": "target/mainnet-release/mandate_registry.wasm",
+      "sha256": "3656430ac7cf5e7cf1c26948b46314c37866c2d7e928ea89d7d1f89b8aa0ef3c",
+      "size_bytes": 27059
+    }
+  },
+  "public_configuration": {
+    "deployment_source_account": "GADKNO6PXPSHPB5SEL5T7VZSBNIV7Z5WWHX5RGSZYNEUL3RKBEL2KVYK",
+    "authority_2_of_3_account": "GCQNLXZSQUYVFXYTWPA6RF6KIRTGQNZYHR4JIILXE3LTMXZQAUW6PXN5",
+    "emergency_pauser": "GCL6IG2J5QRO4B2XBXJ6QUGKEAMOCOS2HQIRMJWBPVEBZRDM5EZPR3TY",
+    "timelock_min_delay_ledgers": 17280,
+    "usdc_asset_code": "USDC",
+    "usdc_issuer": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+    "usdc_sac": "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75",
+    "usdc_derivation_evidence": "Circle mainnet issuer reverified; Stellar CLI 26.1.0 and @stellar/stellar-sdk independently derived the same Public Network SAC.",
+    "usdc_independent_verifier": "Stellar CLI 26.1.0 and @stellar/stellar-sdk 14.5.0"
+  },
+  "authority": {
+    "thresholds": {
+      "low": 2,
+      "medium": 2,
+      "high": 2
+    },
+    "signers": [
+      "GCQNLXZSQUYVFXYTWPA6RF6KIRTGQNZYHR4JIILXE3LTMXZQAUW6PXN5",
+      "GD5GMGMSVRCLSWAFOU6B2G4XMSODZYVCAC7PJHJXDGHA3NSJ7DRJOU2U",
+      "GDRSZJSJWPD2ED4XLCMN3YSAOXDJIBCNAUIYN2YSPZR47FLKMRBFOKYK"
+    ],
+    "signer_weights": [1, 1, 1]
+  },
+  "constructor_arguments": {
+    "timelock": {
+      "min_delay": 17280,
+      "proposers": [
+        "GCQNLXZSQUYVFXYTWPA6RF6KIRTGQNZYHR4JIILXE3LTMXZQAUW6PXN5"
+      ],
+      "executors": [],
+      "admin": null
+    },
+    "mandate_registry": {
+      "admin": "CD3KRQRNCW52CZHKG2GPQAEOU6UCL426YFNHYUZ7IWUUKAOTKUQX6UUX",
+      "pauser": "GCL6IG2J5QRO4B2XBXJ6QUGKEAMOCOS2HQIRMJWBPVEBZRDM5EZPR3TY",
+      "unpauser": "GCQNLXZSQUYVFXYTWPA6RF6KIRTGQNZYHR4JIILXE3LTMXZQAUW6PXN5",
+      "asset_policy": "CD3KRQRNCW52CZHKG2GPQAEOU6UCL426YFNHYUZ7IWUUKAOTKUQX6UUX",
+      "upgrader": "CD3KRQRNCW52CZHKG2GPQAEOU6UCL426YFNHYUZ7IWUUKAOTKUQX6UUX",
+      "initial_asset": "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75"
+    }
+  },
+  "deployment": {
+    "authorized_by": "Ackrate deployment owner through interactive canary approval",
+    "authorized_at": "2026-08-26T12:19:46.000Z",
+    "deployed_at": "2026-08-26T12:20:20.000Z",
+    "ledger": 64132889,
+    "timelock_upload_transaction_hash": "cba62b052c68350013f7e430cff939af6b23bb6dadc4e419135293832e570b73",
+    "timelock_transaction_hash": "ecc8becb4473454d99811c90dd7bcf81175833717063f69c30438f847f065213",
+    "timelock_contract_id": "CD3KRQRNCW52CZHKG2GPQAEOU6UCL426YFNHYUZ7IWUUKAOTKUQX6UUX",
+    "timelock_observed_wasm_hash": "99a32170feaf3521338adfadb25d1a2ea573e6d29ec5de97e9d9cc3e4a99da97",
+    "registry_upload_transaction_hash": "2f1de95547d3309b3c48140160627690f88ec561dfdad43dab92e4d500e8b4f7",
+    "registry_transaction_hash": "0d7e689188f58d9a68b0ef0c08f0fed3aaac5033e618240f8f7a7bd28e073c05",
+    "registry_contract_id": "CDBTG5ZKASFA7LOYUPBOTGKAVX5MJIM4U24BYGX7VX23IHYDAHLQPAGS",
+    "registry_observed_wasm_hash": "3656430ac7cf5e7cf1c26948b46314c37866c2d7e928ea89d7d1f89b8aa0ef3c"
+  },
+  "transactions": {
+    "timelock_upload": {
+      "hash": "cba62b052c68350013f7e430cff939af6b23bb6dadc4e419135293832e570b73",
+      "ledger": 64132883,
+      "created_at": "2026-08-26T12:19:46Z",
+      "fee_charged_stroops": "205984511"
+    },
+    "timelock_create": {
+      "hash": "ecc8becb4473454d99811c90dd7bcf81175833717063f69c30438f847f065213",
+      "ledger": 64132885,
+      "created_at": "2026-08-26T12:19:58Z",
+      "fee_charged_stroops": "2220860"
+    },
+    "registry_upload": {
+      "hash": "2f1de95547d3309b3c48140160627690f88ec561dfdad43dab92e4d500e8b4f7",
+      "ledger": 64132887,
+      "created_at": "2026-08-26T12:20:09Z",
+      "fee_charged_stroops": "220322105"
+    },
+    "registry_create": {
+      "hash": "0d7e689188f58d9a68b0ef0c08f0fed3aaac5033e618240f8f7a7bd28e073c05",
+      "ledger": 64132889,
+      "created_at": "2026-08-26T12:20:20Z",
+      "fee_charged_stroops": "4124833"
+    }
+  },
+  "verification": {
+    "artifact_hashes_match": true,
+    "constructor_arguments_match": true,
+    "timelock_self_administered": true,
+    "authority_is_proposer_and_canceller": true,
+    "executor_is_permissionless_after_delay": true,
+    "registry_admin_is_timelock": true,
+    "registry_asset_policy_is_timelock": true,
+    "registry_upgrader_is_timelock": true,
+    "registry_unpauser_is_2_of_3": true,
+    "registry_pauser_is_emergency_key": true,
+    "registry_initially_unpaused": true,
+    "registry_usdc_asset_allowed": true,
+    "registry_embedded_source_repo_matches": true,
+    "registry_release_sha256_matches_mainnet": true,
+    "registry_slsa_attestation_verified": true,
+    "registry_slsa_builder": "https://github.com/stellar-expert/soroban-build-workflow/.github/workflows/release.yml@refs/tags/v27.0.0",
+    "independent_read_only_verifier": "Stellar CLI 26.1.0 --send=no, Horizon, and StellarExpert public API",
+    "verified_at": "2026-08-26T12:24:19.000Z",
+    "stellar_expert_indexed": true,
+    "stellar_expert_source_validation": "pending"
+  },
+  "explorer": {
+    "timelock_contract": "https://stellar.expert/explorer/public/contract/CD3KRQRNCW52CZHKG2GPQAEOU6UCL426YFNHYUZ7IWUUKAOTKUQX6UUX",
+    "registry_contract": "https://stellar.expert/explorer/public/contract/CDBTG5ZKASFA7LOYUPBOTGKAVX5MJIM4U24BYGX7VX23IHYDAHLQPAGS",
+    "timelock_upload_transaction": "https://stellar.expert/explorer/public/tx/cba62b052c68350013f7e430cff939af6b23bb6dadc4e419135293832e570b73",
+    "timelock_create_transaction": "https://stellar.expert/explorer/public/tx/ecc8becb4473454d99811c90dd7bcf81175833717063f69c30438f847f065213",
+    "registry_upload_transaction": "https://stellar.expert/explorer/public/tx/2f1de95547d3309b3c48140160627690f88ec561dfdad43dab92e4d500e8b4f7",
+    "registry_create_transaction": "https://stellar.expert/explorer/public/tx/0d7e689188f58d9a68b0ef0c08f0fed3aaac5033e618240f8f7a7bd28e073c05"
+  }
+}

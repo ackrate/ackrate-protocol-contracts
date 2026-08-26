@@ -20,7 +20,8 @@ Gate 1 of that roadmap:
 - produce reproducible optimized WASM, checksums, SBOM, scan evidence, and
   deployment metadata.
 
-Nothing here claims a mainnet deployment already exists. The mainnet contract
-ID is published only after the exact artifact, authority, timelock, USDC
-identity, constructor arguments, and observed chain state all match the signed
-deployment manifest.
+The governed canary deployment now exists on Stellar mainnet. Its exact
+artifact, authority, timelock, USDC identity, constructor arguments, observed
+chain state, contract IDs, and transaction links are published in
+[`contracts/mainnet/deployment-manifest.json`](../contracts/mainnet/deployment-manifest.json)
+and the [deployment report](mainnet-canary-deployment.md).

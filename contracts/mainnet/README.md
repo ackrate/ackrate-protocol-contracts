@@ -1,4 +1,11 @@
-# Mainnet MandateRegistry release candidate
+# Mainnet MandateRegistry deployment
+
+The governed canary is live on Stellar mainnet. The canonical public record is
+[`deployment-manifest.json`](deployment-manifest.json), with a human-readable
+[deployment and verification report](../../docs/mainnet-canary-deployment.md).
+
+- TimelockController: [`CD3KRQRN...6UUX`](https://stellar.expert/explorer/public/contract/CD3KRQRNCW52CZHKG2GPQAEOU6UCL426YFNHYUZ7IWUUKAOTKUQX6UUX)
+- MandateRegistry: [`CDBTG5ZK...PAGS`](https://stellar.expert/explorer/public/contract/CDBTG5ZKASFA7LOYUPBOTGKAVX5MJIM4U24BYGX7VX23IHYDAHLQPAGS)
 
 This directory contains the two contracts used by the governed mainnet
 deployment profile:
@@ -85,12 +92,13 @@ USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN
 CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75
 ```
 
-## Prepare the deployment record
+## Deployment record
 
-Copy `deployment-manifest.template.json` outside the repository into the
-private deployment evidence location. Complete every `null` field from
-independently verified evidence. Do not place signer secrets, recovery
-material, API keys, or seed phrases in the manifest or repository.
+`deployment-manifest.json` contains only public mainnet evidence. It was
+completed from independently verified Horizon, RPC, StellarExpert, release,
+and attestation records. It contains no signer secrets, recovery material, API
+keys, or seed phrases. `deployment-manifest.template.json` remains the input
+for future deployments.
 
 The deployment runner reads only public addresses or local identity aliases.
 Review the runner and completed manifest together before use:
