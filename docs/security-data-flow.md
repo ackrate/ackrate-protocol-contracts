@@ -55,7 +55,7 @@ sequenceDiagram
     A->>M: Request protected resource
     M-->>A: 402 + bound challenge
     A->>R: execute_payment(id, amount, expected_seq)
-    R->>R: Authenticate agent; re-read durable mandate
+    R->>R: Authenticate agent and re-read durable mandate
     R->>R: Check status, expiry, merchant, budget, sequence
     R->>R: Increment spent and sequence
     R->>S: transfer_from(user -> merchant)
