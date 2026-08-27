@@ -9,6 +9,7 @@ on:
       - 'mainnet-v*'
       - 'mainnet-registry-v*'
       - 'source-verify-v*'
+      - 'source-verify-registry-v*'
 permissions:
   id-token: write
   contents: write
@@ -48,7 +49,7 @@ jobs:
       release_token: ${{ secrets.GITHUB_TOKEN }}
 
   gatecheck-mainnet-contracts:
-    if: startsWith(github.ref_name, 'mainnet-canary-v') || startsWith(github.ref_name, 'mainnet-v') || startsWith(github.ref_name, 'mainnet-registry-v') || startsWith(github.ref_name, 'source-verify-v')
+    if: startsWith(github.ref_name, 'mainnet-canary-v') || startsWith(github.ref_name, 'mainnet-v') || startsWith(github.ref_name, 'mainnet-registry-v') || startsWith(github.ref_name, 'source-verify-v') || startsWith(github.ref_name, 'source-verify-registry-v')
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
@@ -91,7 +92,7 @@ jobs:
       release_token: ${{ secrets.GITHUB_TOKEN }}
 
   exact-byte-source-verification:
-    if: startsWith(github.ref_name, 'source-verify-v')
+    if: startsWith(github.ref_name, 'source-verify-v') || startsWith(github.ref_name, 'source-verify-registry-v')
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
@@ -143,7 +144,7 @@ jobs:
 
   source-verify-mandate-registry:
     needs: exact-byte-source-verification
-    if: startsWith(github.ref_name, 'source-verify-v')
+    if: startsWith(github.ref_name, 'source-verify-v') || startsWith(github.ref_name, 'source-verify-registry-v')
     uses: stellar-expert/soroban-build-workflow/.github/workflows/release.yml@main
     with:
       release_name: ${{ github.ref_name }}

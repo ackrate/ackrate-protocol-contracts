@@ -30,9 +30,7 @@ mod storage;
 pub use error::Error;
 pub use mandate::{Mandate, Status};
 
-use soroban_sdk::{
-    contract, contractimpl, contractmeta, contracttype, Address, BytesN, Env, Symbol, Vec,
-};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, BytesN, Env, Symbol, Vec};
 use stellar_access::access_control::{grant_role_no_auth, set_admin, AccessControl};
 use stellar_contract_utils::upgradeable::{self, Upgradeable};
 
@@ -40,10 +38,6 @@ pub use admin::{ASSET_POLICY_ROLE, PAUSER_ROLE, UNPAUSER_ROLE, UPGRADER_ROLE};
 pub use storage::MAX_MANDATE_LIFETIME_SECONDS;
 
 pub const SCHEMA_VERSION: u32 = 1;
-
-// Metadata-only canary revision. This creates a fresh, independently attested
-// WASM hash without changing contract behavior or persistent schema.
-contractmeta!(key = "ackrate_release", val = "mainnet-canary-v0.3.1");
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
