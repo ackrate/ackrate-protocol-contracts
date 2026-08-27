@@ -55,7 +55,7 @@ RPC provider, database, and model output are untrusted inputs.
 | Emergency key expands its authority | Separate pauser and unpauser roles; pauser can only stop | `emergency_pause_is_one_key_but_unpause_is_separate` |
 | Unauthorized or early upgrade | Registry upgrader is the timelock; operation hash binds target, function, args, predecessor, and salt; minimum delay enforced | `governance_functions_require_both_role_and_authorization`; `canonical_timelock_binds_and_executes_the_exact_policy_change`; `schedule_with_insufficient_delay`; `execute_before_ready`; `every_timelock_mutator_rejects_wrong_roles_and_missing_authorization` |
 | Artifact substitution | Pinned toolchain, exact hashes, GitHub provenance, and observed on-chain hashes | `gatecheck-mainnet.sh`; `deployment-manifest.json`; release workflow |
-| Vulnerable or yanked dependency | Lockfile audit is a required CI job; actionable findings fail the build | `scripts/security-scan.sh`; `docs/security-scan-report.md` |
+| Vulnerable or yanked dependency | The lockfile dependency gate is a required CI job; actionable findings fail the build | `scripts/security-scan.sh`; `docs/security-scan-report.md` |
 
 The executable sources are under
 `contracts/mainnet/mandate-registry/src/` and
@@ -127,5 +127,5 @@ against `scripts/preflight-mainnet.mjs` before any transaction is submitted.
   Clients retry safely; settlement evidence remains bound to one transaction
   and one fulfillment claim.
 - The final release is stopped by a failing security test, unreviewed contract
-  surface change, actionable audit finding, artifact mismatch, authority
+  surface change, actionable dependency finding, artifact mismatch, authority
   mismatch, or missing live payment/rejection receipt.

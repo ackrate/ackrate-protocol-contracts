@@ -37,8 +37,8 @@ ce209c5ce0f5a5105acf7f6116762c27caec5a61d9f27c941f60595df9a97d66  contracts/main
 
 | Finding | Initial state | Disposition |
 |---|---|---|
-| `RUSTSEC-2026-0009` in `time 0.3.36` (stack exhaustion denial of service) | Present in the MandateRegistry host/test lock graph | Remediated: updated to `time 0.3.47`; audit now reports zero vulnerabilities. |
-| Yanked `spin 0.9.8` | Present in the MandateRegistry host/test lock graph | Remediated: updated to `spin 0.9.9`; audit now reports zero yanked crates. |
+| `RUSTSEC-2026-0009` in `time 0.3.36` (stack exhaustion denial of service) | Present in the MandateRegistry host/test lock graph | Remediated: updated to `time 0.3.47`; the dependency scanner now reports zero vulnerabilities. |
+| Yanked `spin 0.9.8` | Present in the MandateRegistry host/test lock graph | Remediated: updated to `spin 0.9.9`; the dependency scanner now reports zero yanked crates. |
 | `RUSTSEC-2024-0436` (`paste 1.0.15` unmaintained) | Transitive Soroban host/test dependency in both locks; no patched compatible release is available | Mitigated and explicitly gated: `paste` is absent from both deployed `wasm32v1-none` graphs. CI fails if this is no longer true or if any additional warning appears. Track upstream Soroban dependency removal. |
 
 There are no unresolved findings in deployed contract code. The single
