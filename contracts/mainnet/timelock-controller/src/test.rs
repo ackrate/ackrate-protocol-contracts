@@ -71,6 +71,108 @@ fn initialization() {
 }
 
 #[test]
+fn inherited_access_control_management_and_read_surface_are_consistent() {
+    let e = Env::default();
+    e.mock_all_auths();
+
+    let proposer = Address::generate(&e);
+    let executor = Address::generate(&e);
+    let admin = Address::generate(&e);
+    let delegated_admin = Address::generate(&e);
+    let candidate = Address::generate(&e);
+    let timelock = e.register(
+        TimelockController,
+        (
+            10u32,
+            vec![&e, proposer.clone()],
+            vec![&e, executor.clone()],
+            Some(admin.clone()),
+        ),
+    );
+    let client = TimelockControllerClient::new(&e, &timelock);
+    let proposer_role = symbol_short!("proposer");
+    let executor_role = symbol_short!("executor");
+    let canceller_role = symbol_short!("canceller");
+    let delegated_role = symbol_short!("execadm");
+
+    assert_eq!(client.get_role_member_count(&proposer_role), 1);
+    assert_eq!(client.get_role_member(&proposer_role, &0), proposer);
+    assert_eq!(client.get_role_member_count(&executor_role), 1);
+    assert_eq!(client.get_role_member(&executor_role, &0), executor);
+    assert_eq!(client.get_role_member_count(&canceller_role), 1);
+    assert_eq!(client.get_role_admin(&executor_role), None);
+    assert!(client.try_get_role_member(&executor_role, &1).is_err());
+    let roles = client.get_existing_roles();
+    for role in [proposer_role, executor_role.clone(), canceller_role.clone()] {
+        assert!(roles.iter().any(|existing| existing == role));
+    }
+
+    client.grant_role(&delegated_admin, &delegated_role, &admin);
+    client.set_role_admin(&executor_role, &delegated_role);
+    assert_eq!(client.get_role_admin(&executor_role), Some(delegated_role));
+    client.grant_role(&candidate, &executor_role, &delegated_admin);
+    assert!(client.has_role(&candidate, &executor_role).is_some());
+    client.revoke_role(&candidate, &executor_role, &delegated_admin);
+    assert_eq!(client.has_role(&candidate, &executor_role), None);
+
+    client.grant_role(&candidate, &canceller_role, &admin);
+    client.renounce_role(&canceller_role, &candidate);
+    assert_eq!(client.has_role(&candidate, &canceller_role), None);
+
+    client.update_delay(&20, &admin);
+    assert_eq!(client.get_min_delay(), 20);
+}
+
+#[test]
+fn inherited_access_control_admin_transfer_and_negative_paths_are_enforced() {
+    let e = Env::default();
+    e.mock_all_auths();
+
+    let proposer = Address::generate(&e);
+    let admin = Address::generate(&e);
+    let next_admin = Address::generate(&e);
+    let attacker = Address::generate(&e);
+    let candidate = Address::generate(&e);
+    let timelock = e.register(
+        TimelockController,
+        (
+            10u32,
+            vec![&e, proposer],
+            Vec::<Address>::new(&e),
+            Some(admin.clone()),
+        ),
+    );
+    let client = TimelockControllerClient::new(&e, &timelock);
+    let executor_role = symbol_short!("executor");
+
+    assert!(client
+        .try_grant_role(&candidate, &executor_role, &attacker)
+        .is_err());
+    assert!(client
+        .try_revoke_role(&candidate, &executor_role, &attacker)
+        .is_err());
+    assert!(client.try_renounce_role(&executor_role, &attacker).is_err());
+
+    client.transfer_admin_role(&next_admin, &100);
+    assert_eq!(client.get_admin(), Some(admin.clone()));
+    assert!(client.try_renounce_admin().is_err());
+    client.accept_admin_transfer();
+    assert_eq!(client.get_admin(), Some(next_admin.clone()));
+    assert!(client
+        .try_grant_role(&candidate, &executor_role, &admin)
+        .is_err());
+    client.grant_role(&candidate, &executor_role, &next_admin);
+    assert!(client.has_role(&candidate, &executor_role).is_some());
+
+    e.set_auths(&[]);
+    assert!(client
+        .try_revoke_role(&candidate, &executor_role, &next_admin)
+        .is_err());
+    assert!(client.try_transfer_admin_role(&attacker, &100).is_err());
+    assert!(client.try_renounce_admin().is_err());
+}
+
+#[test]
 fn schedule_and_execute_operation() {
     let e = Env::default();
     e.mock_all_auths();
@@ -93,6 +195,7 @@ fn schedule_and_execute_operation() {
     let target_client = TargetContractClient::new(&e, &target);
 
     let args = vec![&e, 42u32.into_val(&e)];
+    let scheduled_at = e.ledger().sequence();
     let operation_id = client.schedule(
         &target,
         &symbol_short!("set_value"),
@@ -101,6 +204,21 @@ fn schedule_and_execute_operation() {
         &empty(&e),
         &10,
         &proposer,
+    );
+
+    assert_eq!(
+        operation_id,
+        client.hash_operation(
+            &target,
+            &symbol_short!("set_value"),
+            &args,
+            &empty(&e),
+            &empty(&e),
+        )
+    );
+    assert_eq!(
+        client.get_operation_ledger(&operation_id),
+        scheduled_at + 10
     );
 
     assert!(client.get_operation_state(&operation_id) != OperationState::Unset);
@@ -320,6 +438,74 @@ fn schedule_and_execute_self_admin_operation() {
         client.get_operation_state(&operation_id),
         OperationState::Done
     );
+}
+
+#[test]
+fn self_admin_authorization_rejects_malformed_external_and_unscheduled_contexts() {
+    let e = Env::default();
+    let proposer = Address::generate(&e);
+    let external = e.register(TargetContract, ());
+    let timelock = e.register(
+        TimelockController,
+        (
+            10u32,
+            vec![&e, proposer],
+            Vec::<Address>::new(&e),
+            None::<Address>,
+        ),
+    );
+    let payload = BytesN::random(&e);
+    let args = vec![&e, 42u32.into_val(&e)];
+    let meta = vec![
+        &e,
+        OperationMeta {
+            predecessor: empty(&e),
+            salt: empty(&e),
+            executor: None,
+        },
+    ];
+
+    let external_context = vec![
+        &e,
+        Context::Contract(ContractContext {
+            contract: external,
+            fn_name: Symbol::new(&e, "set_value"),
+            args: args.clone(),
+        }),
+    ];
+    assert!(e
+        .try_invoke_contract_check_auth::<TimelockError>(
+            &timelock,
+            &payload,
+            Vec::<OperationMeta>::new(&e).into_val(&e),
+            &external_context,
+        )
+        .is_err());
+    assert!(e
+        .try_invoke_contract_check_auth::<TimelockError>(
+            &timelock,
+            &payload,
+            meta.clone().into_val(&e),
+            &external_context,
+        )
+        .is_err());
+
+    let unscheduled_self_context = vec![
+        &e,
+        Context::Contract(ContractContext {
+            contract: timelock.clone(),
+            fn_name: Symbol::new(&e, "update_delay"),
+            args,
+        }),
+    ];
+    assert!(e
+        .try_invoke_contract_check_auth::<TimelockError>(
+            &timelock,
+            &payload,
+            meta.into_val(&e),
+            &unscheduled_self_context,
+        )
+        .is_err());
 }
 
 #[test]

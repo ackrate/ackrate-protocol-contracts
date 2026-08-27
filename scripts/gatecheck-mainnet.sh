@@ -37,8 +37,8 @@ for manifest in "$TIMELOCK_MANIFEST" "$REGISTRY_MANIFEST"; do
   (
     cd "$SOURCE_ROOT"
     cargo fmt --manifest-path "$manifest" --all -- --check
-    cargo clippy --manifest-path "$manifest" --all-targets -- -D warnings
-    cargo test --manifest-path "$manifest"
+    cargo clippy --manifest-path "$manifest" --locked --all-targets -- -D warnings
+    cargo test --manifest-path "$manifest" --locked
   )
 done
 
@@ -49,6 +49,7 @@ done
 (
   cd "$(dirname "$TIMELOCK_MANIFEST")"
   stellar contract build \
+    --locked \
     --optimize \
     --package ackrate-timelock-controller \
     --out-dir "$RELEASE_DIR" \
@@ -58,6 +59,7 @@ done
 (
   cd "$(dirname "$REGISTRY_MANIFEST")"
   stellar contract build \
+    --locked \
     --optimize \
     --package mandate-registry \
     --out-dir "$RELEASE_DIR" \

@@ -14,7 +14,7 @@ flowchart LR
     M["Fulfillment agent / merchant\nuntrusted service"]
     R["MandateRegistry\non-chain enforcement boundary"]
     T["Circle USDC SAC\nallowed asset"]
-    G["2-of-3 authority"]
+    G["Live 2-of-3 authority"]
     L["TimelockController"]
     P["Emergency pauser"]
 
@@ -33,6 +33,10 @@ flowchart LR
 The boundary is the registry transaction, not the SDK call and not the HTTP
 exchange. Replacing x402 v0.1 with a later request/response shape does not
 change the mandate schema or the payment invariant.
+
+The live canary already uses the technical 2-of-3 authority shown in the
+deployment manifest. The remaining step is the independent physical Freighter
+custody handoff; it is tracked separately from the on-chain signer math.
 
 ## Mandate lifecycle and payment
 
@@ -76,7 +80,7 @@ reverts the complete invocation.
 | Mandate | user, agent, merchant, asset, max amount, spent, expiry, sequence, status, credential hash | Registry | Registry; public clients for inspection |
 | Asset policy | asset address -> allowed | Timelock-authorized registry call | Registry registration path |
 | Pause state | boolean | Pauser / unpauser roles | Registry payment path |
-| Timelock operation | target, function, args, predecessor, salt, ready ledger, state | 2-of-3 proposer; controller | Controller execution path; public observers |
+| Timelock operation | target, function, args, predecessor, salt, ready ledger, state | Live 2-of-3 proposer; controller | Controller execution path; public observers |
 | USDC allowance | owner, spender=registry, amount, expiry ledger | User signature | Circle USDC SAC during transfer |
 | Settlement receipt | transaction hash, registry event, token transfer, mandate ID, sequence | Stellar ledger | Merchant verifier and reviewer |
 | x402 challenge | method, resource, merchant, asset, amount, nonce/expiry | Merchant adapter | Consumer and fulfillment adapter only; never contract authority |
@@ -107,7 +111,7 @@ transfer.
 sequenceDiagram
     participant A as Signer A
     participant B as Signer B
-    participant G as 2-of-3 authority
+    participant G as Live 2-of-3 authority
     participant L as TimelockController
     participant R as MandateRegistry
 

@@ -20,9 +20,9 @@ hook, or extension-specific storage.
 
 ## Governance profile
 
-The timelock is deployed first with:
+The canary timelock is deployed first with:
 
-- the selected native Stellar 2-of-3 account as proposer and canceller;
+- the live native Stellar 2-of-3 account as proposer and canceller;
 - no bootstrap administrator;
 - no executor list, making execution permissionless after the delay; and
 - the reviewed minimum delay in ledgers.
@@ -31,9 +31,14 @@ MandateRegistry is then deployed with:
 
 - the timelock as top administrator, asset-policy authority, and upgrader;
 - a separate emergency pauser that can only stop payments;
-- the 2-of-3 account as unpauser; and
+- the live 2-of-3 account as unpauser; and
 - the independently derived and verified mainnet USDC Stellar Asset Contract
   as the initial allowed asset.
+
+The on-chain 2-of-3 signer math is already live: exactly three Ed25519 signers,
+weight 1 each, and low/medium/high thresholds of 2. The remaining step is the
+independent physical Freighter custody handoff. The canary deployment record
+tracks that ceremony separately from the technical multisig state.
 
 ## Reproduce the release artifacts
 
@@ -128,6 +133,8 @@ The preflight is read-only. It checks the RPC health, deployment source,
 Circle USDC identity, the public authority manifest, and the live Stellar
 account thresholds. Every A+B, A+C, and B+C pair must satisfy both medium and
 high thresholds while every single signer remains insufficient. The deployment
+preflight proves on-chain signer math only; the independent physical custody
+handoff is recorded separately in the completed manifest. The deployment
 runner accepts only a local identity alias and verifies that its public key is
 the recorded deployment source; secrets and seed phrases are not accepted as
 arguments or environment values. If the selected RPC provider requires an

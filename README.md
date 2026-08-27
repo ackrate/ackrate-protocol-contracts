@@ -15,6 +15,7 @@ Mainnet planning: [`docs/mainnet-roadmap.md`](docs/mainnet-roadmap.md)
 Mainnet security review:
 
 - [Threat model and control-to-test matrix](docs/security-threat-model.md)
+- [Mainnet exported-function coverage matrix](docs/security-function-coverage.md)
 - [Trust boundaries and mandate lifecycle data flows](docs/security-data-flow.md)
 - [Published dependency scan and remediation report](docs/security-scan-report.md)
 - [Continuous security scan](scripts/security-scan.sh)
@@ -203,7 +204,7 @@ flowchart LR
 
 Zero warnings tolerated. Same gate, local and CI.
 
-The current gate check runs **27 simple tests** and **64 composite tests**. Each
+The current gate check runs **32 simple tests** and **64 composite tests**. Each
 suite includes a positive timelocked-upgrade lifecycle that uploads replacement
 WASM, proves early and unpaused execution fail, executes while paused, calls the
 replacement at the original contract ID, and confirms administrator, pause,

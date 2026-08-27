@@ -17,7 +17,9 @@ use crate::error::Error;
 use crate::mandate::{Mandate, Status};
 use crate::{events, storage};
 
-/// Store a user-signed mandate. The caller supplies only the AUTHORIZED
+/// Store a user-signed mandate. `vc_hash` is the signed AP2 binding, whose
+/// secure nonce makes the global identifier unpredictable and independently
+/// renewable. The caller supplies only the AUTHORIZED
 /// parameters; the contract initializes `spent=0, seq=0, status=Active` so a
 /// caller can never seed a tampered balance/status. Authorized by the user.
 #[allow(clippy::too_many_arguments)]

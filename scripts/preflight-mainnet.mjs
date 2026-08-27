@@ -185,7 +185,8 @@ if (!Array.isArray(assets?._embedded?.records) || assets._embedded.records.lengt
 }
 
 process.stdout.write("Mainnet preflight passed.\n");
-process.stdout.write(`Authority: ${authority} (verified exact 2-of-3 low/medium/high thresholds)\n`);
+process.stdout.write(`Authority: ${authority} (verified on-chain 2-of-3 signer math and thresholds)\n`);
+process.stdout.write("Independent physical custody handoff: not asserted by this preflight\n");
 process.stdout.write(`Deployment source: ${deploymentSource} (${nativeBalance.balance} XLM)\n`);
 process.stdout.write(`Circle USDC SAC: ${USDC_SAC}\n`);
 process.stdout.write(`Timelock minimum: ${delay} ledgers\n`);

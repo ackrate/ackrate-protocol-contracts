@@ -6,12 +6,15 @@ The Ackrate governed canary was deployed to Stellar mainnet on
 - [MandateRegistry](https://stellar.expert/explorer/public/contract/CDBTG5ZKASFA7LOYUPBOTGKAVX5MJIM4U24BYGX7VX23IHYDAHLQPAGS) is the only mandate and USDC payment path.
 - [TimelockController](https://stellar.expert/explorer/public/contract/CD3KRQRNCW52CZHKG2GPQAEOU6UCL426YFNHYUZ7IWUUKAOTKUQX6UUX) governs Registry administration, asset policy, and upgrades.
 
-The authority path is `2-of-3 Stellar account -> TimelockController ->
+The authority path is `Stellar 2-of-3 account -> TimelockController ->
 MandateRegistry`. The Timelock is self-administered, has a minimum delay of
-17,280 ledgers, grants proposer and canceller roles to the 2-of-3 account, and
-has no executor allowlist. Therefore an approved operation may be executed by
-anyone only after the delay. The Registry is initially unpaused and allows only
-the canonical Circle Stellar mainnet USDC SAC.
+17,280 ledgers, grants proposer and canceller roles to that authority account,
+and has no executor allowlist. Horizon confirms exactly three Ed25519 signers,
+weight 1 each, and low/medium/high thresholds of 2. Therefore an approved
+operation may be executed by anyone only after the delay. The Registry is
+initially unpaused and allows only the canonical Circle Stellar mainnet USDC
+SAC. The independent physical Freighter custody handoff is still pending; this
+canary record distinguishes that ceremony from the already-live signer math.
 
 ## Deployment transactions
 
@@ -59,9 +62,9 @@ accepted the match records for both hashes. The MandateRegistry match was also
 resubmitted after its attestation existed and after the complete workflow had
 finished successfully. As of the last recorded check, the Explorer API still
 reported `unverified`; the manifest therefore records `pending_external_index`
-rather than claiming a source badge that is not yet visible. The remaining
-private-worker failure is documented in
-[StellarExpert workflow issue #8](https://github.com/stellar-expert/soroban-build-workflow/issues/8#issuecomment-5426282212).
+rather than claiming a source badge that is not yet visible. That external
+indexing state is separate from the exact-byte and attestation checks recorded
+here.
 
 ## Independent read-only verification
 
@@ -75,7 +78,7 @@ Post-deployment reads verified:
 - Registry admin is the Timelock;
 - Registry roles are `pauser`, `unpauser`, `assetpol`, and `upgrader`;
 - the emergency key is the sole pauser;
-- the 2-of-3 authority is the sole unpauser;
+- the technical 2-of-3 authority is the sole unpauser;
 - the Timelock is the sole asset-policy authority and upgrader;
 - Registry schema version is 1 and it is unpaused; and
 - Circle USDC SAC `CCW67TSZ...MI75` is allowed.

@@ -96,8 +96,9 @@ impl MandateRegistry {
         admin::is_paused(&env)
     }
 
-    /// Change the accepted asset set. The deployment profile assigns this role
-    /// only to the canonical timelock.
+    /// Change the admission policy for new mandates. Existing user-signed
+    /// mandates are not rewritten. The deployment profile assigns this role
+    /// only to the canonical timelock; `pause` is the emergency execution stop.
     pub fn set_asset_allowed(env: Env, asset: Address, allowed: bool, operator: Address) {
         admin::set_asset_allowed(&env, asset, allowed, operator)
     }

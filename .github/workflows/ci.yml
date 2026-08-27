@@ -13,7 +13,7 @@ jobs:
   security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Install Rust contract toolchain
         run: rustup toolchain install 1.98.0 --profile minimal --target wasm32v1-none
       - name: Install pinned dependency scanner
@@ -24,16 +24,16 @@ jobs:
   contracts:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Install Rust contract toolchain
         run: rustup toolchain install 1.98.0 --profile minimal --component clippy,rustfmt --target wasm32v1-none
-      - name: Gate check both contracts
+      - name: Gate check all current contract suites
         run: ./scripts/gatecheck-contracts.sh
 
   mainnet-candidate:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Read reviewed source identity
         id: reviewed-source
         run: |
@@ -44,7 +44,7 @@ jobs:
           echo "commit=$source_commit" >> "$GITHUB_OUTPUT"
           echo "rust_toolchain=$rust_toolchain" >> "$GITHUB_OUTPUT"
       - name: Check out exact reviewed source
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: ${{ steps.reviewed-source.outputs.commit }}
           path: reviewed-source
@@ -69,7 +69,7 @@ jobs:
           ACKRATE_MAINNET_SOURCE_ROOT: ${{ github.workspace }}/reviewed-source
         run: ./scripts/gatecheck-mainnet.sh
       - name: Publish exact governed mainnet artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: mainnet-release-${{ github.sha }}
           path: |

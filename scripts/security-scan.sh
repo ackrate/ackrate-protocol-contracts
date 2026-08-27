@@ -21,7 +21,7 @@ for contract in mandate-registry timelock-controller; do
     --ignore "$ACCEPTED_HOST_ONLY_ADVISORY"
 
   echo "==> $contract: accepted advisory must not enter deployed WASM"
-  if [[ -n "$(cargo tree --manifest-path "$manifest" --target wasm32v1-none -i paste 2>/dev/null)" ]]; then
+  if [[ -n "$(cargo tree --manifest-path "$manifest" --locked --target wasm32v1-none -i paste 2>/dev/null)" ]]; then
     echo "paste entered the $contract wasm32v1-none dependency graph" >&2
     exit 1
   fi

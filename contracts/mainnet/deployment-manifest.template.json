@@ -37,7 +37,11 @@
   },
   "public_configuration": {
     "deployment_source_account": null,
+    "deployment_stage": null,
+    "authority_mode": "stellar_2_of_3",
     "authority_2_of_3_account": null,
+    "final_independent_custody_handoff_complete": false,
+    "final_independent_custody_handoff_evidence": null,
     "emergency_pauser": null,
     "timelock_min_delay_ledgers": null,
     "usdc_asset_code": "USDC",

@@ -29,7 +29,7 @@ not depend on the HTTP request or response shape.
 | Mandate state | User / contract | Registration requires user authorization; consumption is contract-owned and atomic. |
 | Sequence and spent amount | Contract | Never accepted from an SDK cache; read and updated on-chain for every payment. |
 | Merchant and asset scope | User / governance | Immutable per mandate; assets must also pass the governed allowlist. |
-| Upgrade authority | 2-of-3 authority through TimelockController | Exact operation binding, minimum delay, and contract-held privileged roles. |
+| Upgrade authority | Live Stellar 2-of-3 account through TimelockController; independent physical custody handoff is pending | Exact operation binding, minimum delay, contract-held privileged roles, verified on-chain signer math, and a required custody preflight before final handoff. |
 | Emergency stop | Separate pauser | May stop value movement, but cannot unpause, change policy, or upgrade. |
 | Release artifact | Reviewers | Exact source, toolchain, WASM hash, provenance, constructor arguments, and on-chain hash must agree. |
 
@@ -53,7 +53,7 @@ RPC provider, database, and model output are untrusted inputs.
 | Token allowance or transfer failure | Soroban transaction rollback restores mandate state and balances | `allowance_failure_reverts_consumption_and_transfer` |
 | Alternate money path introduced by an extension | Registry exposes no plugin hook, callback registry, or extension allowance | `hostile_extension_has_no_token_allowance_or_second_money_path`; `direct_caller_cannot_bypass_a_contract_agent` |
 | Emergency key expands its authority | Separate pauser and unpauser roles; pauser can only stop | `emergency_pause_is_one_key_but_unpause_is_separate` |
-| Unauthorized or early upgrade | Registry upgrader is the timelock; operation hash binds target, function, args, predecessor, and salt; minimum delay enforced | `governance_functions_require_both_role_and_authorization`; `canonical_timelock_binds_and_executes_the_exact_policy_change`; `schedule_with_insufficient_delay`; `execute_before_ready`; `every_timelock_mutator_rejects_wrong_roles_and_missing_authorization` |
+| Unauthorized or early upgrade | Registry upgrader is the timelock; operation hash binds target, function, args, predecessor, and salt; minimum delay enforced | `governance_functions_require_both_role_and_authorization`; `canonical_timelock_binds_and_executes_the_exact_policy_change`; `canonical_timelock_upgrades_registry_at_same_address_and_preserves_state`; `schedule_with_insufficient_delay`; `execute_before_ready`; `every_timelock_mutator_rejects_wrong_roles_and_missing_authorization` |
 | Artifact substitution | Pinned toolchain, exact hashes, GitHub provenance, and observed on-chain hashes | `gatecheck-mainnet.sh`; `deployment-manifest.json`; release workflow |
 | Vulnerable or yanked dependency | The lockfile dependency gate is a required CI job; actionable findings fail the build | `scripts/security-scan.sh`; `docs/security-scan-report.md` |
 
@@ -77,24 +77,35 @@ reviewer entry points and run on every push and pull request.
   settlement and negative amount, caller, merchant, expiry, budget, sequence,
   pause, reentrancy, and token-failure cases.
 - Governance (`pause`, `unpause`, `set_asset_allowed`, `upgrade` and inherited
-  access-control methods) is covered by wrong-role, missing-authorization,
-  separated-authority, exact-operation, and delay cases.
+  access-control methods) is covered by positive state transitions, wrong-role,
+  missing-authorization, delegated-role, admin-transfer, renunciation,
+  separated-authority, exact-operation, delay, same-address replacement, and
+  storage-preservation cases.
 
 ### TimelockController
 
 - Construction and read helpers are covered by initialization and operation
   state transitions.
-- `schedule`, `execute`, `cancel`, and `update_delay` are each exercised on a
-  valid path and rejected for a wrong role or missing authorization.
-- Self-administration is bound to the exact target, function, arguments,
-  predecessor, salt, executor policy, and ready operation.
+- `schedule`, `execute`, and `cancel` are exercised on valid paths and rejected
+  for a wrong role or missing authorization. `update_delay` is rejected without
+  authorization, exercised through an external administrator, and its scheduled
+  self-authorization context is covered below.
+- Inherited role-management and administrator-transfer functions are covered
+  by positive state transitions, delegation, renunciation, wrong-role, and
+  missing-authorization cases, including the public role read surface.
+- The self-administration authorization check binds the target, function,
+  arguments, predecessor, salt, executor policy, and ready operation; malformed,
+  external-target, and unscheduled contexts are rejected. A final end-to-end
+  delay mutation remains a required custody-handoff rehearsal.
 
 ## Governance custody and recovery
 
-The final authority uses three independently held signer keys (Future, Max,
-and Alex) with weight 1 and low/medium/high thresholds of 2. Public signer
-addresses are recorded in the reviewed authority manifest; recovery phrases
-and secret keys are never stored in this repository.
+The live contracts are a governed mainnet canary configured to a technical
+Stellar 2-of-3 account. Horizon confirms exactly three Ed25519 signers, weight 1
+each, and low/medium/high thresholds of 2. The remaining step is the independent
+physical Freighter custody handoff to the three designated holders. The final
+authority manifest must record only public signer addresses; recovery phrases
+and secret keys must never enter this repository.
 
 - **Normal action:** one signer prepares the exact transaction; a second signer
   independently verifies network, contract, function, arguments, and hash
@@ -117,6 +128,22 @@ Friday's final activation must verify the three live signers and thresholds
 against `scripts/preflight-mainnet.mjs` before any transaction is submitted.
 
 ## Residual risk and release rules
+
+### Reviewed semantics and disposition
+
+The final gate found no open fund-loss or authorization finding. Three edge
+semantics were reviewed explicitly so they cannot be mistaken for hidden
+assumptions:
+
+| Edge | Disposition | Enforced control |
+|---|---|---|
+| `validate_mandate` is a public, non-authoritative dry run and does not authenticate the agent or consume a sequence | Accepted by design; it cannot move value or reserve authority | `execute_payment` independently authenticates the bound agent, compares the durable sequence, repeats every payment check, consumes state, and transfers atomically |
+| Removing an asset from the allowlist prevents new mandates but does not rewrite existing user-signed mandates | Accepted admission-policy behavior; changing an existing mandate behind the user's signature would be a separate semantic risk | Governance can stop all execution with `pause`; existing mandates remain bounded by their signed merchant, asset, amount, expiry, status, and sequence |
+| A mandate ID is the signed credential hash and is globally unique | Controlled by the AP2 binding's cryptographically secure nonce; identical intent fields produce independent unpredictable IDs | `@ackrate/ap2` generates secure nonces by default, validates the full binding, and tests deterministic binding, nonce separation, replay rejection, and 100-way concurrent admission; an `AlreadyExists` response cannot move or corrupt funds and the user can issue a fresh nonce |
+
+These are documented protocol semantics, not unresolved scanner findings. Any
+future change to them is a versioned protocol change and must rerun this entire
+gate before a timelocked upgrade is proposed.
 
 - x402 v0.1 will change. Adapters may translate new wire formats, but they may
   not add another settlement path or weaken the contract call.
