@@ -27,7 +27,7 @@ The published app exposes an explicit environment selector:
 For an initial deployment, the browser downloads
 `web/public/mandate_registry.wasm` from the public `v3mainnet` GitHub branch and
 requires SHA-256
-`b9e4e607ab56e63ce7d5e75ff192e56ccb3cf741cb78c0944c7004ac3f9487ca`.
+`5b0173d49c836ef756c96bee143b46b4bf956be19dee3a1d50498c0cc4c32cad`.
 Freighter approves two ordinary transactions: WASM upload and contract creation.
 The deployment constructor takes one parameter, `admin`, which should be the
 future multisig G-account. The fee-paying Freighter account does not become an
@@ -36,7 +36,30 @@ authority unless it is also supplied as `admin`.
 The Git ref field accepts `v3mainnet` by default or an explicit branch, tag, or
 commit SHA. The same selector controls replacement-WASM upload for upgrades.
 The UI displays the fetched SHA-256; the default branch additionally has a
-hard-coded reviewed hash gate.
+hard-coded reviewed hash gate. It also resolves the ref through GitHub and
+records an immutable URL to the exact source commit in every deployment result.
+
+### Source and build verification requirement
+
+Do not deploy a locally compiled or otherwise unattested WASM. A deployable
+SimpleContract release must be built by the pinned
+`stellar-expert/soroban-build-workflow`, contain
+`source_repo=github:ackrate/ackrate-protocol-contracts` and
+`home_domain=ackrate.xyz` metadata, and have a GitHub build attestation whose
+subject digest equals the uploaded WASM SHA-256. The release workflow uses
+GitHub's immutable source commit as the attestation dependency.
+
+For every testnet or production deployment, retain all of the following:
+
+- `https://github.com/ackrate/ackrate-protocol-contracts/tree/<FULL_COMMIT>/contracts/simple/mandate-registry`;
+- the immutable GitHub release and WASM asset URLs;
+- the GitHub attestation filtered by the exact WASM SHA-256;
+- the upload and create transaction hashes and final contract ID.
+
+The same bytes and provenance are required on both networks. Testnet may show
+the explorer's source-verified label after indexing; production acceptance
+requires the exact-byte build provenance to validate even while an explorer's
+display is still indexing. A mutable branch URL alone is not verification.
 
 Creating a new 2-of-3 policy necessarily requires the two secondary public keys
 once because they do not exist in ledger state beforehand. The UI submits one
@@ -55,16 +78,19 @@ unpause → two-signature self-upgrade at the unchanged address.
 
 | Evidence | Value |
 | --- | --- |
-| Contract | [`CAQRNJD5JTKOFLRXF6Q47TSRHEREDYQZO4QLOW65MHKO4GIMF3726NAG`](https://stellar.expert/explorer/testnet/contract/CAQRNJD5JTKOFLRXF6Q47TSRHEREDYQZO4QLOW65MHKO4GIMF3726NAG) |
-| One-signature deployer | `GCR2BBVAFRXWOQRTIPUJDI5334VMTU72A5ARQYBI4IMFSLAENTZ6IXXZ` |
-| 2-of-3 admin account | `GBNUQ53GWVVYFJJL3JCLQYDJUMYQNQI7LPVRZ6PXHZWS7N6LEX2X6JOQ` |
-| Secondary signers | `GB4WBDCEA56AIVWNA5LTHDAO7FCSLTSCJ6EK4K6MZBKFNJY5WLBRZIUT`, `GBPG5IUR4TPPOYPXFQCGYLIS4ODA52N3V4MUJJ7YPPT7HSWCJBYDB6KW` |
-| Atomic account policy | [`3d476134…9726`](https://stellar.expert/explorer/testnet/tx/3d4761344544bbad030ed8c9214ea850703160c09d8a96d994dcbbaf7fb79726) |
-| WASM upload | [`088ead48…f287`](https://stellar.expert/explorer/testnet/tx/088ead48b33009db61011445c4d982317fdf57f41a7424bf5f178091ba0ef287) |
-| Initial deployment | [`5f0dde7c…294d`](https://stellar.expert/explorer/testnet/tx/5f0dde7caddd6aded4b3fb2eae997fe4df42c306dad6216f770f9e71438d294d) |
-| Two-signature pause | [`45dc8389…bdee`](https://stellar.expert/explorer/testnet/tx/45dc83891dbc925649260bef26c1d7982a678feed185b9366da7820cfcb8bdee) |
-| Two-signature unpause | [`94df4885…3be1`](https://stellar.expert/explorer/testnet/tx/94df4885486c5ea829d6f3e00eec73673c632c1e1bbbf019f296ee05efa53be1) |
-| Two-signature self-upgrade | [`8953bbbc…0476`](https://stellar.expert/explorer/testnet/tx/8953bbbcec2687485cfb2aa1ec8616ef46aded2c99d28a3f81dc76e1f0770476) |
+| Contract | [`CCZKTGYVWSPZ2NLXVSLO57SGXG3YSITVQIF2GPDBLI35Q4F3I22YQDSO`](https://stellar.expert/explorer/testnet/contract/CCZKTGYVWSPZ2NLXVSLO57SGXG3YSITVQIF2GPDBLI35Q4F3I22YQDSO) |
+| One-signature deployer | `GDNAAPKQB4TFBFGX6JBAUN6DV32AIJKV74GXPLZK45GHTRXFVLZOPFGC` |
+| 2-of-3 admin account | `GBPCUP2TYSETAZU352CGZ2F5OJ4XG4WWYL55L7PMNBBTBDJB3N3AYF27` |
+| Secondary signers | `GB434L6F5P67SEIM7PMWZ2TSUZVQSSKLR4DCNT765A3XIX4S7FANXZLO`, `GC5CAV55GMASD3FFGBBWZRY4OBZWCEXW2Z4YWMSVRNZHQO3MPGKXA2C2` |
+| GitHub source | [`03b6af079e07b5e2efd6c31a2bdefa834c0e4c4d`](https://github.com/ackrate/ackrate-protocol-contracts/tree/03b6af079e07b5e2efd6c31a2bdefa834c0e4c4d/contracts/simple/mandate-registry) |
+| Build release | [CLI 27.0.0 verified release](https://github.com/ackrate/ackrate-protocol-contracts/releases/tag/simple-v0.2.3-mainnet.1_contracts_simple_mandate_registry_mandate-registry_pkg0.2.3_cli27.0.0) |
+| Build attestation | [`5b0173d4…c32cad`](https://github.com/ackrate/ackrate-protocol-contracts/attestations/43965366) |
+| Atomic account policy | [`62e1ba7c…1b96`](https://stellar.expert/explorer/testnet/tx/62e1ba7cb96e61b366efed7514f148d58dc9ef7318df91f826f3215044dc1b96) |
+| WASM upload | [`4783611c…29c8`](https://stellar.expert/explorer/testnet/tx/4783611ca0ad6ee833b969fc2300f871d4481cc857a94fac822ec5d8dda129c8) |
+| Initial deployment | [`daf8547f…57f8`](https://stellar.expert/explorer/testnet/tx/daf8547f316f442d765823406d7b58885a1119ddbf2bcee06fed5bfbbfae57f8) |
+| Two-signature pause | [`795b2b2d…0f9a`](https://stellar.expert/explorer/testnet/tx/795b2b2db0155c218fc3f0f840101af2500c9ef483c8677ed5dc327bf9b10f9a) |
+| Two-signature unpause | [`95ab8598…41f9`](https://stellar.expert/explorer/testnet/tx/95ab8598a3beaee8a75553c313e15b0734d2a7578c0852f0fc00127c10e241f9) |
+| Two-signature self-upgrade | [`ae3c37b4…07f5`](https://stellar.expert/explorer/testnet/tx/ae3c37b4e8c1f8265a3536388f9e8740a05bdd66a50e09bfd90e052fd84a07f5) |
 
 The disposable secret was generated in memory, never printed, and not retained.
 Re-run the same check with `npm run smoke:testnet --prefix web`; every run creates

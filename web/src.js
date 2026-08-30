@@ -33,7 +33,8 @@ const NETWORKS = {
     rpc: "https://soroban-testnet.stellar.org",
   },
 };
-const EXPECTED_WASM_HASH = "b9e4e607ab56e63ce7d5e75ff192e56ccb3cf741cb78c0944c7004ac3f9487ca";
+const EXPECTED_WASM_HASH = "5b0173d49c836ef756c96bee143b46b4bf956be19dee3a1d50498c0cc4c32cad";
+const TRUSTED_BUILDER = "https://github.com/stellar-expert/soroban-build-workflow/.github/workflows/release.yml@88068ec50cba931a96436869727ed08edeb76ade";
 const byId = (id) => document.getElementById(id);
 const xdrInput = byId("xdr");
 const signButton = byId("sign");
@@ -262,14 +263,51 @@ async function reviewedWasm() {
     throw new Error("Git ref contains unsupported characters.");
   }
   const wasmUrl = `https://raw.githubusercontent.com/ackrate/ackrate-protocol-contracts/${ref}/web/public/mandate_registry.wasm`;
-  const response = await fetch(wasmUrl, { cache: "no-store" });
+  const [response, commitResponse] = await Promise.all([
+    fetch(wasmUrl, { cache: "no-store" }),
+    fetch(`https://api.github.com/repos/ackrate/ackrate-protocol-contracts/commits/${encodeURIComponent(ref)}`, { cache: "no-store" }),
+  ]);
   if (!response.ok) throw new Error(`GitHub WASM download returned HTTP ${response.status}.`);
+  if (!commitResponse.ok) throw new Error(`GitHub source resolution returned HTTP ${commitResponse.status}.`);
   const wasm = new Uint8Array(await response.arrayBuffer());
+  const commit = await commitResponse.json();
+  if (!/^[0-9a-f]{40}$/.test(commit.sha)) throw new Error("GitHub did not return an immutable source commit.");
   const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", wasm));
-  if (ref === "v3mainnet" && toHex(hash) !== EXPECTED_WASM_HASH) {
+  const hashHex = toHex(hash);
+  if (ref === "v3mainnet" && hashHex !== EXPECTED_WASM_HASH) {
     throw new Error("Latest branch WASM does not match the reviewed SHA-256.");
   }
-  return { wasm, hash, ref, wasmUrl };
+  const attestationResponse = await fetch(
+    `https://api.github.com/repos/ackrate/ackrate-protocol-contracts/attestations/sha256:${hashHex}`,
+    { cache: "no-store" },
+  );
+  if (!attestationResponse.ok) throw new Error(`GitHub attestation lookup returned HTTP ${attestationResponse.status}.`);
+  const attestationSet = await attestationResponse.json();
+  const provenance = attestationSet.attestations?.map((attestation) => {
+    try {
+      return JSON.parse(atob(attestation.bundle.dsseEnvelope.payload));
+    } catch {
+      return null;
+    }
+  }).find((statement) => {
+    const dependency = statement?.predicate?.buildDefinition?.resolvedDependencies?.[0];
+    return statement?.subject?.some((subject) => subject.digest?.sha256 === hashHex)
+      && statement?.predicate?.runDetails?.builder?.id === TRUSTED_BUILDER
+      && dependency?.uri?.startsWith("git+https://github.com/ackrate/ackrate-protocol-contracts@")
+      && /^[0-9a-f]{40}$/.test(dependency?.digest?.gitCommit);
+  });
+  if (!provenance) throw new Error("WASM has no trusted Ackrate GitHub build attestation; deployment refused.");
+  const sourceCommit = provenance.predicate.buildDefinition.resolvedDependencies[0].digest.gitCommit;
+  return {
+    wasm,
+    hash,
+    ref,
+    wasmUrl,
+    requestedCommit: commit.sha,
+    sourceCommit,
+    sourceUrl: `https://github.com/ackrate/ackrate-protocol-contracts/tree/${sourceCommit}/contracts/simple/mandate-registry`,
+    attestationUrl: `https://github.com/ackrate/ackrate-protocol-contracts/attestations?query=subject-digest%3A${hashHex}`,
+  };
 }
 
 async function simulateRead(contractId, source, method) {
@@ -371,7 +409,7 @@ byId("deploy").addEventListener("click", async () => {
     const wallet = await connectedWallet();
     const accountResponse = await fetch(`${selected.horizon}/accounts/${wallet}`);
     if (!accountResponse.ok) throw new Error(`Freighter account is not funded on ${selected.label}.`);
-    const { wasm, hash } = await reviewedWasm();
+    const { wasm, hash, sourceUrl, attestationUrl } = await reviewedWasm();
 
     await freighterTransaction(
       Operation.uploadContractWasm({ wasm }),
@@ -393,6 +431,10 @@ byId("deploy").addEventListener("click", async () => {
     const contractId = Address.fromScVal(deployment.returnValue).toString();
     byId("deployed-contract").textContent = contractId;
     byId("deployed-hash").textContent = toHex(hash);
+    byId("deployed-source").href = sourceUrl;
+    byId("deployed-source").textContent = sourceUrl;
+    byId("deployed-attestation").href = attestationUrl;
+    byId("deployed-attestation").textContent = "GitHub build attestations for this WASM hash";
     byId("deployment-tx").textContent = deployment.txHash;
     byId("deployment-result").classList.remove("hidden");
     byId("contract-input").value = contractId;
@@ -415,14 +457,14 @@ byId("use-git-wasm").addEventListener("click", async () => {
   try {
     await assertNetwork();
     const wallet = await connectedWallet();
-    const { wasm, hash, ref } = await reviewedWasm();
+    const { wasm, hash, ref, sourceUrl, attestationUrl } = await reviewedWasm();
     const result = await freighterTransaction(
       Operation.uploadContractWasm({ wasm }),
       wallet,
       `Approve the ${ref} WASM upload in Freighter…`,
     );
     byId("hash-input").value = toHex(hash);
-    byId("status").textContent = `WASM from ${ref} uploaded. Hash ${toHex(hash)}. Transaction ${result.txHash}`;
+    byId("status").textContent = `WASM from ${ref} uploaded. Hash ${toHex(hash)}. Source ${sourceUrl}. Attestation ${attestationUrl}. Transaction ${result.txHash}`;
   } catch (error) {
     byId("status").textContent = `WASM upload failed: ${error.message}`;
   }
