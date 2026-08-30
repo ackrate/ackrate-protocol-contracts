@@ -4,7 +4,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo "==> release workflow supply-chain pins"
-if rg --line-number 'uses: [^#[:space:]]+@(main|master|v[0-9])' "$ROOT/.github/workflows"; then
+if grep -R -n -E --include='*.yml' --include='*.yaml' \
+  'uses: [^#[:space:]]+@(main|master|v[0-9])' \
+  "$ROOT/.github/workflows"; then
   echo "External GitHub Actions must be pinned to full commit SHAs." >&2
   exit 1
 fi
@@ -14,14 +16,14 @@ if [[ -d "$ROOT/contracts/mainnet-v2/timelock-controller" ]]; then
   exit 1
 fi
 
-if rg --line-number \
+if grep -R -n -E --include='*.rs' \
   'schedule_upgrade|cancel_upgrade|execute_upgrade|get_pending_upgrade|get_upgrade_delay|PendingUpgrade|UPGRADE_DELAY' \
   "$ROOT/contracts/mainnet-v2/mandate-registry/src"; then
   echo "mainnet-v2 must not expose timelock or delayed-upgrade state." >&2
   exit 1
 fi
 
-if rg --line-number --ignore-case \
+if grep -R -n -E -i --include='*.rs' \
   'mock_all_auths|mock_auths|MockAuth|dummy' \
   "$ROOT/contracts/mainnet-v2/mandate-registry/src"; then
   echo "mainnet-v2 must not use authorization bypasses or dummy data." >&2
@@ -38,7 +40,9 @@ required_v2_negative_tests=(
   upgrade_requires_pause_without_changing_state
 )
 for test_name in "${required_v2_negative_tests[@]}"; do
-  if ! rg --quiet "fn ${test_name}\\(" "$ROOT/contracts/mainnet-v2/mandate-registry/src"; then
+  if ! grep -R -q -E --include='*.rs' \
+    "fn[[:space:]]+${test_name}[[:space:]]*\\(" \
+    "$ROOT/contracts/mainnet-v2/mandate-registry/src"; then
     echo "mainnet-v2 continuous negative gate is missing: $test_name" >&2
     exit 1
   fi
