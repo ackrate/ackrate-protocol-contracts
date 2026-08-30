@@ -4,6 +4,8 @@
 
 ## Status
 
+This repository's active milestone is **T3 Step 1**.
+
 `0.4.1` is ACKRATE's condensed MandateRegistry review candidate on `main`.
 It is not deployed to Stellar mainnet. A secret-free preparation workflow can
 build and inspect unsigned Mainnet transactions, but it cannot sign anything
@@ -401,8 +403,9 @@ mainnet action, all of these remain mandatory:
 - finish repeated independent review, property/fuzz, mutation, differential,
   and resource-cost lanes;
 - complete and rehearse the named 2-of-3 custody and recovery record;
-- reconcile the supplied T3 OpenZeppelin/timelock wording with the explicitly
-  no-timelock V2 governance profile before claiming that acceptance line;
+- reconcile the supplied T3 Step 1 OpenZeppelin/timelock wording with the
+  explicitly no-timelock V2 governance profile before claiming that acceptance
+  line;
 - verify reference apps teach mandate registration plus authoritative on-chain
   execution and warn against agent token allowances or cached approval; and
 - run testnet drills for rogue-agent spending within budget, merchant downtime
