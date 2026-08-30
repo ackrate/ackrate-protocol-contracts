@@ -13,12 +13,7 @@ if [[ "$stellar_version" != stellar\ 27.0.0* ]]; then
 fi
 
 echo "==> release workflow supply-chain pins"
-if grep -R -n -E --include='*.yml' --include='*.yaml' \
-  'uses: [^#[:space:]]+@(main|master|v[0-9])' \
-  "$ROOT/.github/workflows"; then
-  echo "External GitHub Actions must be pinned to full commit SHAs." >&2
-  exit 1
-fi
+bash "$ROOT/scripts/check-action-pins.sh"
 
 if [[ -d "$ROOT/contracts/mainnet-v2/timelock-controller" ]]; then
   echo "mainnet-v2 must contain only mandate-registry; timelock-controller is forbidden." >&2
@@ -52,7 +47,7 @@ for variant in simple mainnet-v2 composites; do
       cargo test \
         --manifest-path "$contract/Cargo.toml" \
         --locked \
-        --features release-wasm-test \
+        --all-features \
         -- --list 2>/dev/null |
         sed -n 's/: test$//p' |
         LC_ALL=C sort
@@ -113,13 +108,12 @@ for variant in simple mainnet-v2 composites; do
       exit 1
     fi
 
-    echo "==> mainnet-v2: execute exact optimized release WASM"
+    echo "==> mainnet-v2: execute full required suite against exact optimized release WASM"
     MAINNET_V2_RELEASE_WASM="$wasm" cargo test \
       --manifest-path "$contract/Cargo.toml" \
       --locked \
-      --features release-wasm-test \
-      test::optimized_release_wasm_executes_reviewed_enforcement_surface \
-      -- --exact --include-ignored
+      --all-features \
+      -- --include-ignored
   else
     cargo build --manifest-path "$contract/Cargo.toml" --locked --target wasm32v1-none --release
   fi

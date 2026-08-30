@@ -12,9 +12,9 @@ cache, x402 adapter, or merchant server—is the enforcement layer.
 ## 1,000-Agent Gate-Check Record
 
 > [!IMPORTANT]
-> **Latest completed cycle — cycle 4**
-> Three release-gate issues found. Three fixed. State/accounting and Soroban
-> host reviewers found no new contract-logic issue. The repaired revision passed
+> **Latest completed cycle — cycle 5**
+> Two release-gate issues found. Two fixed. Value/state and administration
+> reviewers found no new contract-logic issue. The repaired revision passed
 > 12,561 deterministic checks/actions, all 49 required tests, and direct
 > execution of the exact optimized release file.
 
@@ -33,19 +33,34 @@ the result → repeat**.
 
 | Campaign evidence | Current result |
 |---|---:|
-| Independent reviewers completed | 12 across 4 rounds |
+| Independent reviewers completed | 15 across 5 rounds |
 | Executable contract checks/actions per full run | 12,561 |
 | Required executable tests | 49 |
-| Confirmed issues in the latest cycle | 3 found / 3 fixed |
+| Confirmed issues in the latest cycle | 2 found / 2 fixed |
 | Release artifact exercised directly | Yes |
 
 ### Latest findings and repairs
 
 | What the agents caught | What we fixed |
 |---|---|
+| The action-pin rule blocked a few familiar mutable names but could miss a different branch name or a shortened commit. | Every external action reference must now be a complete immutable commit digest; a permanent fixture challenges it with branches, tags, short commits, and unpinned containers. |
+| A future feature-gated test could appear in the required list without running. | The gate now executes the entire all-feature manifest, including ignored tests, against the exact optimized release file. |
+
+The same cycle completed a private 2-of-3 operator playbook for holder custody,
+two-signature approvals, pause/policy/upgrade order, signer rotation, and
+one-key-loss recovery. Custodian identities and wallet addresses are not kept
+in this public repository.
+
+<details>
+<summary><strong>Cycle 4 release-gate fixes</strong></summary>
+
+| What the agents caught | What we fixed |
+|---|---|
 | A V2-looking release tag could publish an older contract family. | Release tags now pass through one unambiguous router. V2 release tags fail closed until a dedicated V2 release path is separately approved. |
 | A required test could keep its name but be silently marked “ignored.” | Every required test is now executed even if it is marked ignored; names alone are not enough. |
 | Different build machines produced different file fingerprints from the same source. | The release fingerprint is now defined by the pinned Linux release environment and Stellar CLI 27.0.0; local machines still verify behavior, size, and interface. |
+
+</details>
 
 <details>
 <summary><strong>Cycle 3 fixes from 0.4.1</strong></summary>
@@ -211,10 +226,16 @@ The contract has no timelock. `upgrade` calls Soroban's native same-address
 WASM replacement only after current-administrator authorization and an
 already-paused state.
 
+The private 2-of-3 operator playbook defines the holder roles, two-signature
+ceremony, pause/policy/upgrade order, signer rotation, one-key-loss recovery,
+and the no-recovery boundary when two keys are lost.
+
 Production policy is a native Stellar 2-of-3 account at the administrator
-address. Deployment remains blocked until the authority record names all three
-public signers, organizational holders, separate custody locations, rotation
-steps, and one-key-loss recovery. Two lost keys have no hidden recovery path.
+address. Deployment remains blocked until the private authority record names
+all three public signers, organizational holders, separate custody locations,
+rotation steps, and one-key-loss recovery. Two lost keys have no hidden
+recovery path. No custodian identity or wallet address belongs in this public
+repository.
 
 Version `0.4.1` is **fresh-create only**. It must be constructed at a new
 contract address and must not be installed over schema `1` predecessor state.
@@ -242,7 +263,7 @@ unexpected warnings, and accepted host-only code entering deployed WASM.
 
 | Evidence | Current result |
 |---|---:|
-| Independent reviewers completed across four rounds | 12 |
+| Independent reviewers completed across five rounds | 15 |
 | Amount/expiry boundary cases | 10,001 |
 | Authenticated state-machine actions | 2,560 |
 | Deterministic host cases/actions per full V2 gate | 12,561 |
@@ -273,6 +294,8 @@ mainnet action, all of these remain mandatory:
 - finish repeated independent review, property/fuzz, mutation, differential,
   and resource-cost lanes;
 - complete and rehearse the named 2-of-3 custody and recovery record;
+- reconcile the supplied T3 OpenZeppelin/timelock wording with the explicitly
+  no-timelock V2 governance profile before claiming that acceptance line;
 - verify reference apps teach mandate registration plus authoritative on-chain
   execution and warn against agent token allowances or cached approval; and
 - run testnet drills for rogue-agent spending within budget, merchant downtime
