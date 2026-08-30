@@ -30,38 +30,30 @@ if grep -R -n -E -i --include='*.rs' \
   exit 1
 fi
 
-required_v2_negative_tests=(
-  admin_methods_require_authorization
-  execute_requires_agent_auth
-  expired_mandate_rejected
-  overspend_single_rejected
-  overspend_cumulative_rejected
-  replay_stale_seq_rejected
-  upgrade_requires_pause_without_changing_state
-  reviewed_asset_policy_is_enforced_on_registration_and_execution
-  credential_commitment_is_idempotent_across_changed_terms
-  mandate_identifier_is_bound_to_network_registry_user_and_terms
-  mandate_lifetime_is_bounded_below_persistence_target
-  missing_schema_blocks_mandates_but_preserves_admin_recovery
-  exact_budget_token_failure_rolls_back_exhaustion
-  amount_and_expiry_boundaries_cover_ten_thousand_real_host_cases
-  state_machine_runs_thousands_of_real_host_transitions
-)
-for test_name in "${required_v2_negative_tests[@]}"; do
-  if ! grep -R -q -E --include='*.rs' \
-    "fn[[:space:]]+${test_name}[[:space:]]*\\(" \
-    "$ROOT/contracts/mainnet-v2/mandate-registry/src"; then
-    echo "mainnet-v2 continuous negative gate is missing: $test_name" >&2
-    exit 1
-  fi
-done
-
 for variant in simple mainnet-v2 composites; do
   contract="$ROOT/contracts/$variant/mandate-registry"
   echo "==> $variant: format"
   cargo fmt --manifest-path "$contract/Cargo.toml" --all -- --check
   echo "==> $variant: lint"
-  cargo clippy --manifest-path "$contract/Cargo.toml" --locked --all-targets -- -D warnings
+  cargo clippy --manifest-path "$contract/Cargo.toml" --locked --all-targets --all-features -- -D warnings
+  if [[ "$variant" == "mainnet-v2" ]]; then
+    echo "==> mainnet-v2: exact required test manifest"
+    expected_tests="$(LC_ALL=C sort "$contract/tests.required")"
+    actual_tests="$(
+      cargo test \
+        --manifest-path "$contract/Cargo.toml" \
+        --locked \
+        --features release-wasm-test \
+        -- --list 2>/dev/null |
+        sed -n 's/: test$//p' |
+        LC_ALL=C sort
+    )"
+    if [[ "$actual_tests" != "$expected_tests" ]]; then
+      echo "mainnet-v2 required test manifest changed:" >&2
+      diff -u <(printf '%s\n' "$expected_tests") <(printf '%s\n' "$actual_tests") >&2 || true
+      exit 1
+    fi
+  fi
   echo "==> $variant: tests"
   cargo test --manifest-path "$contract/Cargo.toml" --locked
   echo "==> $variant: release WASM"
@@ -73,6 +65,18 @@ for variant in simple mainnet-v2 composites; do
       --optimize
 
     wasm="$contract/target/wasm32v1-none/release/mandate_registry.wasm"
+    expected_wasm_size='15405'
+    actual_wasm_size="$(wc -c <"$wasm" | tr -d '[:space:]')"
+    if [[ "$actual_wasm_size" != "$expected_wasm_size" ]]; then
+      echo "mainnet-v2 optimized WASM size changed: $actual_wasm_size" >&2
+      exit 1
+    fi
+    expected_wasm_hash='46ec350154e75c0cd13cbb28521c174ee62109174bccdd60bdef78cfbe88951c'
+    actual_wasm_hash="$(shasum -a 256 "$wasm" | awk '{print $1}')"
+    if [[ "$actual_wasm_hash" != "$expected_wasm_hash" ]]; then
+      echo "mainnet-v2 optimized WASM hash changed: $actual_wasm_hash" >&2
+      exit 1
+    fi
     interface="$(stellar contract info interface --wasm "$wasm" --output json)"
     expected_interface_hash='69c201ce1fb089ccfef06f125826b0aeba72af1b1536cb0b19e8cb05970ee805'
     actual_interface_hash="$(jq -S -c . <<<"$interface" | shasum -a 256 | awk '{print $1}')"
@@ -95,6 +99,14 @@ for variant in simple mainnet-v2 composites; do
       echo "$actual_events" >&2
       exit 1
     fi
+
+    echo "==> mainnet-v2: execute exact optimized release WASM"
+    MAINNET_V2_RELEASE_WASM="$wasm" cargo test \
+      --manifest-path "$contract/Cargo.toml" \
+      --locked \
+      --features release-wasm-test \
+      test::optimized_release_wasm_executes_reviewed_enforcement_surface \
+      -- --exact
   else
     cargo build --manifest-path "$contract/Cargo.toml" --locked --target wasm32v1-none --release
   fi

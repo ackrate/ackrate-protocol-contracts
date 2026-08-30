@@ -14,7 +14,11 @@ pub const MAX_MANDATE_LIFETIME_SECONDS: u64 = 30 * SECONDS_PER_DAY;
 const DAY_IN_LEDGERS: u32 = 17_280;
 const TTL_THRESHOLD: u32 = 30 * DAY_IN_LEDGERS;
 pub(crate) const TTL_EXTEND: u32 = 120 * DAY_IN_LEDGERS;
-pub const SCHEMA_VERSION: u32 = 1;
+// Version 1 belongs to the predecessor layout, which keyed mandates directly
+// by the credential commitment and had no credential-use or asset-policy keys.
+// Keeping this generation distinct makes an accidental predecessor upgrade
+// fail closed before any mixed-layout state can be read or written.
+pub const SCHEMA_VERSION: u32 = 2;
 pub const MANDATE_ID_DOMAIN_VERSION: u32 = 1;
 
 pub fn bump_contract(env: &Env) {

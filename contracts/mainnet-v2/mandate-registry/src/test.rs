@@ -363,13 +363,13 @@ fn constructor_sets_admin_and_unpaused_state() {
     let w = setup();
     assert_eq!(w.client().get_admin(), w.admin);
     assert!(!w.client().is_paused());
-    assert_eq!(w.client().get_schema_version(), 1);
+    assert_eq!(w.client().get_schema_version(), 2);
     assert!(w.client().is_asset_allowed(&w.asset));
     assert_eq!(
         w.env.as_contract(&w.contract, || {
             crate::storage::get_schema_version(&w.env)
         }),
-        Some(1)
+        Some(2)
     );
 }
 
@@ -388,6 +388,38 @@ fn missing_schema_blocks_mandates_but_preserves_admin_recovery() {
         w.client().try_get_schema_version(),
         Err(Ok(Error::InvalidState))
     );
+    w.pause();
+    assert!(w.client().is_paused());
+}
+
+#[test]
+fn predecessor_schema_fails_closed_before_state_access() {
+    let w = setup();
+    w.register();
+    let legacy_mandate = w.client().get_mandate(&w.id);
+    let legacy_id = w.vc_hash.clone();
+    w.env.as_contract(&w.contract, || {
+        crate::storage::set_mandate(&w.env, &legacy_id, &legacy_mandate);
+        w.env
+            .storage()
+            .instance()
+            .set(&crate::storage::DataKey::SchemaVersion, &1_u32);
+    });
+
+    assert_eq!(w.register_error(EXPIRY + 1), Error::InvalidState as u32);
+    assert_eq!(
+        w.client().try_get_mandate(&legacy_id),
+        Err(Ok(Error::InvalidState))
+    );
+    assert_eq!(
+        w.principal(&w.agent)
+            .execute_error(&w.contract, &legacy_id, &SPEND, &0),
+        Error::InvalidState as u32
+    );
+    assert_eq!(w.balance(&w.merchant), 0);
+
+    // Administrative recovery remains available so an incompatible instance
+    // can be stopped without exposing mandate state or moving value.
     w.pause();
     assert!(w.client().is_paused());
 }
@@ -826,6 +858,21 @@ fn exhausted_status_then_rejected() {
 }
 
 #[test]
+fn exhausted_mandate_can_record_user_revocation_without_reopening_budget() {
+    let w = setup();
+    w.register();
+    w.execute(MAX, 0);
+    assert_eq!(w.client().get_mandate(&w.id).status, Status::Exhausted);
+
+    w.revoke();
+    let revoked = w.client().get_mandate(&w.id);
+    assert_eq!(revoked.status, Status::Revoked);
+    assert_eq!(revoked.spent, MAX);
+    assert_eq!(w.execute_error(1, 1), Error::MandateRevoked as u32);
+    assert_eq!(w.balance(&w.merchant), MAX);
+}
+
+#[test]
 fn insufficient_allowance_blocks_payment() {
     let w = setup();
     // Within the contract's budget, but the SEP-41 allowance is the hard ceiling.
@@ -1173,4 +1220,62 @@ fn state_machine_runs_thousands_of_real_host_transitions() {
         );
         assert_eq!(c.get_mandate(&id), exhausted);
     }
+}
+
+/// Executed separately by the repository gate after the optimized artifact is
+/// built. This registers the exact release bytes in the Soroban host and calls
+/// them through the generated public client.
+#[cfg(feature = "release-wasm-test")]
+#[test]
+fn optimized_release_wasm_executes_reviewed_enforcement_surface() {
+    let wasm_path = std::env::var("MAINNET_V2_RELEASE_WASM")
+        .expect("MAINNET_V2_RELEASE_WASM must point to the optimized artifact");
+    let wasm = std::fs::read(wasm_path).expect("optimized release WASM must be readable");
+
+    let env = Env::default();
+    env.ledger().set_timestamp(NOW);
+    let admin = env.register(Principal, ());
+    let asset_admin = env.register(Principal, ());
+    let asset = env
+        .register_stellar_asset_contract_v2(asset_admin.clone())
+        .address();
+    let registry = env.register(wasm.as_slice(), (admin, asset.clone()));
+    let user = env.register(Principal, ());
+    let agent = env.register(Principal, ());
+    let merchant = Address::generate(&env);
+    let vc_hash = BytesN::from_array(&env, &[0xA4; 32]);
+    let client = MandateRegistryClient::new(&env, &registry);
+
+    assert_eq!(client.get_schema_version(), 2);
+    assert!(client.is_asset_allowed(&asset));
+    assert!(client
+        .try_register_mandate(&user, &agent, &merchant, &asset, &MAX, &EXPIRY, &vc_hash,)
+        .is_err());
+
+    PrincipalClient::new(&env, &asset_admin).mint(&asset, &user, &FUNDED);
+    PrincipalClient::new(&env, &user).approve(&asset, &registry, &SPEND, &100_000);
+    let id = PrincipalClient::new(&env, &user).register(
+        &registry, &agent, &merchant, &asset, &MAX, &EXPIRY, &vc_hash,
+    );
+    PrincipalClient::new(&env, &agent).execute(&registry, &id, &SPEND, &0);
+    assert_eq!(
+        env.events()
+            .all()
+            .filter_by_contract(&registry)
+            .events()
+            .len(),
+        1
+    );
+    assert_eq!(TokenClient::new(&env, &asset).balance(&merchant), SPEND);
+    let committed = client.get_mandate(&id);
+    assert_eq!((committed.spent, committed.seq), (SPEND, 1));
+
+    // The exact release bytes must preserve atomic rollback when the real SAC
+    // allowance is exhausted.
+    assert_ne!(
+        PrincipalClient::new(&env, &agent).execute_error(&registry, &id, &1, &1),
+        OK
+    );
+    assert_eq!(client.get_mandate(&id), committed);
+    assert_eq!(TokenClient::new(&env, &asset).balance(&merchant), SPEND);
 }

@@ -1,7 +1,7 @@
-//! Reentrancy regression test — a malicious SEP-41 asset reenters
-//! `execute_payment` during `transfer_from`. Soroban's host prohibits contract
-//! reentry; this pins that protocol behavior while checks-effects-interactions
-//! keeps the registry safe if the external token call fails.
+//! Malicious-callback regression test — a hostile SEP-41-shaped asset attempts
+//! a nested `execute_payment` during `transfer_from`. The test does not assume
+//! why the host rejects the nested call; it proves the attempt cannot consume a
+//! second budget/sequence step or corrupt the committed outer payment.
 #![cfg(test)]
 
 use soroban_sdk::testutils::{Address as _, Ledger as _};
@@ -43,14 +43,14 @@ impl EvilToken {
 }
 
 #[test]
-fn reentrancy_via_evil_token() {
+fn malicious_token_callback_is_bounded_and_atomic() {
     let env = Env::default();
     env.ledger().set_timestamp(1_000);
 
     let admin = env.register(Principal, ());
     let evil = env.register(EvilToken, ());
-    // The custom asset is admitted explicitly so this regression test reaches
-    // Soroban's host-level contract-reentry prohibition.
+    // The custom asset is admitted explicitly so the callback attempt reaches
+    // the registry during settlement.
     let registry = env.register(MandateRegistry, (admin, evil.clone()));
 
     let user = env.register(Principal, ());
@@ -77,8 +77,8 @@ fn reentrancy_via_evil_token() {
     assert!(EvilTokenClient::new(&env, &evil).reentry_rejected());
 
     let m = client.get_mandate(&id);
-    // If host reentry prohibition regressed, spent/seq could advance twice.
-    // Panic encodes the observed values into the failure message either way.
+    // Regardless of which host rule rejects the nested attempt, only the outer
+    // payment may consume state.
     assert_eq!(
         (m.spent, m.seq),
         (10_000_000i128, 1u32),
