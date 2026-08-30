@@ -10,9 +10,15 @@ if ! command -v "$CARGO_AUDIT" >/dev/null 2>&1; then
   exit 1
 fi
 
-for contract in mandate-registry timelock-controller; do
-  manifest="$ROOT/contracts/mainnet/$contract/Cargo.toml"
-  lockfile="$ROOT/contracts/mainnet/$contract/Cargo.lock"
+contracts=(
+  "mainnet/mandate-registry"
+  "mainnet/timelock-controller"
+  "mainnet-v2/mandate-registry"
+)
+
+for contract in "${contracts[@]}"; do
+  manifest="$ROOT/contracts/$contract/Cargo.toml"
+  lockfile="$ROOT/contracts/$contract/Cargo.lock"
 
   echo "==> $contract: dependency vulnerabilities, yanked crates, and unexpected warnings"
   "$CARGO_AUDIT" audit \

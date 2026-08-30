@@ -13,9 +13,9 @@ Mainnet canary deployment: [`docs/mainnet-canary-deployment.md`](docs/mainnet-ca
 Mainnet planning: [`docs/mainnet-roadmap.md`](docs/mainnet-roadmap.md)
 
 Mainnet v2 refactor specification:
-[`contracts/mainnet-v2/README.md`](contracts/mainnet-v2/README.md). The T2 design
-is approved, implementation is next, and nothing in this folder is deployed to
-Stellar mainnet.
+[`contracts/mainnet-v2/README.md`](contracts/mainnet-v2/README.md). The condensed
+single-contract review baseline is implemented and gated; nothing in this
+folder is deployed to Stellar mainnet.
 
 Mainnet security review:
 
