@@ -1,5 +1,7 @@
 # Mainnet v2 MandateRegistry
 
+[![Contract Gate Check](https://github.com/ackrate/ackrate-protocol-contracts/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ackrate/ackrate-protocol-contracts/actions/workflows/ci.yml?query=branch%3Amain)
+
 ## Status
 
 `0.4.1` is ACKRATE's condensed MandateRegistry review candidate on `main`.
@@ -10,6 +12,32 @@ remain disabled, and `contracts/simple` remains unchanged.
 
 V2 is one contract with one payment path. The contract—not the SDK, agent,
 cache, x402 adapter, or merchant server—is the enforcement layer.
+
+> [!IMPORTANT]
+> **Evidence-backed release posture:** every confirmed finding from eight
+> completed review rounds is repaired, its regression is locked where
+> applicable, and the complete local gate is green. This is strong release
+> evidence, not a claim that unknown defects are mathematically impossible.
+
+## Why V2 is smaller and sharper
+
+V2 was rebuilt from the proven Simple behavior without changing
+`contracts/simple`. The refactor follows Soroban and Stellar primitives instead
+of adding framework layers:
+
+| Design choice | What it achieves |
+|---|---|
+| One `MandateRegistry` contract | No timelock contract, upgrade queue, plugin system, or second settlement route. |
+| Enforcement centered in `lib.rs` | The complete authorization, budget, sequence, expiry, asset, merchant, transfer, and receipt path is readable in one place. |
+| Storage isolated in `storage.rs` | One schema owner, bounded persistent entries, explicit TTL renewal, and no caller-sized collection traversal. |
+| Small typed boundaries | `error.rs`, `types.rs`, and `events.rs` contain only stable errors, durable values, and contract-spec events. |
+| Native Soroban authorization | Users, agents, and the administrator must authorize through contract principals; the SDK is never trusted as authority. |
+| Atomic SEP-41 settlement | State consumption, token transfer, and the typed receipt succeed together or roll back together. |
+| Wire-format independence | x402 request shapes stay outside contract storage and the public mandate interface, so the adapter can evolve separately. |
+| Paused, native upgrade path | Same-address WASM replacement requires the 2-of-3 administrator and an already-paused contract. |
+
+The result is a five-file production kernel with one money-moving function,
+18 locked public functions, 9 typed events, and no alternate payment surface.
 
 ## 1,000-Review Campaign: Completed Evidence
 
