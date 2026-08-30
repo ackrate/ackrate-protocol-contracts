@@ -1,0 +1,13 @@
+.git/
+.github/
+.vercel/
+.env.local
+**/node_modules/
+**/target/
+**/test_snapshots/
+contracts/
+docs/
+scripts/
+release-artifact/
+README.md
+rust-toolchain.toml

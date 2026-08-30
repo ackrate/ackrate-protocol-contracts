@@ -1,0 +1,60 @@
+name: Vercel Web Deployment
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main, prod]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vercel-${{ github.repository }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm install --global vercel@59.5.0
+      - run: vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+        env: &vercel-env
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - run: vercel build --token="$VERCEL_TOKEN"
+        env: *vercel-env
+      - run: vercel deploy --prebuilt --token="$VERCEL_TOKEN"
+        env: *vercel-env
+
+  production:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm install --global vercel@59.5.0
+      - run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+        env: &vercel-env
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - run: vercel build --prod --token="$VERCEL_TOKEN"
+        env: *vercel-env
+      - run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+        env: *vercel-env

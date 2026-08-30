@@ -8,9 +8,7 @@ use soroban_sdk::testutils::{Address as _, Ledger as _};
 use soroban_sdk::token::{StellarAssetClient, TokenClient};
 use soroban_sdk::{symbol_short, Address, Bytes, BytesN, Env, IntoVal};
 
-use crate::{
-    Error, MandateRegistry, MandateRegistryClient, PendingUpgrade, Status, UPGRADE_DELAY_SECONDS,
-};
+use crate::{Error, MandateRegistry, MandateRegistryClient, Status};
 
 const NOW: u64 = 1_000;
 const EXPIRY: u64 = 10_000;
@@ -232,41 +230,13 @@ fn admin_methods_require_authorization() {
     assert!(c.try_pause().is_err());
     assert!(c.try_unpause().is_err());
     assert!(c.try_set_admin(&replacement).is_err());
-    assert!(c.try_schedule_upgrade(&wasm_hash).is_err());
-    assert!(c.try_cancel_upgrade().is_err());
-    assert!(c.try_execute_upgrade().is_err());
+    assert!(c.try_upgrade(&wasm_hash).is_err());
     assert!(!c.is_paused());
     assert_eq!(c.get_admin(), w.admin);
 }
 
 #[test]
-fn cancel_and_execute_require_authorization_with_ready_upgrade() {
-    let w = setup();
-    let c = w.client();
-    w.register();
-    let mandate_before = c.get_mandate(&w.id);
-    let wasm_hash = w
-        .env
-        .deployer()
-        .upload_contract_wasm(replacement_wasm(&w.env));
-    let execute_after = c.schedule_upgrade(&wasm_hash);
-    c.pause();
-    w.env.ledger().set_timestamp(execute_after);
-    let pending_before = c.get_pending_upgrade();
-
-    w.env.set_auths(&[]);
-
-    assert!(matches!(c.try_cancel_upgrade(), Err(Err(_))));
-    assert_eq!(c.get_pending_upgrade(), pending_before);
-    assert!(matches!(c.try_execute_upgrade(), Err(Err(_))));
-    assert_eq!(c.get_pending_upgrade(), pending_before);
-    assert!(c.is_paused());
-    assert_eq!(c.get_admin(), w.admin);
-    assert_eq!(c.get_mandate(&w.id), mandate_before);
-}
-
-#[test]
-fn timelocked_upgrade_replaces_wasm_at_same_address_and_preserves_storage() {
+fn admin_upgrade_replaces_wasm_at_same_address_and_preserves_storage() {
     let w = setup();
     let c = w.client();
     w.register();
@@ -278,26 +248,7 @@ fn timelocked_upgrade_replaces_wasm_at_same_address_and_preserves_storage() {
         .env
         .deployer()
         .upload_contract_wasm(replacement_wasm(&w.env));
-    let execute_after = c.schedule_upgrade(&wasm_hash);
-    assert_eq!(execute_after, NOW + UPGRADE_DELAY_SECONDS);
-    assert_eq!(
-        c.get_pending_upgrade(),
-        Some(PendingUpgrade {
-            wasm_hash: wasm_hash.clone(),
-            execute_after,
-        })
-    );
-
-    w.env.ledger().set_timestamp(execute_after - 1);
-    assert_eq!(c.try_execute_upgrade(), Err(Ok(Error::UpgradeNotReady)));
-    w.env.ledger().set_timestamp(execute_after);
-    assert_eq!(
-        c.try_execute_upgrade(),
-        Err(Ok(Error::UpgradeRequiresPause))
-    );
-
-    c.pause();
-    c.execute_upgrade();
+    c.upgrade(&wasm_hash);
 
     let sum: u64 = w.env.invoke_contract(
         &contract_before,
@@ -307,17 +258,15 @@ fn timelocked_upgrade_replaces_wasm_at_same_address_and_preserves_storage() {
     assert_eq!(sum, 5);
     assert_eq!(w.contract, contract_before);
 
-    let (admin, paused, pending, mandate_after) = w.env.as_contract(&w.contract, || {
+    let (admin, paused, mandate_after) = w.env.as_contract(&w.contract, || {
         (
             crate::storage::get_admin(&w.env),
             crate::storage::is_paused(&w.env),
-            crate::storage::get_pending_upgrade(&w.env),
             crate::storage::get_mandate(&w.env, w.id.clone()).unwrap(),
         )
     });
     assert_eq!(admin, w.admin);
-    assert!(paused);
-    assert_eq!(pending, None);
+    assert!(!paused);
     assert_eq!(mandate_after, mandate_before);
 }
 

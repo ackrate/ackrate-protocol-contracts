@@ -3,9 +3,7 @@
 
 use soroban_sdk::{contracttype, Address, BytesN, Env};
 
-use crate::admin::PendingUpgrade;
-use crate::error::Error;
-use crate::mandate::Mandate;
+use crate::{Error, Mandate};
 
 // ~5s ledgers → bump TTL well past a typical mandate's life.
 const DAY_IN_LEDGERS: u32 = 17_280;
@@ -16,7 +14,6 @@ const TTL_EXTEND: u32 = 30 * DAY_IN_LEDGERS;
 pub enum DataKey {
     Admin,
     Paused,
-    PendingUpgrade,
     Mandate(BytesN<32>),
 }
 
@@ -37,20 +34,6 @@ pub fn is_paused(env: &Env) -> bool {
         .instance()
         .get(&DataKey::Paused)
         .unwrap_or(false)
-}
-
-pub fn set_pending_upgrade(env: &Env, pending: &PendingUpgrade) {
-    env.storage()
-        .instance()
-        .set(&DataKey::PendingUpgrade, pending);
-}
-
-pub fn get_pending_upgrade(env: &Env) -> Option<PendingUpgrade> {
-    env.storage().instance().get(&DataKey::PendingUpgrade)
-}
-
-pub fn remove_pending_upgrade(env: &Env) {
-    env.storage().instance().remove(&DataKey::PendingUpgrade);
 }
 
 pub fn has_mandate(env: &Env, id: &BytesN<32>) -> bool {

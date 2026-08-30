@@ -6,32 +6,50 @@
 //! validates-and-consumes the mandate atomically before transferring. The SDK
 //! is untrusted; this contract is the source of truth.
 //!
-//! Module responsibilities (dependencies flow ONE way, no cycles):
-//!
-//!   lib  →  {registry, payment}  →  storage  →  mandate / error
-//!                  └────────────→  events  (leaf; anyone may emit)
-//!
-//!  - `lib`      — contract entry points only: thin dispatch, no logic.
-//!  - `mandate`  — the `Mandate` type (pure data).
-//!  - `storage`  — `DataKey` + all get/set/TTL (the ONLY module touching env.storage).
-//!  - `registry` — register / revoke (allowance funding model).
-//!  - `payment`  — validate_mandate + execute_payment + the token transfer.
-//!  - `error`    — typed errors.
-//!  - `events`   — emitted events.
-
-mod admin;
-mod error;
-mod events;
-mod mandate;
-mod payment;
-mod registry;
 mod storage;
 
-pub use admin::{PendingUpgrade, UPGRADE_DELAY_SECONDS};
-pub use error::Error;
-pub use mandate::{Mandate, Status};
+use soroban_sdk::token::TokenClient;
+use soroban_sdk::{
+    contract, contracterror, contractimpl, contracttype, symbol_short, Address, BytesN, Env,
+};
 
-use soroban_sdk::{contract, contractimpl, Address, BytesN, Env};
+#[contracterror]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[repr(u32)]
+pub enum Error {
+    AlreadyExists = 1,
+    NotFound = 2,
+    MandateExpired = 4,
+    MandateRevoked = 5,
+    BudgetExceeded = 6,
+    MerchantOutOfScope = 7,
+    BadSequence = 8,
+    InvalidAmount = 9,
+    Paused = 10,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, PartialEq)]
+pub struct Mandate {
+    pub user: Address,
+    pub agent: Address,
+    pub merchant: Address,
+    pub asset: Address,
+    pub max_amount: i128,
+    pub spent: i128,
+    pub expiry: u64,
+    pub seq: u32,
+    pub status: Status,
+    pub vc_hash: BytesN<32>,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, PartialEq)]
+pub enum Status {
+    Active,
+    Revoked,
+    Exhausted,
+}
 
 #[contract]
 pub struct MandateRegistry;
@@ -47,52 +65,50 @@ impl MandateRegistry {
 
     /// Current operational administrator.
     pub fn get_admin(env: Env) -> Address {
-        admin::get_admin(&env)
+        storage::get_admin(&env)
     }
 
     /// Rotate operational authority. Authorized by the current administrator.
     pub fn set_admin(env: Env, new_admin: Address) {
-        admin::set_admin(&env, new_admin)
+        let current = storage::get_admin(&env);
+        current.require_auth();
+        storage::set_admin(&env, &new_admin);
+        env.events().publish((symbol_short!("admin"),), new_admin);
     }
 
     /// Emergency stop for the sole money-moving path.
     pub fn pause(env: Env) {
-        admin::pause(&env)
+        let admin = storage::get_admin(&env);
+        admin.require_auth();
+        if !storage::is_paused(&env) {
+            storage::set_paused(&env, true);
+            env.events().publish((symbol_short!("paused"), admin), ());
+        }
     }
 
     /// Restore the money-moving path after an emergency stop.
     pub fn unpause(env: Env) {
-        admin::unpause(&env)
+        let admin = storage::get_admin(&env);
+        admin.require_auth();
+        if storage::is_paused(&env) {
+            storage::set_paused(&env, false);
+            env.events().publish((symbol_short!("unpaused"), admin), ());
+        }
     }
 
     /// Read the emergency-stop state without authorization.
     pub fn is_paused(env: Env) -> bool {
-        admin::is_paused(&env)
+        storage::is_paused(&env)
     }
 
-    /// Schedule a same-address WASM upgrade after the fixed one-hour delay.
-    pub fn schedule_upgrade(env: Env, new_wasm_hash: BytesN<32>) -> Result<u64, Error> {
-        admin::schedule_upgrade(&env, new_wasm_hash)
-    }
-
-    /// Cancel the currently scheduled upgrade.
-    pub fn cancel_upgrade(env: Env) -> Result<(), Error> {
-        admin::cancel_upgrade(&env)
-    }
-
-    /// Execute the scheduled upgrade after the delay while the contract is paused.
-    pub fn execute_upgrade(env: Env) -> Result<(), Error> {
-        admin::execute_upgrade(&env)
-    }
-
-    /// Read the pending upgrade, including hash and earliest execution time.
-    pub fn get_pending_upgrade(env: Env) -> Option<PendingUpgrade> {
-        storage::get_pending_upgrade(&env)
-    }
-
-    /// Fixed timelock duration in seconds.
-    pub fn get_upgrade_delay(_env: Env) -> u64 {
-        UPGRADE_DELAY_SECONDS
+    /// Replace this contract's WASM at the same address. The current admin is
+    /// the sole authority; account thresholds provide any desired multisig.
+    pub fn upgrade(env: Env, new_wasm_hash: BytesN<32>) {
+        let admin = storage::get_admin(&env);
+        admin.require_auth();
+        env.events()
+            .publish((symbol_short!("upgrade"), admin), new_wasm_hash.clone());
+        env.deployer().update_current_contract_wasm(new_wasm_hash);
     }
 
     /// Store a user-signed mandate from its authorized parameters. The contract
@@ -109,9 +125,32 @@ impl MandateRegistry {
         expiry: u64,
         vc_hash: BytesN<32>,
     ) -> Result<BytesN<32>, Error> {
-        registry::register_mandate(
-            &env, user, agent, merchant, asset, max_amount, expiry, vc_hash,
-        )
+        user.require_auth();
+        if max_amount <= 0 {
+            return Err(Error::InvalidAmount);
+        }
+        if expiry <= env.ledger().timestamp() {
+            return Err(Error::MandateExpired);
+        }
+        if storage::has_mandate(&env, &vc_hash) {
+            return Err(Error::AlreadyExists);
+        }
+        let mandate = Mandate {
+            user: user.clone(),
+            agent,
+            merchant,
+            asset,
+            max_amount,
+            spent: 0,
+            expiry,
+            seq: 0,
+            status: Status::Active,
+            vc_hash: vc_hash.clone(),
+        };
+        storage::set_mandate(&env, &vc_hash, &mandate);
+        env.events()
+            .publish((symbol_short!("register"), user), vc_hash.clone());
+        Ok(vc_hash)
     }
 
     /// Read-only preflight — would this spend be permitted right now? Mutates
@@ -123,7 +162,8 @@ impl MandateRegistry {
         amount: i128,
         merchant: Address,
     ) -> Result<(), Error> {
-        payment::validate_mandate(&env, mandate_id, amount, merchant)
+        let mandate = storage::get_mandate(&env, mandate_id)?;
+        check_mandate(&env, &mandate, amount, &merchant)
     }
 
     /// The only money path. Atomic: require_auth(agent) → replay guard
@@ -137,18 +177,73 @@ impl MandateRegistry {
         amount: i128,
         expected_seq: u32,
     ) -> Result<(), Error> {
-        payment::execute_payment(&env, mandate_id, amount, expected_seq)
+        if storage::is_paused(&env) {
+            return Err(Error::Paused);
+        }
+        let mut mandate = storage::get_mandate(&env, mandate_id.clone())?;
+        mandate.agent.require_auth();
+        if expected_seq != mandate.seq {
+            return Err(Error::BadSequence);
+        }
+        let merchant = mandate.merchant.clone();
+        check_mandate(&env, &mandate, amount, &merchant)?;
+        mandate.spent += amount;
+        mandate.seq += 1;
+        if mandate.spent == mandate.max_amount {
+            mandate.status = Status::Exhausted;
+        }
+        storage::set_mandate(&env, &mandate_id, &mandate);
+        TokenClient::new(&env, &mandate.asset).transfer_from(
+            &env.current_contract_address(),
+            &mandate.user,
+            &merchant,
+            &amount,
+        );
+        env.events()
+            .publish((symbol_short!("payment"), merchant), (mandate_id, amount));
+        Ok(())
     }
 
     /// User withdraws consent; marks the mandate Revoked. Authorized by the user.
     pub fn revoke_mandate(env: Env, mandate_id: BytesN<32>) -> Result<(), Error> {
-        registry::revoke_mandate(&env, mandate_id)
+        let mut mandate = storage::get_mandate(&env, mandate_id.clone())?;
+        mandate.user.require_auth();
+        mandate.status = Status::Revoked;
+        storage::set_mandate(&env, &mandate_id, &mandate);
+        env.events().publish((symbol_short!("revoke"),), mandate_id);
+        Ok(())
     }
 
     /// Read-only accessor for the stored mandate (inspection / preflight).
     pub fn get_mandate(env: Env, mandate_id: BytesN<32>) -> Result<Mandate, Error> {
         storage::get_mandate(&env, mandate_id)
     }
+}
+
+fn check_mandate(
+    env: &Env,
+    mandate: &Mandate,
+    amount: i128,
+    merchant: &Address,
+) -> Result<(), Error> {
+    if amount <= 0 {
+        return Err(Error::InvalidAmount);
+    }
+    match mandate.status {
+        Status::Revoked => return Err(Error::MandateRevoked),
+        Status::Exhausted => return Err(Error::BudgetExceeded),
+        Status::Active => {}
+    }
+    if env.ledger().timestamp() >= mandate.expiry {
+        return Err(Error::MandateExpired);
+    }
+    if *merchant != mandate.merchant {
+        return Err(Error::MerchantOutOfScope);
+    }
+    if mandate.spent + amount > mandate.max_amount {
+        return Err(Error::BudgetExceeded);
+    }
+    Ok(())
 }
 
 #[cfg(test)]

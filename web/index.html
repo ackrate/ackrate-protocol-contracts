@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Review and co-sign an Ackrate mainnet upgrade transaction with Freighter." />
+    <title>Ackrate Upgrade Signer</title>
+  </head>
+  <body>
+    <main>
+      <header>
+        <span class="eyebrow">ACKRATE · MAINNET</span>
+        <h1>Upgrade signer</h1>
+        <p>Inspect an encoded transaction, verify its network and operation, then add your signature with Freighter.</p>
+      </header>
+
+      <section class="warning">
+        <strong>Verify out of band.</strong> Compare the contract ID, WASM SHA-256, source account, sequence, and transaction hash with the release coordinator before signing.
+      </section>
+
+      <section class="card">
+        <label for="xdr">Transaction envelope XDR</label>
+        <textarea id="xdr" rows="8" spellcheck="false" placeholder="Paste the base64 transaction envelope…"></textarea>
+        <div class="actions">
+          <button id="inspect">Inspect</button>
+          <button id="sign" class="primary" disabled>Sign with Freighter</button>
+        </div>
+      </section>
+
+      <section id="review" class="card hidden" aria-live="polite">
+        <h2>Review</h2>
+        <dl>
+          <div><dt>Network</dt><dd id="network"></dd></div>
+          <div><dt>Source</dt><dd id="source"></dd></div>
+          <div><dt>Sequence</dt><dd id="sequence"></dd></div>
+          <div><dt>Fee</dt><dd id="fee"></dd></div>
+          <div><dt>Signatures</dt><dd id="signatures"></dd></div>
+          <div><dt>Transaction hash</dt><dd id="hash"></dd></div>
+          <div><dt>Contract</dt><dd id="contract"></dd></div>
+          <div><dt>Function</dt><dd id="function"></dd></div>
+          <div><dt>New WASM hash</dt><dd id="wasm-hash"></dd></div>
+        </dl>
+      </section>
+
+      <section id="result" class="card hidden">
+        <label for="signed-xdr">Signed envelope XDR</label>
+        <textarea id="signed-xdr" rows="8" readonly></textarea>
+        <button id="copy">Copy signed XDR</button>
+      </section>
+      <p id="status" role="status"></p>
+    </main>
+    <script type="module" src="/src.js"></script>
+  </body>
+</html>

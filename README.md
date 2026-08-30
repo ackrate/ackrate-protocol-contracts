@@ -66,38 +66,29 @@ flowchart LR
 | [`contracts/simple`](contracts/simple) | [`CCHQ5G4Y…CZRM`](https://stellar.expert/explorer/testnet/contract/CCHQ5G4Y4YBMY6D3TYYJSVJVCKUM22Q6TMKCCHVAHY4X7K6QELQACZRM) — release `0.2.3` | [`CB4KOTLG…7ZOA`](https://stellar.expert/explorer/testnet/contract/CB4KOTLGMM5JEPFPU6QBJLADIBP3RSGUX44FOYTFRICNXKKFPYIW7ZOA) — immutable `v0.1.0` |
 | [`contracts/composites`](contracts/composites) | [`CCYRF7FK…HEYW`](https://stellar.expert/explorer/testnet/contract/CCYRF7FKYGSNWX5I7WLYXZ6LNUNVCSPE4BOTQFVWVTABOHAP52DYHEYW) — release `0.3.0` | [`CBALARHT…WOQX`](https://stellar.expert/explorer/testnet/contract/CBALARHTO5D7JLWHZ5KST4QNIRC64JI5H3DQDHMIUBSRLLOVS6FCWOQX) — immutable `v0.2.0` |
 
-Both contracts keep the crate name `mandate-registry`, but their package versions and release tags are distinct. The historical deployments remain available as **immutable source anchors**; the current deployments add **pause**, **authority rotation**, and **timelocked same-address upgrades**.
+Both contracts keep the crate name `mandate-registry`, but their package versions and release tags are distinct. The historical deployments remain available as **immutable source anchors**. The next Simple mainnet candidate uses a direct admin-authenticated same-address upgrade; the Composite release retains its timelock.
 
 ---
 
-## Shared upgrade controls
+## Upgrade controls
 
-Both current contracts bolt on the same operational surface — **without touching existing mandate or pool encodings**.
+The Simple and Composite variants intentionally have different governance.
 
-### Upgrade Lifecycle — Fixed Timelock, No Exceptions
+### Simple: direct 2-of-3-admin upgrade
 
 ```mermaid
 stateDiagram-v2
     direction LR
     [*] --> Active : __constructor(admin)
 
-    Active --> UpgradeScheduled : schedule_upgrade(wasm_hash)\n🔑 admin only
-    UpgradeScheduled --> Active : cancel_upgrade()\n🔑 admin only
-    UpgradeScheduled --> Timelock : ⏳ fixed contract delay
-
-    state Timelock {
-        [*] --> Waiting
-        Waiting --> Ready : delay elapsed
-    }
-
-    Timelock --> Executed : execute_upgrade()\n🔑 admin + ⏸️ paused + ⏳ elapsed
+    Active --> Executed : upgrade(wasm_hash)\n🔑 admin require_auth
     Executed --> Active : ♻️ new WASM\nsame contract ID\nstorage preserved
 ```
 
-**Three gates on `execute_upgrade`:** current admin authorization, elapsed fixed
-delay, and paused state. The current Simple testnet contract enforces 3,600
-seconds; the Composite contract enforces 86,400 seconds. Contract ID and storage
-survive the swap.
+Simple has no schedule, cancellation, pending state, fixed delay, or pause gate.
+For mainnet its admin is a Stellar G-account with three weight-1 keys and all
+thresholds set to 2. Any two account signers can therefore authorize `upgrade`.
+The Composite contract retains its separate 86,400-second scheduled lifecycle.
 
 ### Emergency Stop — Pause State Machine
 
@@ -151,17 +142,21 @@ flowchart TB
 |---|---|---|
 | `Admin` | instance `Address` | Set by the constructor; authorizes pause, unpause, rotation, and the upgrade lifecycle. |
 | `Paused` | instance `bool` | Starts `false`; when `true`, money-moving entry points return `Paused = 10` before changing state. |
-| `PendingUpgrade` | instance `Option<PendingUpgrade>` | Stores the proposed WASM hash and its earliest execution timestamp. |
 | `__constructor` | `(admin: Address)` | Establishes the initial admin and active state atomically at deployment. |
 | `get_admin` | `() -> Address` | Returns the current operational authority. |
 | `set_admin` | `(new_admin: Address)` | Requires the current admin and transfers future control. |
 | `pause` / `unpause` | `() -> ()` | Require the current admin and are idempotent. |
 | `is_paused` | `() -> bool` | Exposes the emergency-stop state without authorization. |
-| `schedule_upgrade` | `(new_wasm_hash: BytesN<32>) -> u64` | Requires the current admin and starts the contract's fixed delay. |
-| `cancel_upgrade` | `() -> ()` | Requires the current admin and removes the pending upgrade. |
-| `execute_upgrade` | `() -> ()` | Requires the current admin, elapsed delay, and paused state; replaces WASM while preserving contract ID and storage. |
-| `get_pending_upgrade` | `() -> Option<PendingUpgrade>` | Returns the pending hash and earliest execution timestamp. |
-| `get_upgrade_delay` | `() -> u64` | Returns `3,600` seconds for Simple and `86,400` seconds for Composite. |
+| `upgrade` (Simple) | `(new_wasm_hash: BytesN<32>) -> ()` | Requires current admin authorization and immediately replaces WASM while preserving contract ID and storage. |
+
+See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for the mainnet 2-of-3 setup,
+deployment, co-signing, self-upgrade, verification, and rollback playbook.
+
+The browser-only multisig review/signing helper is published at
+[`ackrate-ackrate-protocol-contracts-f85d4451.vercel.app`](https://ackrate-ackrate-protocol-contracts-f85d4451.vercel.app).
+It accepts mainnet transaction XDR, requires exactly one `upgrade(BytesN<32>)`
+invocation, displays the security-sensitive fields, and asks Freighter to append
+a signature. It does not accept secret keys or submit transactions.
 
 ---
 
@@ -204,11 +199,10 @@ flowchart LR
 
 Zero warnings tolerated. Same gate, local and CI.
 
-The current gate check runs **32 simple tests** and **64 composite tests**. Each
-suite includes a positive timelocked-upgrade lifecycle that uploads replacement
-WASM, proves early and unpaused execution fail, executes while paused, calls the
-replacement at the original contract ID, and confirms administrator, pause,
-pending-upgrade, and mandate storage behavior across the swap.
+The gate covers the full mandate/payment negative suite, reentrancy probes, and
+same-address replacement. Simple proves direct admin authorization and storage
+preservation across `upgrade`; Composite independently tests its scheduled,
+paused upgrade lifecycle.
 
 ---
 

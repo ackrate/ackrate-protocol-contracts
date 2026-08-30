@@ -1,7 +1,10 @@
 **/target/
 .DS_Store
 release-artifact/
-package-lock.json
+**/node_modules/
+**/dist/
 
 # Local agent/editor settings
 .claude/
+.vercel
+.env*
