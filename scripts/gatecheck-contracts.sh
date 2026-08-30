@@ -38,6 +38,14 @@ required_v2_negative_tests=(
   overspend_cumulative_rejected
   replay_stale_seq_rejected
   upgrade_requires_pause_without_changing_state
+  reviewed_asset_policy_is_enforced_on_registration_and_execution
+  credential_commitment_is_idempotent_across_changed_terms
+  mandate_identifier_is_bound_to_network_registry_user_and_terms
+  mandate_lifetime_is_bounded_below_persistence_target
+  missing_schema_blocks_mandates_but_preserves_admin_recovery
+  exact_budget_token_failure_rolls_back_exhaustion
+  amount_and_expiry_boundaries_cover_ten_thousand_real_host_cases
+  state_machine_runs_thousands_of_real_host_transitions
 )
 for test_name in "${required_v2_negative_tests[@]}"; do
   if ! grep -R -q -E --include='*.rs' \
@@ -66,7 +74,13 @@ for variant in simple mainnet-v2 composites; do
 
     wasm="$contract/target/wasm32v1-none/release/mandate_registry.wasm"
     interface="$(stellar contract info interface --wasm "$wasm" --output json)"
-    expected_functions=$'__constructor\nexecute_payment\nget_admin\nget_mandate\nis_paused\npause\nregister_mandate\nrevoke_mandate\nset_admin\nunpause\nupgrade\nvalidate_mandate'
+    expected_interface_hash='69c201ce1fb089ccfef06f125826b0aeba72af1b1536cb0b19e8cb05970ee805'
+    actual_interface_hash="$(jq -S -c . <<<"$interface" | shasum -a 256 | awk '{print $1}')"
+    if [[ "$actual_interface_hash" != "$expected_interface_hash" ]]; then
+      echo "mainnet-v2 full interface schema changed: $actual_interface_hash" >&2
+      exit 1
+    fi
+    expected_functions=$'__constructor\naccept_admin\nderive_mandate_id\nexecute_payment\nget_admin\nget_mandate\nget_pending_admin\nget_schema_version\nis_asset_allowed\nis_paused\npause\npropose_admin\nregister_mandate\nrevoke_mandate\nset_asset_allowed\nunpause\nupgrade\nvalidate_mandate'
     actual_functions="$(jq -r '.[].function_v0?.name // empty' <<<"$interface" | sort)"
     if [[ "$actual_functions" != "$expected_functions" ]]; then
       echo "mainnet-v2 exported function surface changed:" >&2
@@ -74,7 +88,7 @@ for variant in simple mainnet-v2 composites; do
       exit 1
     fi
 
-    expected_events=$'AdminSet\nMandateRegistered\nMandateRevoked\nPaused\nPaymentExecuted\nUnpaused\nUpgraded'
+    expected_events=$'AdminSet\nAdminTransferProposed\nAssetPolicyChanged\nMandateRegistered\nMandateRevoked\nPaused\nPaymentExecuted\nUnpaused\nUpgraded'
     actual_events="$(jq -r '.[].event_v0?.name // empty' <<<"$interface" | sort)"
     if [[ "$actual_events" != "$expected_events" ]]; then
       echo "mainnet-v2 exported event surface changed:" >&2

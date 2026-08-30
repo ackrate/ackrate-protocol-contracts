@@ -22,7 +22,14 @@ pub enum Error {
     BadSequence = 8,
     InvalidAmount = 9,
     Paused = 10,
-    // 11..=13 reserved for compatibility with the source contract's removed
-    // delayed-upgrade errors. Mainnet v2 has no timelock state or surface.
+    // 11..=13 remain reserved for the removed delayed-upgrade errors so clients
+    // never reinterpret a historical numeric code as a different failure.
     UpgradeRequiresPause = 14,
+    AssetNotAllowed = 15,
+    MandateTooLong = 16,
+    SequenceExhausted = 17,
+    AssetPolicyRequiresPause = 18,
+    InvalidState = 19,
+    NoPendingAdmin = 20,
+    AssetOutOfScope = 21,
 }

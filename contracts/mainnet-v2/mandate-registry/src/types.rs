@@ -2,6 +2,25 @@
 
 use soroban_sdk::{contracttype, Address, BytesN};
 
+/// Canonical, wire-format-neutral preimage for a mandate's on-chain identifier.
+/// Network and registry domains prevent an identifier from being replayed across
+/// deployments; the immutable terms prevent another user from squatting a
+/// disclosed credential hash under different payment terms.
+#[contracttype]
+#[derive(Clone)]
+pub(crate) struct MandateIdPreimage {
+    pub version: u32,
+    pub network_id: BytesN<32>,
+    pub registry: Address,
+    pub user: Address,
+    pub agent: Address,
+    pub merchant: Address,
+    pub asset: Address,
+    pub max_amount: i128,
+    pub expiry: u64,
+    pub vc_hash: BytesN<32>,
+}
+
 #[contracttype]
 #[derive(Clone, Debug, PartialEq)]
 pub struct Mandate {
@@ -22,8 +41,9 @@ pub struct Mandate {
     /// Monotonic replay guard for successful payments.
     pub seq: u32,
     pub status: Status,
-    /// Opaque mandate identifier. User authorization binds this identifier and
-    /// every other registration argument to the on-chain invocation.
+    /// Credential commitment and caller-supplied uniqueness source. The
+    /// on-chain mandate identifier is a domain-separated hash over this value
+    /// and every immutable mandate term.
     pub vc_hash: BytesN<32>,
 }
 

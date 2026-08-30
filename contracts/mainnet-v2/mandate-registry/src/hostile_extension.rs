@@ -69,25 +69,19 @@ impl World {
         let env = Env::default();
         env.ledger().set_timestamp(NOW);
         let admin = env.register(Principal, ());
-        let registry = env.register(MandateRegistry, (admin.clone(),));
-        let extension = env.register(HostileExtension, ());
-        let user = env.register(Principal, ());
-        let merchant = Address::generate(&env);
-        let attacker = Address::generate(&env);
         let asset_admin = env.register(Principal, ());
         let asset = env
             .register_stellar_asset_contract_v2(asset_admin.clone())
             .address();
-        let mandate_id = BytesN::from_array(&env, &[91; 32]);
+        let registry = env.register(MandateRegistry, (admin.clone(), asset.clone()));
+        let extension = env.register(HostileExtension, ());
+        let user = env.register(Principal, ());
+        let merchant = Address::generate(&env);
+        let attacker = Address::generate(&env);
+        let vc_hash = BytesN::from_array(&env, &[91; 32]);
 
-        PrincipalClient::new(&env, &user).register(
-            &registry,
-            &extension,
-            &merchant,
-            &asset,
-            &MAX,
-            &EXPIRY,
-            &mandate_id,
+        let mandate_id = PrincipalClient::new(&env, &user).register(
+            &registry, &extension, &merchant, &asset, &MAX, &EXPIRY, &vc_hash,
         );
         PrincipalClient::new(&env, &asset_admin).mint(&asset, &user, &(MAX * 2));
         PrincipalClient::new(&env, &user).approve(&asset, &registry, &MAX, &100_000);
@@ -219,9 +213,13 @@ fn hostile_extension_cannot_select_a_different_merchant_or_asset() {
         0
     );
     assert_eq!(
-        world
-            .registry()
-            .try_validate_mandate(&world.mandate_id, &1, &world.attacker,),
+        world.registry().try_validate_mandate(
+            &world.mandate_id,
+            &1,
+            &1,
+            &world.attacker,
+            &world.asset,
+        ),
         Err(Ok(Error::MerchantOutOfScope))
     );
 }

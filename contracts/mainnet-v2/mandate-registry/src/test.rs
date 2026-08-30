@@ -130,8 +130,29 @@ impl Principal {
         MandateRegistryClient::new(&env, &registry).unpause();
     }
 
-    pub fn set_admin(env: Env, registry: Address, new_admin: Address) {
-        MandateRegistryClient::new(&env, &registry).set_admin(&new_admin);
+    pub fn propose_admin(env: Env, registry: Address, new_admin: Address) {
+        MandateRegistryClient::new(&env, &registry).propose_admin(&new_admin);
+    }
+
+    pub fn accept_admin(env: Env, registry: Address) {
+        MandateRegistryClient::new(&env, &registry).accept_admin();
+    }
+
+    pub fn set_asset_allowed(env: Env, registry: Address, asset: Address, allowed: bool) {
+        MandateRegistryClient::new(&env, &registry).set_asset_allowed(&asset, &allowed);
+    }
+
+    pub fn set_asset_allowed_error(
+        env: Env,
+        registry: Address,
+        asset: Address,
+        allowed: bool,
+    ) -> u32 {
+        match MandateRegistryClient::new(&env, &registry).try_set_asset_allowed(&asset, &allowed) {
+            Ok(Ok(())) => OK,
+            Err(Ok(error)) => error as u32,
+            _ => HOST_FAILURE,
+        }
     }
 
     pub fn upgrade(env: Env, registry: Address, new_wasm_hash: BytesN<32>) {
@@ -192,6 +213,7 @@ struct World {
     agent: Address,
     merchant: Address,
     asset: Address,
+    vc_hash: BytesN<32>,
     id: BytesN<32>,
 }
 
@@ -200,20 +222,21 @@ fn setup() -> World {
     env.ledger().set_timestamp(NOW);
 
     let admin = env.register(Principal, ());
-    let contract = env.register(MandateRegistry, (admin.clone(),));
-    let user = env.register(Principal, ());
-    let agent = env.register(Principal, ());
-    let merchant = Address::generate(&env);
-
     let asset_admin = env.register(Principal, ());
     let asset = env
         .register_stellar_asset_contract_v2(asset_admin.clone())
         .address();
+    let contract = env.register(MandateRegistry, (admin.clone(), asset.clone()));
+    let user = env.register(Principal, ());
+    let agent = env.register(Principal, ());
+    let merchant = Address::generate(&env);
 
     PrincipalClient::new(&env, &asset_admin).mint(&asset, &user, &FUNDED);
     PrincipalClient::new(&env, &user).approve(&asset, &contract, &FUNDED, &100_000);
 
-    let id = BytesN::from_array(&env, &[1u8; 32]);
+    let vc_hash = BytesN::from_array(&env, &[1u8; 32]);
+    let id = MandateRegistryClient::new(&env, &contract)
+        .derive_mandate_id(&user, &agent, &merchant, &asset, &MAX, &EXPIRY, &vc_hash);
     World {
         env,
         contract,
@@ -222,6 +245,7 @@ fn setup() -> World {
         agent,
         merchant,
         asset,
+        vc_hash,
         id,
     }
 }
@@ -241,7 +265,7 @@ impl World {
             &self.asset,
             &MAX,
             &EXPIRY,
-            &self.id,
+            &self.vc_hash,
         )
     }
     fn register_error(&self, expiry: u64) -> u32 {
@@ -252,7 +276,7 @@ impl World {
             &self.asset,
             &MAX,
             &expiry,
-            &self.id,
+            &self.vc_hash,
         )
     }
     fn execute(&self, amount: i128, expected_seq: u32) {
@@ -272,9 +296,16 @@ impl World {
     fn unpause(&self) {
         self.principal(&self.admin).unpause(&self.contract);
     }
-    fn set_admin(&self, new_admin: &Address) {
+    fn propose_admin(&self, new_admin: &Address) {
         self.principal(&self.admin)
-            .set_admin(&self.contract, new_admin);
+            .propose_admin(&self.contract, new_admin);
+    }
+    fn accept_admin(&self, candidate: &Address) {
+        self.principal(candidate).accept_admin(&self.contract);
+    }
+    fn set_asset_allowed(&self, asset: &Address, allowed: bool) {
+        self.principal(&self.admin)
+            .set_asset_allowed(&self.contract, asset, &allowed);
     }
     fn upgrade(&self, new_wasm_hash: &BytesN<32>) {
         self.principal(&self.admin)
@@ -310,8 +341,8 @@ fn happy_path_runs_every_method() {
     assert_eq!(m.max_amount, MAX);
     assert_eq!(m.seq, 0);
 
-    // validate_mandate (read-only preflight)
-    c.validate_mandate(&w.id, &SPEND, &w.merchant);
+    // validate_mandate (non-value-moving preview)
+    c.validate_mandate(&w.id, &SPEND, &0, &w.merchant, &w.asset);
 
     // execute_payment — funds actually move (seq starts at 0)
     w.execute(SPEND, 0);
@@ -332,12 +363,33 @@ fn constructor_sets_admin_and_unpaused_state() {
     let w = setup();
     assert_eq!(w.client().get_admin(), w.admin);
     assert!(!w.client().is_paused());
+    assert_eq!(w.client().get_schema_version(), 1);
+    assert!(w.client().is_asset_allowed(&w.asset));
     assert_eq!(
         w.env.as_contract(&w.contract, || {
             crate::storage::get_schema_version(&w.env)
         }),
-        1
+        Some(1)
     );
+}
+
+#[test]
+fn missing_schema_blocks_mandates_but_preserves_admin_recovery() {
+    let w = setup();
+    w.env.as_contract(&w.contract, || {
+        w.env
+            .storage()
+            .instance()
+            .remove(&crate::storage::DataKey::SchemaVersion);
+    });
+
+    assert_eq!(w.register_error(EXPIRY), Error::InvalidState as u32);
+    assert_eq!(
+        w.client().try_get_schema_version(),
+        Err(Ok(Error::InvalidState))
+    );
+    w.pause();
+    assert!(w.client().is_paused());
 }
 
 #[test]
@@ -385,12 +437,61 @@ fn typed_events_match_the_reviewed_xdr_shapes() {
     w.execute(SPEND, 0);
     let paid = crate::events::PaymentExecuted {
         merchant: w.merchant.clone(),
+        asset: w.asset.clone(),
         mandate_id: w.id.clone(),
         amount: SPEND,
+        sequence: 0,
     };
     assert_eq!(
         w.env.events().all().filter_by_contract(&w.contract),
         std::vec![paid.to_xdr(&w.env, &w.contract)]
+    );
+
+    let admin_world = setup();
+    let candidate = admin_world.env.register(Principal, ());
+    admin_world.propose_admin(&candidate);
+    let proposed = crate::events::AdminTransferProposed {
+        pending_admin: candidate.clone(),
+    };
+    assert_eq!(
+        admin_world
+            .env
+            .events()
+            .all()
+            .filter_by_contract(&admin_world.contract),
+        std::vec![proposed.to_xdr(&admin_world.env, &admin_world.contract)]
+    );
+    admin_world.accept_admin(&candidate);
+    let accepted = crate::events::AdminSet {
+        new_admin: candidate,
+    };
+    assert_eq!(
+        admin_world
+            .env
+            .events()
+            .all()
+            .filter_by_contract(&admin_world.contract),
+        std::vec![accepted.to_xdr(&admin_world.env, &admin_world.contract)]
+    );
+
+    let asset_world = setup();
+    let second_asset = asset_world
+        .env
+        .register_stellar_asset_contract_v2(Address::generate(&asset_world.env))
+        .address();
+    asset_world.pause();
+    asset_world.set_asset_allowed(&second_asset, true);
+    let policy = crate::events::AssetPolicyChanged {
+        asset: second_asset,
+        allowed: true,
+    };
+    assert_eq!(
+        asset_world
+            .env
+            .events()
+            .all()
+            .filter_by_contract(&asset_world.contract),
+        std::vec![policy.to_xdr(&asset_world.env, &asset_world.contract)]
     );
 }
 
@@ -445,13 +546,16 @@ fn pause_blocks_payment_without_changing_mandate_state() {
 }
 
 #[test]
-fn registration_validation_reads_and_revocation_remain_available_while_paused() {
+fn registration_reads_and_revocation_remain_available_while_preview_is_paused() {
     let w = setup();
     let c = w.client();
     w.pause();
 
     w.register();
-    c.validate_mandate(&w.id, &SPEND, &w.merchant);
+    assert_eq!(
+        c.try_validate_mandate(&w.id, &SPEND, &0, &w.merchant, &w.asset),
+        Err(Ok(Error::Paused))
+    );
     assert_eq!(c.get_mandate(&w.id).status, Status::Active);
     w.revoke();
     assert_eq!(c.get_mandate(&w.id).status, Status::Revoked);
@@ -462,7 +566,21 @@ fn admin_rotation_transfers_control() {
     let w = setup();
     let c = w.client();
     let new_admin = w.env.register(Principal, ());
-    w.set_admin(&new_admin);
+    let abandoned_candidate = Address::generate(&w.env);
+    assert_eq!(c.try_accept_admin(), Err(Ok(Error::NoPendingAdmin)));
+    w.propose_admin(&abandoned_candidate);
+    assert_eq!(c.get_pending_admin(), Some(abandoned_candidate));
+    w.propose_admin(&new_admin);
+    assert_eq!(c.get_pending_admin(), Some(new_admin.clone()));
+    assert_eq!(c.get_admin(), w.admin);
+    assert!(c.try_accept_admin().is_err());
+
+    // The old administrator remains able to recover from a mistaken proposal.
+    w.pause();
+    w.unpause();
+
+    w.accept_admin(&new_admin);
+    assert_eq!(c.get_pending_admin(), None);
     assert_eq!(c.get_admin(), new_admin);
 
     assert!(c.try_pause().is_err());
@@ -479,8 +597,9 @@ fn admin_methods_require_authorization() {
     let wasm_hash = BytesN::from_array(&w.env, &[42u8; 32]);
     assert!(c.try_pause().is_err());
     assert!(c.try_unpause().is_err());
-    assert!(c.try_set_admin(&replacement).is_err());
+    assert!(c.try_propose_admin(&replacement).is_err());
     assert!(c.try_upgrade(&wasm_hash).is_err());
+    assert!(c.try_set_asset_allowed(&replacement, &true).is_err());
     assert!(!c.is_paused());
     assert_eq!(c.get_admin(), w.admin);
 }
@@ -615,7 +734,8 @@ fn out_of_scope_merchant_rejected() {
     w.register();
     let attacker = Address::generate(&w.env);
     assert_eq!(
-        w.client().try_validate_mandate(&w.id, &SPEND, &attacker),
+        w.client()
+            .try_validate_mandate(&w.id, &SPEND, &0, &attacker, &w.asset),
         Err(Ok(Error::MerchantOutOfScope))
     );
 }
@@ -661,14 +781,15 @@ fn out_of_order_seq_rejected() {
 fn register_requires_user_auth() {
     let env = Env::default();
     env.ledger().set_timestamp(NOW);
-    let contract = env.register(MandateRegistry, (env.register(Principal, ()),));
+    let admin = env.register(Principal, ());
+    let asset = env
+        .register_stellar_asset_contract_v2(Address::generate(&env))
+        .address();
+    let contract = env.register(MandateRegistry, (admin, asset.clone()));
     let client = MandateRegistryClient::new(&env, &contract);
     let user = Address::generate(&env);
     let agent = Address::generate(&env);
     let merchant = Address::generate(&env);
-    let asset = env
-        .register_stellar_asset_contract_v2(Address::generate(&env))
-        .address();
     let id = BytesN::from_array(&env, &[2u8; 32]);
 
     let r = client.try_register_mandate(&user, &agent, &merchant, &asset, &MAX, &EXPIRY, &id);
@@ -710,9 +831,346 @@ fn insufficient_allowance_blocks_payment() {
     // Within the contract's budget, but the SEP-41 allowance is the hard ceiling.
     w.approve(SPEND - 1);
     w.register();
+    let before = w.client().get_mandate(&w.id);
     assert!(w
         .principal(&w.agent)
         .try_execute(&w.contract, &w.id, &SPEND, &0)
         .is_err());
     assert_eq!(w.balance(&w.merchant), 0);
+    assert_eq!(w.client().get_mandate(&w.id), before);
+
+    // The failed token call rolled the sequence and spend back, so an exact
+    // retry succeeds with the original sequence after allowance is restored.
+    w.approve(FUNDED);
+    w.execute(SPEND, 0);
+    assert_eq!(w.client().get_mandate(&w.id).seq, 1);
+    assert_eq!(w.balance(&w.merchant), SPEND);
+}
+
+#[test]
+fn exact_budget_token_failure_rolls_back_exhaustion() {
+    let w = setup();
+    w.approve(MAX - 1);
+    w.register();
+
+    assert!(w
+        .principal(&w.agent)
+        .try_execute(&w.contract, &w.id, &MAX, &0)
+        .is_err());
+    let after_failure = w.client().get_mandate(&w.id);
+    assert_eq!(after_failure.spent, 0);
+    assert_eq!(after_failure.seq, 0);
+    assert_eq!(after_failure.status, Status::Active);
+    assert_eq!(w.balance(&w.merchant), 0);
+
+    w.approve(FUNDED);
+    w.execute(MAX, 0);
+    let committed = w.client().get_mandate(&w.id);
+    assert_eq!(committed.spent, MAX);
+    assert_eq!(committed.seq, 1);
+    assert_eq!(committed.status, Status::Exhausted);
+    assert_eq!(w.balance(&w.merchant), MAX);
+}
+
+#[test]
+fn reviewed_asset_policy_is_enforced_on_registration_and_execution() {
+    let w = setup();
+    let second_admin = w.env.register(Principal, ());
+    let second_asset = w
+        .env
+        .register_stellar_asset_contract_v2(second_admin)
+        .address();
+    let second_hash = BytesN::from_array(&w.env, &[22; 32]);
+
+    assert_eq!(
+        w.principal(&w.user).register_error(
+            &w.contract,
+            &w.agent,
+            &w.merchant,
+            &second_asset,
+            &MAX,
+            &EXPIRY,
+            &second_hash,
+        ),
+        Error::AssetNotAllowed as u32
+    );
+    assert_eq!(
+        w.principal(&w.admin)
+            .set_asset_allowed_error(&w.contract, &second_asset, &true,),
+        Error::AssetPolicyRequiresPause as u32
+    );
+
+    w.pause();
+    w.set_asset_allowed(&second_asset, true);
+    w.unpause();
+    assert!(w.client().is_asset_allowed(&second_asset));
+    let second_id = w.principal(&w.user).register(
+        &w.contract,
+        &w.agent,
+        &w.merchant,
+        &second_asset,
+        &MAX,
+        &EXPIRY,
+        &second_hash,
+    );
+
+    w.pause();
+    w.set_asset_allowed(&second_asset, false);
+    w.unpause();
+    assert!(!w.client().is_asset_allowed(&second_asset));
+    assert_eq!(
+        w.client()
+            .try_validate_mandate(&second_id, &SPEND, &0, &w.merchant, &second_asset,),
+        Err(Ok(Error::AssetNotAllowed))
+    );
+    assert_eq!(
+        w.principal(&w.agent)
+            .execute_error(&w.contract, &second_id, &SPEND, &0),
+        Error::AssetNotAllowed as u32
+    );
+}
+
+#[test]
+fn mandate_lifetime_is_bounded_below_persistence_target() {
+    let w = setup();
+    let latest = NOW + crate::MAX_MANDATE_LIFETIME_SECONDS;
+    let accepted_hash = BytesN::from_array(&w.env, &[31; 32]);
+    let rejected_hash = BytesN::from_array(&w.env, &[32; 32]);
+
+    w.principal(&w.user).register(
+        &w.contract,
+        &w.agent,
+        &w.merchant,
+        &w.asset,
+        &MAX,
+        &latest,
+        &accepted_hash,
+    );
+    assert_eq!(
+        w.principal(&w.user).register_error(
+            &w.contract,
+            &w.agent,
+            &w.merchant,
+            &w.asset,
+            &MAX,
+            &(latest + 1),
+            &rejected_hash,
+        ),
+        Error::MandateTooLong as u32
+    );
+}
+
+#[test]
+fn mandate_identifier_is_bound_to_network_registry_user_and_terms() {
+    let w = setup();
+    let second_user = w.env.register(Principal, ());
+    let shared_hash = BytesN::from_array(&w.env, &[41; 32]);
+
+    let first_id = w.principal(&w.user).register(
+        &w.contract,
+        &w.agent,
+        &w.merchant,
+        &w.asset,
+        &MAX,
+        &EXPIRY,
+        &shared_hash,
+    );
+    assert_eq!(
+        first_id.to_array(),
+        [
+            243, 174, 137, 90, 107, 105, 192, 176, 131, 14, 11, 187, 21, 246, 132, 69, 153, 128,
+            69, 173, 230, 236, 50, 98, 2, 65, 233, 1, 31, 223, 45, 250,
+        ]
+    );
+    let second_id = w.principal(&second_user).register(
+        &w.contract,
+        &w.agent,
+        &w.merchant,
+        &w.asset,
+        &MAX,
+        &EXPIRY,
+        &shared_hash,
+    );
+    assert_ne!(first_id, second_id);
+    assert_eq!(w.client().get_mandate(&first_id).user, w.user);
+    assert_eq!(w.client().get_mandate(&second_id).user, second_user);
+
+    let second_registry = w
+        .env
+        .register(MandateRegistry, (w.admin.clone(), w.asset.clone()));
+    let other_id = MandateRegistryClient::new(&w.env, &second_registry).derive_mandate_id(
+        &w.user,
+        &w.agent,
+        &w.merchant,
+        &w.asset,
+        &MAX,
+        &EXPIRY,
+        &shared_hash,
+    );
+    assert_ne!(first_id, other_id);
+}
+
+#[test]
+fn credential_commitment_is_idempotent_across_changed_terms() {
+    let w = setup();
+    let shared_hash = BytesN::from_array(&w.env, &[42; 32]);
+    w.principal(&w.user).register(
+        &w.contract,
+        &w.agent,
+        &w.merchant,
+        &w.asset,
+        &MAX,
+        &EXPIRY,
+        &shared_hash,
+    );
+
+    assert_eq!(
+        w.principal(&w.user).register_error(
+            &w.contract,
+            &w.agent,
+            &w.merchant,
+            &w.asset,
+            &MAX,
+            &(EXPIRY + 1),
+            &shared_hash,
+        ),
+        Error::AlreadyExists as u32
+    );
+}
+
+#[test]
+fn invalid_stored_invariants_fail_closed() {
+    let w = setup();
+    w.register();
+    let mut invalid = w.client().get_mandate(&w.id);
+    invalid.spent = -1;
+    w.env.as_contract(&w.contract, || {
+        crate::storage::set_mandate(&w.env, &w.id, &invalid);
+    });
+
+    assert_eq!(w.execute_error(SPEND, 0), Error::InvalidState as u32);
+    assert_eq!(w.balance(&w.merchant), 0);
+}
+
+#[test]
+fn sequence_exhaustion_is_typed_and_atomic() {
+    let w = setup();
+    w.register();
+    let mut mandate = w.client().get_mandate(&w.id);
+    mandate.seq = u32::MAX;
+    w.env.as_contract(&w.contract, || {
+        crate::storage::set_mandate(&w.env, &w.id, &mandate);
+    });
+
+    assert_eq!(
+        w.execute_error(1, u32::MAX),
+        Error::SequenceExhausted as u32
+    );
+    assert_eq!(w.client().get_mandate(&w.id), mandate);
+    assert_eq!(w.balance(&w.merchant), 0);
+}
+
+#[test]
+fn amount_and_expiry_boundaries_cover_ten_thousand_real_host_cases() {
+    let w = setup();
+    w.register();
+    let c = w.client();
+
+    for amount in -5_000_i128..=5_000_i128 {
+        let result = c.try_validate_mandate(&w.id, &amount, &0, &w.merchant, &w.asset);
+        if amount <= 0 {
+            assert_eq!(result, Err(Ok(Error::InvalidAmount)));
+        } else {
+            assert_eq!(result, Ok(Ok(())));
+        }
+    }
+    assert_eq!(
+        c.try_validate_mandate(&w.id, &i128::MIN, &0, &w.merchant, &w.asset),
+        Err(Ok(Error::InvalidAmount))
+    );
+    assert_eq!(
+        c.try_validate_mandate(&w.id, &i128::MAX, &0, &w.merchant, &w.asset),
+        Err(Ok(Error::BudgetExceeded))
+    );
+
+    w.env.ledger().set_timestamp(EXPIRY - 1);
+    assert_eq!(
+        c.try_validate_mandate(&w.id, &1, &0, &w.merchant, &w.asset),
+        Ok(Ok(()))
+    );
+    w.env.ledger().set_timestamp(EXPIRY);
+    assert_eq!(
+        c.try_validate_mandate(&w.id, &1, &0, &w.merchant, &w.asset),
+        Err(Ok(Error::MandateExpired))
+    );
+    w.env.ledger().set_timestamp(EXPIRY + 1);
+    assert_eq!(
+        c.try_validate_mandate(&w.id, &1, &0, &w.merchant, &w.asset),
+        Err(Ok(Error::MandateExpired))
+    );
+}
+
+#[test]
+fn state_machine_runs_thousands_of_real_host_transitions() {
+    const CASES: u32 = 512;
+
+    let w = setup();
+    let c = w.client();
+    let mut merchant_total = 0_i128;
+
+    for case in 0..CASES {
+        let mut raw = [0_u8; 32];
+        raw[..4].copy_from_slice(&case.to_be_bytes());
+        raw[4] = 0xA5;
+        let vc_hash = BytesN::from_array(&w.env, &raw);
+        let max_amount = 17_i128 + i128::from(case % 97);
+        let first = 1_i128 + i128::from(case % 7);
+        let remaining = max_amount - first;
+        let id = w.principal(&w.user).register(
+            &w.contract,
+            &w.agent,
+            &w.merchant,
+            &w.asset,
+            &max_amount,
+            &EXPIRY,
+            &vc_hash,
+        );
+
+        assert_eq!(
+            w.principal(&w.agent)
+                .execute_error(&w.contract, &id, &first, &1),
+            Error::BadSequence as u32
+        );
+        assert_eq!(c.get_mandate(&id).spent, 0);
+
+        w.principal(&w.agent).execute(&w.contract, &id, &first, &0);
+        merchant_total += first;
+        let after_first = c.get_mandate(&id);
+        assert_eq!((after_first.spent, after_first.seq), (first, 1));
+        assert_eq!(w.balance(&w.merchant), merchant_total);
+
+        assert_eq!(
+            w.principal(&w.agent)
+                .execute_error(&w.contract, &id, &first, &0),
+            Error::BadSequence as u32
+        );
+        assert_eq!(c.get_mandate(&id), after_first);
+
+        w.principal(&w.agent)
+            .execute(&w.contract, &id, &remaining, &1);
+        merchant_total += remaining;
+        let exhausted = c.get_mandate(&id);
+        assert_eq!(
+            (exhausted.spent, exhausted.seq, exhausted.status.clone()),
+            (max_amount, 2, Status::Exhausted)
+        );
+        assert_eq!(w.balance(&w.merchant), merchant_total);
+
+        assert_eq!(
+            w.principal(&w.agent)
+                .execute_error(&w.contract, &id, &1, &2),
+            Error::BudgetExceeded as u32
+        );
+        assert_eq!(c.get_mandate(&id), exhausted);
+    }
 }

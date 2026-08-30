@@ -34,9 +34,6 @@
     [],
     [],
     [],
-    [],
-    [],
-    [],
     []
   ],
   "ledger": {
@@ -176,7 +173,7 @@
                     "symbol": "Mandate"
                   },
                   {
-                    "bytes": "0fbe91110192ccb99398199ede6dd085482d60762a2d78688aef786aadcd9164"
+                    "bytes": "a5ef74535259d4e6089792f004dfabc03ce8d5bfada25e44f307b871c0bce801"
                   }
                 ]
               },
@@ -204,7 +201,7 @@
                       "symbol": "expiry"
                     },
                     "val": {
-                      "u64": "10000"
+                      "u64": "2593000"
                     }
                   },
                   {
@@ -228,7 +225,7 @@
                       "symbol": "seq"
                     },
                     "val": {
-                      "u32": 2
+                      "u32": 0
                     }
                   },
                   {
@@ -236,7 +233,7 @@
                       "symbol": "spent"
                     },
                     "val": {
-                      "i128": "20000000"
+                      "i128": "0"
                     }
                   },
                   {
@@ -264,7 +261,7 @@
                       "symbol": "vc_hash"
                     },
                     "val": {
-                      "bytes": "0101010101010101010101010101010101010101010101010101010101010101"
+                      "bytes": "1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f"
                     }
                   }
                 ]
@@ -291,7 +288,7 @@
                     "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
                   },
                   {
-                    "bytes": "0101010101010101010101010101010101010101010101010101010101010101"
+                    "bytes": "1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f"
                   }
                 ]
               },
@@ -453,7 +450,7 @@
                       "symbol": "amount"
                     },
                     "val": {
-                      "i128": "980000000"
+                      "i128": "1000000000"
                     }
                   },
                   {
@@ -497,59 +494,7 @@
                       "symbol": "amount"
                     },
                     "val": {
-                      "i128": "980000000"
-                    }
-                  },
-                  {
-                    "key": {
-                      "symbol": "authorized"
-                    },
-                    "val": {
-                      "bool": true
-                    }
-                  },
-                  {
-                    "key": {
-                      "symbol": "clawback"
-                    },
-                    "val": {
-                      "bool": false
-                    }
-                  }
-                ]
-              }
-            }
-          },
-          "ext": "v0"
-        },
-        "live_until": 518400
-      },
-      {
-        "entry": {
-          "last_modified_ledger_seq": 0,
-          "data": {
-            "contract_data": {
-              "ext": "v0",
-              "contract": "CBUSYNQKASUYFWYC3M2GUEDMX4AIVWPALDBYJPNK6554BREHTGZ2IUNF",
-              "key": {
-                "vec": [
-                  {
-                    "symbol": "Balance"
-                  },
-                  {
-                    "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOLZM"
-                  }
-                ]
-              },
-              "durability": "persistent",
-              "val": {
-                "map": [
-                  {
-                    "key": {
-                      "symbol": "amount"
-                    },
-                    "val": {
-                      "i128": "20000000"
+                      "i128": "1000000000"
                     }
                   },
                   {
