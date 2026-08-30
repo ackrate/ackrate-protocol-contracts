@@ -37,6 +37,7 @@
         <h2>Initial deployment</h2>
         <p>The WASM is fetched from the public <code>v3mainnet</code> GitHub branch, hash-checked, uploaded, and deployed through two ordinary Freighter approvals. The constructor receives only the future admin wallet.</p>
         <label>Future admin / multisig G-account<input id="deploy-admin" spellcheck="false" placeholder="G…" /></label>
+        <label>Git branch, tag, or commit SHA<input id="git-ref" spellcheck="false" value="v3mainnet" /></label>
         <div class="actions">
           <button id="fund-testnet" class="hidden">Fund connected testnet wallet</button>
           <button id="deploy" class="primary">Deploy reviewed SimpleContract</button>
@@ -48,18 +49,47 @@
         </dl>
       </section>
 
-      <section class="card" id="prepare-card">
-        <h2>Upgrade · Prepare</h2>
+      <section class="card">
+        <h2>2-of-3 G-account setup</h2>
+        <p>One atomic transaction adds both secondary signers at weight 1 and sets the master/low/medium/high policy to 1/2/2/2. The account master signs it once in Freighter.</p>
         <div class="grid">
-          <label>2-of-3 admin G-account<input id="admin" spellcheck="false" placeholder="G…" /></label>
-          <label>SimpleContract ID<input id="contract-input" spellcheck="false" placeholder="C…" /></label>
-          <label>Uploaded WASM hash (hex)<input id="hash-input" spellcheck="false" maxlength="64" placeholder="64 hexadecimal characters" /></label>
+          <label>G-account to configure<input id="policy-account" spellcheck="false" placeholder="G…" /></label>
+          <label>Secondary signer 1<input id="signer-2" spellcheck="false" placeholder="G…" /></label>
+          <label>Secondary signer 2<input id="signer-3" spellcheck="false" placeholder="G…" /></label>
         </div>
-        <button id="prepare" class="primary">Build and simulate via RPC</button>
+        <div class="actions">
+          <button id="read-policy">Read policy from RPC</button>
+          <button id="configure-policy" class="primary">Configure 2-of-3 with Freighter</button>
+        </div>
+        <pre id="policy-result">No account policy loaded.</pre>
+      </section>
+
+      <section class="card" id="prepare-card">
+        <h2>Admin operation · Prepare</h2>
+        <div class="grid">
+          <label>Operation
+            <select id="admin-operation">
+              <option value="upgrade">Upgrade WASM</option>
+              <option value="pause">Pause payments</option>
+              <option value="unpause">Unpause payments</option>
+              <option value="set_admin">Rotate admin</option>
+            </select>
+          </label>
+          <label>Configured admin G-account<input id="admin" spellcheck="false" placeholder="G…" /></label>
+          <label>SimpleContract ID<input id="contract-input" spellcheck="false" placeholder="C…" /></label>
+          <label id="upgrade-hash-field">Uploaded WASM hash (hex)<input id="hash-input" spellcheck="false" maxlength="64" placeholder="64 hexadecimal characters" /></label>
+          <label id="new-admin-field" class="hidden">New admin G-account<input id="new-admin" spellcheck="false" placeholder="G…" /></label>
+        </div>
+        <div class="actions">
+          <button id="use-git-wasm">Upload Git-ref WASM</button>
+          <button id="read-contract">Read admin + pause state</button>
+          <button id="prepare" class="primary">Build and simulate via RPC</button>
+        </div>
+        <pre id="contract-state">No contract state loaded.</pre>
       </section>
 
       <section class="card">
-        <h2>Upgrade · Review</h2>
+        <h2>Admin operation · Review</h2>
         <label for="xdr">Prepared transaction envelope XDR</label>
         <textarea id="xdr" rows="7" spellcheck="false" placeholder="Build above, open a cosigner URL, or paste XDR…"></textarea>
         <div class="actions">
@@ -79,12 +109,12 @@
           <div><dt>Transaction hash</dt><dd id="tx-hash"></dd></div>
           <div><dt>Contract</dt><dd id="contract"></dd></div>
           <div><dt>Function</dt><dd id="function"></dd></div>
-          <div><dt>New WASM hash</dt><dd id="wasm-hash"></dd></div>
+          <div><dt>Argument</dt><dd id="operation-argument"></dd></div>
         </dl>
       </section>
 
       <section id="share" class="card hidden">
-        <h2>Upgrade · Share or submit</h2>
+        <h2>Admin operation · Share or submit</h2>
         <label for="share-url">Self-contained cosigner URL</label>
         <textarea id="share-url" rows="5" readonly></textarea>
         <div class="actions">

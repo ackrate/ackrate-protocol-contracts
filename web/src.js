@@ -7,12 +7,15 @@ import {
 import {
   Address,
   Contract,
+  Keypair,
   Networks,
   Operation,
   StrKey,
   TransactionBuilder,
   nativeToScVal,
   rpc,
+  scValToNative,
+  xdr,
 } from "@stellar/stellar-sdk";
 import "./style.css";
 
@@ -30,7 +33,6 @@ const NETWORKS = {
     rpc: "https://soroban-testnet.stellar.org",
   },
 };
-const WASM_URL = "https://raw.githubusercontent.com/ackrate/ackrate-protocol-contracts/v3mainnet/web/public/mandate_registry.wasm";
 const EXPECTED_WASM_HASH = "b9e4e607ab56e63ce7d5e75ff192e56ccb3cf741cb78c0944c7004ac3f9487ca";
 const byId = (id) => document.getElementById(id);
 const xdrInput = byId("xdr");
@@ -69,7 +71,11 @@ function loadShareUrl() {
   byId("environment").value = selectedNetwork;
   setNetworkUi();
   xdrInput.value = encodedXdr;
-  inspect(encodedXdr);
+  const transaction = inspect(encodedXdr);
+  readAccountPolicy(transaction.source).then((policy) => {
+    byId("policy-account").value = transaction.source;
+    byId("policy-result").textContent = JSON.stringify(policy, null, 2);
+  }).catch(() => {});
   byId("status").textContent = "Cosigner transaction loaded from this URL. Verify every field before signing.";
   return true;
 }
@@ -90,11 +96,22 @@ function inspect(raw) {
     ? rawFunctionName
     : new TextDecoder().decode(rawFunctionName);
   const args = invocation.args();
-  if (functionName !== "upgrade" || args.length !== 1 || args[0].switch().name !== "scvBytes") {
-    throw new Error("Expected only upgrade(new_wasm_hash: BytesN<32>).");
+  let operationArgument = "none";
+  if (functionName === "upgrade") {
+    if (args.length !== 1 || args[0].switch().name !== "scvBytes" || args[0].bytes().length !== 32) {
+      throw new Error("Expected upgrade(new_wasm_hash: BytesN<32>).");
+    }
+    operationArgument = toHex(args[0].bytes());
+  } else if (functionName === "set_admin") {
+    if (args.length !== 1 || args[0].switch().name !== "scvAddress") {
+      throw new Error("Expected set_admin(new_admin: Address).");
+    }
+    operationArgument = Address.fromScVal(args[0]).toString();
+  } else if ((functionName === "pause" || functionName === "unpause") && args.length === 0) {
+    operationArgument = "none";
+  } else {
+    throw new Error("Only upgrade, set_admin, pause, and unpause admin calls are allowed.");
   }
-  const wasmHash = args[0].bytes();
-  if (wasmHash.length !== 32) throw new Error("Upgrade WASM hash is not 32 bytes.");
 
   const contractId = Address.fromScAddress(invocation.contractAddress()).toString();
   byId("network").textContent = selected.label;
@@ -106,10 +123,11 @@ function inspect(raw) {
   byId("tx-hash").textContent = toHex(tx.hash());
   byId("contract").textContent = contractId;
   byId("function").textContent = functionName;
-  byId("wasm-hash").textContent = toHex(wasmHash);
+  byId("operation-argument").textContent = operationArgument;
   byId("admin").value ||= tx.source;
   byId("contract-input").value ||= contractId;
-  byId("hash-input").value ||= toHex(wasmHash);
+  if (functionName === "upgrade") byId("hash-input").value ||= operationArgument;
+  if (functionName === "set_admin") byId("new-admin").value ||= operationArgument;
   byId("review").classList.remove("hidden");
   byId("share").classList.remove("hidden");
   byId("share-url").value = makeShareUrl(raw.trim());
@@ -140,6 +158,49 @@ async function connectedWallet() {
     throw new Error(`Switch Freighter to ${network().label} before continuing.`);
   }
   return access.address;
+}
+
+async function readAccountPolicy(account) {
+  if (!StrKey.isValidEd25519PublicKey(account)) throw new Error("Policy account must be a valid G-account.");
+  const ledgerKey = xdr.LedgerKey.account(new xdr.LedgerKeyAccount({
+    accountId: Keypair.fromPublicKey(account).xdrAccountId(),
+  }));
+  const response = await rpcServer().getLedgerEntries(ledgerKey);
+  if (response.entries.length !== 1) throw new Error("Account was not found through RPC.");
+  const entry = response.entries[0].val.account();
+  const thresholds = [...entry.thresholds()];
+  const signers = entry.signers().map((signer) => {
+    const key = signer.key();
+    return {
+      key: key.switch().name === "signerKeyTypeEd25519"
+        ? StrKey.encodeEd25519PublicKey(key.ed25519())
+        : key.switch().name,
+      weight: signer.weight(),
+    };
+  });
+  return {
+    account,
+    masterWeight: thresholds[0],
+    lowThreshold: thresholds[1],
+    mediumThreshold: thresholds[2],
+    highThreshold: thresholds[3],
+    signers,
+  };
+}
+
+function assertTwoOfThree(policy) {
+  const ed25519 = policy.signers.filter((signer) => signer.key.startsWith("G") && signer.weight === 1);
+  if (
+    policy.masterWeight !== 1
+    || policy.lowThreshold !== 2
+    || policy.mediumThreshold !== 2
+    || policy.highThreshold !== 2
+    || ed25519.length !== 2
+    || policy.signers.length !== 2
+  ) {
+    throw new Error("Account is not exactly three weight-1 keys with 2/2/2 thresholds.");
+  }
+  return policy;
 }
 
 async function waitForTransaction(server, hash) {
@@ -173,13 +234,56 @@ async function freighterTransaction(operation, wallet, message) {
   return waitForTransaction(server, sent.hash || toHex(envelope.hash()));
 }
 
+async function freighterClassicTransaction(operations, wallet, message) {
+  const selected = network();
+  const server = rpcServer();
+  const account = await server.getAccount(wallet);
+  const builder = new TransactionBuilder(account, {
+    fee: String(100 * operations.length),
+    networkPassphrase: selected.passphrase,
+  }).setTimeout(900);
+  operations.forEach((operation) => builder.addOperation(operation));
+  const transaction = builder.build();
+  byId("status").textContent = message;
+  const signed = await signTransaction(transaction.toXDR(), {
+    networkPassphrase: selected.passphrase,
+    address: wallet,
+  });
+  if (signed.error) throw new Error(signed.error);
+  const envelope = TransactionBuilder.fromXDR(signed.signedTxXdr, selected.passphrase);
+  const sent = await server.sendTransaction(envelope);
+  if (sent.status === "ERROR") throw new Error(sent.errorResult?.toString() || "RPC rejected the transaction.");
+  return waitForTransaction(server, sent.hash || toHex(envelope.hash()));
+}
+
 async function reviewedWasm() {
-  const response = await fetch(WASM_URL, { cache: "no-store" });
+  const ref = byId("git-ref").value.trim();
+  if (!ref || ref.includes("..") || !/^[A-Za-z0-9._/-]+$/.test(ref)) {
+    throw new Error("Git ref contains unsupported characters.");
+  }
+  const wasmUrl = `https://raw.githubusercontent.com/ackrate/ackrate-protocol-contracts/${ref}/web/public/mandate_registry.wasm`;
+  const response = await fetch(wasmUrl, { cache: "no-store" });
   if (!response.ok) throw new Error(`GitHub WASM download returned HTTP ${response.status}.`);
   const wasm = new Uint8Array(await response.arrayBuffer());
   const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", wasm));
-  if (toHex(hash) !== EXPECTED_WASM_HASH) throw new Error("GitHub WASM does not match the pinned reviewed SHA-256.");
-  return { wasm, hash };
+  if (ref === "v3mainnet" && toHex(hash) !== EXPECTED_WASM_HASH) {
+    throw new Error("Latest branch WASM does not match the reviewed SHA-256.");
+  }
+  return { wasm, hash, ref, wasmUrl };
+}
+
+async function simulateRead(contractId, source, method) {
+  const server = rpcServer();
+  const account = await server.getAccount(source);
+  const transaction = new TransactionBuilder(account, {
+    fee: "100",
+    networkPassphrase: network().passphrase,
+  }).addOperation(new Contract(contractId).call(method)).setTimeout(300).build();
+  const simulation = await server.simulateTransaction(transaction);
+  if (!rpc.Api.isSimulationSuccess(simulation) || !simulation.result?.retval) {
+    throw new Error(`${method} simulation failed.`);
+  }
+  return simulation.result.retval;
 }
 
 byId("environment").addEventListener("change", () => {
@@ -208,6 +312,54 @@ byId("fund-testnet").addEventListener("click", async () => {
     byId("status").textContent = `Testnet wallet funded: ${wallet}`;
   } catch (error) {
     byId("status").textContent = `Testnet funding failed: ${error.message}`;
+  }
+});
+
+byId("read-policy").addEventListener("click", async () => {
+  try {
+    await assertNetwork();
+    const policy = await readAccountPolicy(byId("policy-account").value.trim());
+    byId("policy-result").textContent = JSON.stringify(policy, null, 2);
+    try {
+      assertTwoOfThree(policy);
+      byId("status").textContent = "RPC confirms an exact 2-of-3 account policy.";
+      byId("admin").value = policy.account;
+      byId("deploy-admin").value = policy.account;
+    } catch (error) {
+      byId("status").textContent = `Policy loaded, but not ready: ${error.message}`;
+    }
+  } catch (error) {
+    byId("status").textContent = `Policy read failed: ${error.message}`;
+  }
+});
+
+byId("configure-policy").addEventListener("click", async () => {
+  try {
+    await assertNetwork();
+    const account = byId("policy-account").value.trim();
+    const signer2 = byId("signer-2").value.trim();
+    const signer3 = byId("signer-3").value.trim();
+    const keys = [account, signer2, signer3];
+    if (!keys.every((key) => StrKey.isValidEd25519PublicKey(key))) throw new Error("All three entries must be valid G-accounts.");
+    if (new Set(keys).size !== 3) throw new Error("All three signer keys must be different.");
+    const wallet = await connectedWallet();
+    if (wallet !== account) throw new Error("Freighter must be connected as the G-account being configured.");
+    const before = await readAccountPolicy(account);
+    if (before.signers.length !== 0 || before.masterWeight !== 1) {
+      throw new Error("For safety, automatic setup only accepts a default account with master weight 1 and no additional signers.");
+    }
+    const result = await freighterClassicTransaction([
+      Operation.setOptions({ signer: { ed25519PublicKey: signer2, weight: 1 } }),
+      Operation.setOptions({ signer: { ed25519PublicKey: signer3, weight: 1 } }),
+      Operation.setOptions({ masterWeight: 1, lowThreshold: 2, medThreshold: 2, highThreshold: 2 }),
+    ], wallet, "Approve the atomic 2-of-3 account policy in Freighter…");
+    const policy = assertTwoOfThree(await readAccountPolicy(account));
+    byId("policy-result").textContent = JSON.stringify({ ...policy, transaction: result.txHash }, null, 2);
+    byId("admin").value = account;
+    byId("deploy-admin").value = account;
+    byId("status").textContent = "2-of-3 account configured and independently verified through RPC.";
+  } catch (error) {
+    byId("status").textContent = `2-of-3 setup failed: ${error.message}`;
   }
 });
 
@@ -252,18 +404,81 @@ byId("deploy").addEventListener("click", async () => {
   }
 });
 
+byId("admin-operation").addEventListener("change", () => {
+  const action = byId("admin-operation").value;
+  byId("upgrade-hash-field").classList.toggle("hidden", action !== "upgrade");
+  byId("use-git-wasm").classList.toggle("hidden", action !== "upgrade");
+  byId("new-admin-field").classList.toggle("hidden", action !== "set_admin");
+});
+
+byId("use-git-wasm").addEventListener("click", async () => {
+  try {
+    await assertNetwork();
+    const wallet = await connectedWallet();
+    const { wasm, hash, ref } = await reviewedWasm();
+    const result = await freighterTransaction(
+      Operation.uploadContractWasm({ wasm }),
+      wallet,
+      `Approve the ${ref} WASM upload in Freighter…`,
+    );
+    byId("hash-input").value = toHex(hash);
+    byId("status").textContent = `WASM from ${ref} uploaded. Hash ${toHex(hash)}. Transaction ${result.txHash}`;
+  } catch (error) {
+    byId("status").textContent = `WASM upload failed: ${error.message}`;
+  }
+});
+
+byId("read-contract").addEventListener("click", async () => {
+  try {
+    await assertNetwork();
+    const source = byId("admin").value.trim();
+    const contractId = byId("contract-input").value.trim();
+    if (!StrKey.isValidEd25519PublicKey(source) || !StrKey.isValidContract(contractId)) {
+      throw new Error("Enter a valid configured admin and contract ID.");
+    }
+    const [adminValue, pausedValue] = await Promise.all([
+      simulateRead(contractId, source, "get_admin"),
+      simulateRead(contractId, source, "is_paused"),
+    ]);
+    const state = {
+      admin: Address.fromScVal(adminValue).toString(),
+      paused: scValToNative(pausedValue),
+    };
+    byId("contract-state").textContent = JSON.stringify(state, null, 2);
+    byId("admin").value = state.admin;
+    byId("status").textContent = "Contract admin and pause state read through RPC simulation.";
+  } catch (error) {
+    byId("status").textContent = `Contract read failed: ${error.message}`;
+  }
+});
+
 byId("prepare").addEventListener("click", async () => {
   try {
     const admin = byId("admin").value.trim();
     const contractId = byId("contract-input").value.trim();
-    const wasmHash = fromHex(byId("hash-input").value);
+    const action = byId("admin-operation").value;
     if (!StrKey.isValidEd25519PublicKey(admin)) throw new Error("Admin must be a valid G-account.");
     if (!StrKey.isValidContract(contractId)) throw new Error("Contract must be a valid C-address.");
     await assertNetwork();
-    byId("status").textContent = "Reading the admin account and simulating through RPC…";
+    const policy = assertTwoOfThree(await readAccountPolicy(admin));
+    byId("policy-account").value = admin;
+    byId("policy-result").textContent = JSON.stringify(policy, null, 2);
+    byId("status").textContent = `Building ${action} for the verified 2-of-3 admin…`;
     const server = rpcServer();
     const account = await server.getAccount(admin);
-    const operation = new Contract(contractId).call("upgrade", nativeToScVal(wasmHash, { type: "bytes" }));
+    const contract = new Contract(contractId);
+    let operation;
+    if (action === "upgrade") {
+      operation = contract.call("upgrade", nativeToScVal(fromHex(byId("hash-input").value), { type: "bytes" }));
+    } else if (action === "set_admin") {
+      const newAdmin = byId("new-admin").value.trim();
+      if (!StrKey.isValidEd25519PublicKey(newAdmin)) throw new Error("New admin must be a valid G-account.");
+      operation = contract.call("set_admin", new Address(newAdmin).toScVal());
+    } else if (action === "pause" || action === "unpause") {
+      operation = contract.call(action);
+    } else {
+      throw new Error("Unsupported admin operation.");
+    }
     const transaction = new TransactionBuilder(account, {
       fee: "100",
       networkPassphrase: network().passphrase,
@@ -273,7 +488,7 @@ byId("prepare").addEventListener("click", async () => {
     xdrInput.value = xdr;
     inspect(xdr);
     history.replaceState(null, "", makeShareUrl(xdr));
-    byId("status").textContent = "RPC simulation succeeded. Review, sign, then copy the generated cosigner URL.";
+    byId("status").textContent = `${action} simulation succeeded. Review, add the first signature, then copy the next cosigner URL.`;
   } catch (error) {
     byId("status").textContent = `Preparation failed: ${error.message}`;
   }
@@ -296,6 +511,14 @@ signButton.addEventListener("click", async () => {
   try {
     if (xdrInput.value.trim() !== inspectedXdr) throw new Error("XDR changed after inspection; inspect it again.");
     const wallet = await connectedWallet();
+    const transaction = inspect(inspectedXdr);
+    const policy = assertTwoOfThree(await readAccountPolicy(transaction.source));
+    const eligible = [policy.account, ...policy.signers.map((signer) => signer.key)];
+    if (!eligible.includes(wallet)) throw new Error("Connected Freighter key is not a signer on this admin account.");
+    const walletHint = toHex(Keypair.fromPublicKey(wallet).signatureHint());
+    if (transaction.signatures.some((signature) => toHex(signature.hint()) === walletHint)) {
+      throw new Error("This signer appears to have already signed the envelope.");
+    }
     const signed = await signTransaction(inspectedXdr, {
       networkPassphrase: network().passphrase,
       address: wallet,

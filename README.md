@@ -155,12 +155,14 @@ deployment, co-signing, self-upgrade, verification, and rollback playbook.
 The browser-only multisig review/signing helper is published at
 [`ackrate-ackrate-protocol-contracts-f85d4451.vercel.app`](https://ackrate-ackrate-protocol-contracts-f85d4451.vercel.app).
 Its Production/Testnet selector checks the matching Horizon and Stellar RPC. It
-can download the reviewed WASM from this branch, verify its SHA-256, and perform
-an initial Freighter-approved upload and constructor deployment with one future
-admin G-account argument. Upgrade construction, simulation, submission, and
-polling use RPC; each Freighter signature produces a self-contained URL-fragment
-link for the next cosigner. No secret key or coordination state is sent to an
-application backend.
+can atomically configure a fresh G-account with two additional weight-1 signers
+and 2/2/2 thresholds, then read that policy back from RPC. It downloads the
+reviewed WASM from a branch, tag, or exact commit, verifies its SHA-256, and
+performs an initial Freighter-approved upload and constructor deployment with
+one future admin G-account argument. Upgrade, pause, unpause, and admin-rotation
+requests are simulated through RPC; each Freighter signature produces a
+self-contained URL-fragment link for the next cosigner. No secret key or
+coordination state is sent to an application backend.
 
 ---
 

@@ -33,20 +33,38 @@ The deployment constructor takes one parameter, `admin`, which should be the
 future multisig G-account. The fee-paying Freighter account does not become an
 authority unless it is also supplied as `admin`.
 
+The Git ref field accepts `v3mainnet` by default or an explicit branch, tag, or
+commit SHA. The same selector controls replacement-WASM upload for upgrades.
+The UI displays the fetched SHA-256; the default branch additionally has a
+hard-coded reviewed hash gate.
+
+Creating a new 2-of-3 policy necessarily requires the two secondary public keys
+once because they do not exist in ledger state beforehand. The UI submits one
+atomic, master-signed transaction that adds both keys and sets weights and
+thresholds. Thereafter it reads the complete signer policy directly from the
+account ledger entry through RPC. Admin-operation URLs are produced sequentially:
+the prepared URL, then a new URL after signer one, then a new URL after signer
+two. A signed future URL cannot be generated before that signer approves it.
+
 ### Verified public testnet smoke deployment
 
-The complete RPC flow was executed on 2026-08-30 with a disposable,
-Friendbot-funded account: upload → constructor deployment → `get_admin` → direct
-self-upgrade at the unchanged address.
+The complete flow was executed on 2026-08-30 with disposable, Friendbot-funded
+accounts: atomic 2-of-3 setup → one-signature WASM upload and constructor
+deployment → RPC policy/admin verification → two-signature pause → two-signature
+unpause → two-signature self-upgrade at the unchanged address.
 
 | Evidence | Value |
 | --- | --- |
-| Contract | [`CAQ3CXJ7D5BU47WDPSUV6G5YJQ7ICLJOH4LUN4CHZMAAM226DGERTXLG`](https://stellar.expert/explorer/testnet/contract/CAQ3CXJ7D5BU47WDPSUV6G5YJQ7ICLJOH4LUN4CHZMAAM226DGERTXLG) |
-| Disposable source/admin | `GD2WT7FIAZNPUONCEKFR3C7CZGRXTG7KGQM3TF6RXRYGGIQ2RLEVOCCR` |
-| Upload | [`bb1819fe…14904`](https://stellar.expert/explorer/testnet/tx/bb1819fe59c04bc58d02840f8c687c6318c781d4cd16b0d7423904e512c14904) |
-| Initial deployment | [`5fb5b3bc…98798`](https://stellar.expert/explorer/testnet/tx/5fb5b3bc53b553e2251658d2e006eb1baf09fe69f1245b0bf37aff48fb598798) |
-| Constructor admin read | [`52b0ee48…2fa7e`](https://stellar.expert/explorer/testnet/tx/52b0ee48f66abd57657f343334c227acfe7773cd5c07bc7854c6a9a34762fa7e) |
-| Same-address self-upgrade | [`3c0d627a…d7dac`](https://stellar.expert/explorer/testnet/tx/3c0d627a0d72ab2dcc896530c0a74a5e71d0a06631fc01c47b0341d80e9d7dac) |
+| Contract | [`CAQRNJD5JTKOFLRXF6Q47TSRHEREDYQZO4QLOW65MHKO4GIMF3726NAG`](https://stellar.expert/explorer/testnet/contract/CAQRNJD5JTKOFLRXF6Q47TSRHEREDYQZO4QLOW65MHKO4GIMF3726NAG) |
+| One-signature deployer | `GCR2BBVAFRXWOQRTIPUJDI5334VMTU72A5ARQYBI4IMFSLAENTZ6IXXZ` |
+| 2-of-3 admin account | `GBNUQ53GWVVYFJJL3JCLQYDJUMYQNQI7LPVRZ6PXHZWS7N6LEX2X6JOQ` |
+| Secondary signers | `GB4WBDCEA56AIVWNA5LTHDAO7FCSLTSCJ6EK4K6MZBKFNJY5WLBRZIUT`, `GBPG5IUR4TPPOYPXFQCGYLIS4ODA52N3V4MUJJ7YPPT7HSWCJBYDB6KW` |
+| Atomic account policy | [`3d476134…9726`](https://stellar.expert/explorer/testnet/tx/3d4761344544bbad030ed8c9214ea850703160c09d8a96d994dcbbaf7fb79726) |
+| WASM upload | [`088ead48…f287`](https://stellar.expert/explorer/testnet/tx/088ead48b33009db61011445c4d982317fdf57f41a7424bf5f178091ba0ef287) |
+| Initial deployment | [`5f0dde7c…294d`](https://stellar.expert/explorer/testnet/tx/5f0dde7caddd6aded4b3fb2eae997fe4df42c306dad6216f770f9e71438d294d) |
+| Two-signature pause | [`45dc8389…bdee`](https://stellar.expert/explorer/testnet/tx/45dc83891dbc925649260bef26c1d7982a678feed185b9366da7820cfcb8bdee) |
+| Two-signature unpause | [`94df4885…3be1`](https://stellar.expert/explorer/testnet/tx/94df4885486c5ea829d6f3e00eec73673c632c1e1bbbf019f296ee05efa53be1) |
+| Two-signature self-upgrade | [`8953bbbc…0476`](https://stellar.expert/explorer/testnet/tx/8953bbbcec2687485cfb2aa1ec8616ef46aded2c99d28a3f81dc76e1f0770476) |
 
 The disposable secret was generated in memory, never printed, and not retained.
 Re-run the same check with `npm run smoke:testnet --prefix web`; every run creates
