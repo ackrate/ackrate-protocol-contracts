@@ -41,6 +41,20 @@ The result is a five-file production kernel with one money-moving function,
 
 ## 1,000-Review Campaign: Completed Evidence
 
+### What ACKRATE actually used
+
+- **24 independent agent reviewers across 8 completed rounds.**
+- A campaign designed to continue toward **1,000 independent reviews**; 1,000
+  is the target, not the completed-agent count.
+- **12,561 deterministic Soroban host checks/actions** in every full V2 run.
+- **49 required executable tests:** 48 native-host tests and one direct smoke
+  of the exact optimized contract file.
+- A closed loop for every confirmed finding: reproduce it, repair it, add a
+  permanent regression where applicable, rerun the entire gate, and publish
+  the exact repaired revision to `main`.
+
+The 12,561 figure counts executable cases and state actions, not agents.
+
 > [!NOTE]
 > **Latest completed cycle — cycle 8**
 > Contract source: unchanged from cycle 7 and the full gate remains green.
@@ -51,7 +65,7 @@ The result is a five-file production kernel with one money-moving function,
 
 | Proof at a glance | Completed result |
 |---|---:|
-| Independent reviewers | 24 across 8 rounds |
+| Independent agent reviewers | 24 across 8 rounds |
 | Contract-source changes in cycle 8 | 0 |
 | Deployment-control issues in cycle 8 | 1 found / 1 fixed |
 | Documentation issues in cycle 8 | 2 found / 2 fixed |
@@ -63,9 +77,9 @@ The result is a five-file production kernel with one money-moving function,
 ### Why this process is different
 
 ACKRATE is treating agentic review as a cumulative engineering system, not a
-one-time report. Independent reviewers challenge a fixed revision. A result
-enters this record only after it is reproduced. Every confirmed issue is fixed
-in code, the release gate, or the public evidence; contract and release defects
+one-time report. Independent agent reviewers challenge a fixed revision. A
+result enters this record only after it is reproduced. Every confirmed issue is
+fixed in code, the release gate, or the public evidence; contract and release defects
 become permanent regression checks. The exact compiled contract is exercised,
 the repaired revision is published to `main`, and a new review round begins.
 
@@ -75,7 +89,7 @@ the result → repeat**.
 
 | Campaign evidence | Current result |
 |---|---:|
-| Independent reviewers completed | 24 across 8 rounds |
+| Independent agent reviewers completed | 24 across 8 rounds |
 | Executable contract checks/actions per full run | 12,561 |
 | Required executable tests | 49 |
 | Confirmed issues in the latest cycle | 3 found / 3 fixed |
@@ -172,7 +186,7 @@ suggestions are excluded.
 
 ```mermaid
 flowchart LR
-    A["Independent reviewers"] --> B["Reproduce the finding"]
+    A["Independent agent reviewers"] --> B["Reproduce the finding"]
     B --> C["Fix the contract or release gate"]
     C --> D["Add permanent regression evidence"]
     D --> E["Run 12,561 cases/actions + full repo gate"]
@@ -337,7 +351,7 @@ unexpected warnings, and accepted host-only code entering deployed WASM.
 
 | Evidence | Current result |
 |---|---:|
-| Independent reviewers completed across eight rounds | 24 |
+| Independent agent reviewers completed across eight rounds | 24 |
 | Amount/expiry boundary cases | 10,001 |
 | Authenticated state-machine actions | 2,560 |
 | Deterministic host cases/actions per full V2 gate | 12,561 |
