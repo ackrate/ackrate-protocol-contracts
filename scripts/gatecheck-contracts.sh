@@ -3,6 +3,15 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+echo "==> unambiguous release tag routing"
+bash "$ROOT/scripts/release-tag-route.sh" --self-test
+
+stellar_version="$(stellar --version | head -n 1)"
+if [[ "$stellar_version" != stellar\ 27.0.0* ]]; then
+  echo "Stellar CLI 27.0.0 is required, found: $stellar_version" >&2
+  exit 1
+fi
+
 echo "==> release workflow supply-chain pins"
 if grep -R -n -E --include='*.yml' --include='*.yaml' \
   'uses: [^#[:space:]]+@(main|master|v[0-9])' \
@@ -55,7 +64,7 @@ for variant in simple mainnet-v2 composites; do
     fi
   fi
   echo "==> $variant: tests"
-  cargo test --manifest-path "$contract/Cargo.toml" --locked
+  cargo test --manifest-path "$contract/Cargo.toml" --locked -- --include-ignored
   echo "==> $variant: release WASM"
   if [[ "$variant" == "mainnet-v2" ]]; then
     stellar contract build \
@@ -71,11 +80,15 @@ for variant in simple mainnet-v2 composites; do
       echo "mainnet-v2 optimized WASM size changed: $actual_wasm_size" >&2
       exit 1
     fi
-    expected_wasm_hash='46ec350154e75c0cd13cbb28521c174ee62109174bccdd60bdef78cfbe88951c'
+    expected_wasm_hash='acf5a71b86ad0d92f4f1249f827838e70a3bee5b5e56e6d2e50f047670037fc1'
     actual_wasm_hash="$(shasum -a 256 "$wasm" | awk '{print $1}')"
-    if [[ "$actual_wasm_hash" != "$expected_wasm_hash" ]]; then
-      echo "mainnet-v2 optimized WASM hash changed: $actual_wasm_hash" >&2
-      exit 1
+    if [[ "${ACKRATE_CANONICAL_RELEASE_BUILD:-0}" == "1" ]]; then
+      if [[ "$actual_wasm_hash" != "$expected_wasm_hash" ]]; then
+        echo "mainnet-v2 canonical optimized WASM hash changed: $actual_wasm_hash" >&2
+        exit 1
+      fi
+    else
+      echo "==> mainnet-v2: canonical byte hash is enforced by the Linux release gate"
     fi
     interface="$(stellar contract info interface --wasm "$wasm" --output json)"
     expected_interface_hash='69c201ce1fb089ccfef06f125826b0aeba72af1b1536cb0b19e8cb05970ee805'
@@ -106,7 +119,7 @@ for variant in simple mainnet-v2 composites; do
       --locked \
       --features release-wasm-test \
       test::optimized_release_wasm_executes_reviewed_enforcement_surface \
-      -- --exact
+      -- --exact --include-ignored
   else
     cargo build --manifest-path "$contract/Cargo.toml" --locked --target wasm32v1-none --release
   fi
@@ -119,5 +132,5 @@ for contract in mandate-registry timelock-controller; do
   echo "==> mainnet/$contract: lint"
   cargo clippy --manifest-path "$manifest" --locked --all-targets -- -D warnings
   echo "==> mainnet/$contract: tests"
-  cargo test --manifest-path "$manifest" --locked
+  cargo test --manifest-path "$manifest" --locked -- --include-ignored
 done

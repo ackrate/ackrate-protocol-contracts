@@ -6,6 +6,8 @@
 
 extern crate std;
 
+#[cfg(feature = "release-wasm-test")]
+use soroban_sdk::testutils::EnvTestConfig;
 use soroban_sdk::testutils::{
     storage::{Instance as _, Persistent as _},
     Address as _, Events as _, Ledger as _,
@@ -1232,7 +1234,13 @@ fn optimized_release_wasm_executes_reviewed_enforcement_surface() {
         .expect("MAINNET_V2_RELEASE_WASM must point to the optimized artifact");
     let wasm = std::fs::read(wasm_path).expect("optimized release WASM must be readable");
 
-    let env = Env::default();
+    let mut env = Env::default();
+    env.set_config(EnvTestConfig {
+        // The optimized bytes intentionally differ between canonical Linux and
+        // local platforms, so a machine-specific snapshot is not durable
+        // evidence. Assertions below remain identical on every platform.
+        capture_snapshot_at_drop: false,
+    });
     env.ledger().set_timestamp(NOW);
     let admin = env.register(Principal, ());
     let asset_admin = env.register(Principal, ());

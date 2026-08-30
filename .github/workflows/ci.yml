@@ -42,6 +42,8 @@ jobs:
           echo "$bin_dir" >> "$GITHUB_PATH"
           "$bin_dir/stellar" --version
       - name: Gate check all current contract suites
+        env:
+          ACKRATE_CANONICAL_RELEASE_BUILD: '1'
         run: ./scripts/gatecheck-contracts.sh
 
   mainnet-candidate:

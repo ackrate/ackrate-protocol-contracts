@@ -12,10 +12,11 @@ cache, x402 adapter, or merchant server—is the enforcement layer.
 ## 1,000-Agent Gate-Check Record
 
 > [!IMPORTANT]
-> **Latest completed cycle — `0.4.1`**
-> Seven confirmed issues found. Seven fixed. The repaired contract passed
-> 12,561 deterministic checks/actions, the complete 49-test manifest, and an
-> execution test of the exact optimized release file.
+> **Latest completed cycle — cycle 4**
+> Three release-gate issues found. Three fixed. State/accounting and Soroban
+> host reviewers found no new contract-logic issue. The repaired revision passed
+> 12,561 deterministic checks/actions, all 49 required tests, and direct
+> execution of the exact optimized release file.
 
 ### Why this process is different
 
@@ -32,13 +33,22 @@ the result → repeat**.
 
 | Campaign evidence | Current result |
 |---|---:|
-| Independent reviewers completed | 9 across 3 rounds |
+| Independent reviewers completed | 12 across 4 rounds |
 | Executable contract checks/actions per full run | 12,561 |
 | Required executable tests | 49 |
-| Confirmed issues in the latest cycle | 7 found / 7 fixed |
+| Confirmed issues in the latest cycle | 3 found / 3 fixed |
 | Release artifact exercised directly | Yes |
 
 ### Latest findings and repairs
+
+| What the agents caught | What we fixed |
+|---|---|
+| A V2-looking release tag could publish an older contract family. | Release tags now pass through one unambiguous router. V2 release tags fail closed until a dedicated V2 release path is separately approved. |
+| A required test could keep its name but be silently marked “ignored.” | Every required test is now executed even if it is marked ignored; names alone are not enough. |
+| Different build machines produced different file fingerprints from the same source. | The release fingerprint is now defined by the pinned Linux release environment and Stellar CLI 27.0.0; local machines still verify behavior, size, and interface. |
+
+<details>
+<summary><strong>Cycle 3 fixes from 0.4.1</strong></summary>
 
 | What the agents caught | What we fixed |
 |---|---|
@@ -49,6 +59,8 @@ the result → repeat**.
 | Important tests could be removed without the gate noticing. | The gate now requires the complete 49-test list. |
 | One callback test claimed more than it proved. | The claim now matches the proof: a hostile callback cannot spend twice or advance twice. |
 | The state diagram missed one real user action. | The diagram and permanent test now match the contract. |
+
+</details>
 
 <details>
 <summary><strong>Earlier fixes from 0.4.0</strong></summary>
@@ -230,7 +242,7 @@ unexpected warnings, and accepted host-only code entering deployed WASM.
 
 | Evidence | Current result |
 |---|---:|
-| Independent reviewers completed across three rounds | 9 |
+| Independent reviewers completed across four rounds | 12 |
 | Amount/expiry boundary cases | 10,001 |
 | Authenticated state-machine actions | 2,560 |
 | Deterministic host cases/actions per full V2 gate | 12,561 |
@@ -250,7 +262,7 @@ Exact artifact facts are updated only after the repaired gate completes:
 | Artifact | Reviewed value |
 |---|---|
 | Optimized WASM size | 15,405 bytes |
-| WASM SHA-256 | `46ec350154e75c0cd13cbb28521c174ee62109174bccdd60bdef78cfbe88951c` |
+| Canonical Linux WASM SHA-256 | `acf5a71b86ad0d92f4f1249f827838e70a3bee5b5e56e6d2e50f047670037fc1` |
 | Canonical full-interface SHA-256 | `69c201ce1fb089ccfef06f125826b0aeba72af1b1536cb0b19e8cb05970ee805` |
 
 ## Remaining release blockers
