@@ -9,14 +9,36 @@ configuration or runner, and `contracts/simple` remains unchanged.
 V2 is one contract with one payment path. The contract—not the SDK, agent,
 cache, x402 adapter, or merchant server—is the enforcement layer.
 
-## 🔵 1,000-Agent Gate-Check Updates — Read This First
+## 1,000-Agent Gate-Check Record
 
-![1,000-agent gate check: latest round fixed](https://img.shields.io/badge/1%2C000--AGENT%20GATE%20CHECK-LATEST%20ROUND%20FIXED-1677FF?style=for-the-badge)
+> [!IMPORTANT]
+> **Latest completed cycle — `0.4.1`**
+> Seven confirmed issues found. Seven fixed. The repaired contract passed
+> 12,561 deterministic checks/actions, the complete 49-test manifest, and an
+> execution test of the exact optimized release file.
 
-### Latest round — `0.4.1`
+### Why this process is different
 
-**7 issues caught · 7 fixed · 12,561 contract checks/actions passed · exact
-release file executed successfully**
+ACKRATE is treating agentic review as a cumulative engineering system, not a
+one-time report. Independent agents attempt to break a fixed revision. A result
+enters this record only after it is reproduced. Every confirmed issue is fixed
+in code or in the release gate, converted into permanent regression evidence,
+verified against the exact compiled contract, published to `main`, and attacked
+again in the next round.
+
+The differentiator is the closed loop and its public evidence: **discover →
+reproduce → repair → lock the regression → execute the release bytes → publish
+the result → repeat**.
+
+| Campaign evidence | Current result |
+|---|---:|
+| Independent reviewers completed | 9 across 3 rounds |
+| Executable contract checks/actions per full run | 12,561 |
+| Required executable tests | 49 |
+| Confirmed issues in the latest cycle | 7 found / 7 fixed |
+| Release artifact exercised directly | Yes |
+
+### Latest findings and repairs
 
 | What the agents caught | What we fixed |
 |---|---|
@@ -44,10 +66,9 @@ release file executed successfully**
 
 </details>
 
-Campaign progress: **9 independent reviewers across three rounds**, plus
-**12,561 executable Soroban-host checks/actions per full V2 run**. Repeated
-rounds continue toward the 1,000-review target. Only reproduced findings enter
-this log.
+The campaign scales through repeated independent rounds toward the 1,000-review
+target. Counts above state completed work only; unconfirmed agent suggestions
+are excluded.
 
 ```mermaid
 flowchart LR
