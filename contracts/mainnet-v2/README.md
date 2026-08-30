@@ -12,11 +12,11 @@ cache, x402 adapter, or merchant server—is the enforcement layer.
 ## 1,000-Agent Gate-Check Record
 
 > [!IMPORTANT]
-> **Latest completed cycle — cycle 5**
-> Two release-gate issues found. Two fixed. Value/state and administration
+> **Latest completed cycle — cycle 6**
+> One evidence-wording issue found. One fixed. Contract and administration
 > reviewers found no new contract-logic issue. The repaired revision passed
-> 12,561 deterministic checks/actions, all 49 required tests, and direct
-> execution of the exact optimized release file.
+> 12,561 deterministic checks/actions, all 49 required tests, and one direct
+> execution smoke of the exact optimized release file.
 
 ### Why this process is different
 
@@ -24,8 +24,8 @@ ACKRATE is treating agentic review as a cumulative engineering system, not a
 one-time report. Independent agents attempt to break a fixed revision. A result
 enters this record only after it is reproduced. Every confirmed issue is fixed
 in code or in the release gate, converted into permanent regression evidence,
-verified against the exact compiled contract, published to `main`, and attacked
-again in the next round.
+paired with direct execution evidence for the exact compiled contract,
+published to `main`, and attacked again in the next round.
 
 The differentiator is the closed loop and its public evidence: **discover →
 reproduce → repair → lock the regression → execute the release bytes → publish
@@ -33,23 +33,32 @@ the result → repeat**.
 
 | Campaign evidence | Current result |
 |---|---:|
-| Independent reviewers completed | 15 across 5 rounds |
+| Independent reviewers completed | 18 across 6 rounds |
 | Executable contract checks/actions per full run | 12,561 |
 | Required executable tests | 49 |
-| Confirmed issues in the latest cycle | 2 found / 2 fixed |
+| Confirmed issues in the latest cycle | 1 found / 1 fixed |
 | Release artifact exercised directly | Yes |
 
 ### Latest findings and repairs
 
 | What the agents caught | What we fixed |
 |---|---|
-| The action-pin rule blocked a few familiar mutable names but could miss a different branch name or a shortened commit. | Every external action reference must now be a complete immutable commit digest; a permanent fixture challenges it with branches, tags, short commits, and unpinned containers. |
-| A future feature-gated test could appear in the required list without running. | The gate now executes the entire all-feature manifest, including ignored tests, against the exact optimized release file. |
+| The gate log implied that every test loaded the optimized WASM, while 48 tests exercise the native contract and one separately loads the exact optimized file. | The public record and gate now state the evidence precisely: 48 native-host tests plus one exact optimized-WASM execution smoke. |
 
 The same cycle completed a private 2-of-3 operator playbook for holder custody,
 two-signature approvals, pause/policy/upgrade order, signer rotation, and
 one-key-loss recovery. Custodian identities and wallet addresses are not kept
 in this public repository.
+
+<details>
+<summary><strong>Cycle 5 release-gate fixes</strong></summary>
+
+| What the agents caught | What we fixed |
+|---|---|
+| The action-pin rule blocked a few familiar mutable names but could miss a different branch name or a shortened commit. | Every external action reference must now be a complete immutable commit digest; a permanent fixture challenges it with branches, tags, short commits, and unpinned containers. |
+| A future feature-gated test could appear in the required list without running. | The gate now executes the entire all-feature manifest, including ignored tests, and separately executes the exact optimized release file. |
+
+</details>
 
 <details>
 <summary><strong>Cycle 4 release-gate fixes</strong></summary>
@@ -263,7 +272,7 @@ unexpected warnings, and accepted host-only code entering deployed WASM.
 
 | Evidence | Current result |
 |---|---:|
-| Independent reviewers completed across five rounds | 15 |
+| Independent reviewers completed across six rounds | 18 |
 | Amount/expiry boundary cases | 10,001 |
 | Authenticated state-machine actions | 2,560 |
 | Deterministic host cases/actions per full V2 gate | 12,561 |

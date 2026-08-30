@@ -108,7 +108,7 @@ for variant in simple mainnet-v2 composites; do
       exit 1
     fi
 
-    echo "==> mainnet-v2: execute full required suite against exact optimized release WASM"
+    echo "==> mainnet-v2: execute all-feature suite, including exact optimized-WASM smoke"
     MAINNET_V2_RELEASE_WASM="$wasm" cargo test \
       --manifest-path "$contract/Cargo.toml" \
       --locked \
