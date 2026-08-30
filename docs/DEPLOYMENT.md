@@ -14,6 +14,44 @@ It calls `require_auth()` on the stored admin and immediately replaces the
 current WASM. There is no contract-level schedule, cancellation, delay, or pause
 gate. The 2-of-3 account threshold is therefore the upgrade policy.
 
+## Browser deployment entry points
+
+The published app exposes an explicit environment selector:
+
+- **Production / Mainnet** uses `https://horizon.stellar.org` and
+  `https://mainnet.sorobanrpc.com`.
+- **Testnet** uses `https://horizon-testnet.stellar.org` and
+  `https://soroban-testnet.stellar.org`; the UI can request Friendbot funds for
+  the connected testnet Freighter account through RPC.
+
+For an initial deployment, the browser downloads
+`web/public/mandate_registry.wasm` from the public `v3mainnet` GitHub branch and
+requires SHA-256
+`b9e4e607ab56e63ce7d5e75ff192e56ccb3cf741cb78c0944c7004ac3f9487ca`.
+Freighter approves two ordinary transactions: WASM upload and contract creation.
+The deployment constructor takes one parameter, `admin`, which should be the
+future multisig G-account. The fee-paying Freighter account does not become an
+authority unless it is also supplied as `admin`.
+
+### Verified public testnet smoke deployment
+
+The complete RPC flow was executed on 2026-08-30 with a disposable,
+Friendbot-funded account: upload → constructor deployment → `get_admin` → direct
+self-upgrade at the unchanged address.
+
+| Evidence | Value |
+| --- | --- |
+| Contract | [`CAQ3CXJ7D5BU47WDPSUV6G5YJQ7ICLJOH4LUN4CHZMAAM226DGERTXLG`](https://stellar.expert/explorer/testnet/contract/CAQ3CXJ7D5BU47WDPSUV6G5YJQ7ICLJOH4LUN4CHZMAAM226DGERTXLG) |
+| Disposable source/admin | `GD2WT7FIAZNPUONCEKFR3C7CZGRXTG7KGQM3TF6RXRYGGIQ2RLEVOCCR` |
+| Upload | [`bb1819fe…14904`](https://stellar.expert/explorer/testnet/tx/bb1819fe59c04bc58d02840f8c687c6318c781d4cd16b0d7423904e512c14904) |
+| Initial deployment | [`5fb5b3bc…98798`](https://stellar.expert/explorer/testnet/tx/5fb5b3bc53b553e2251658d2e006eb1baf09fe69f1245b0bf37aff48fb598798) |
+| Constructor admin read | [`52b0ee48…2fa7e`](https://stellar.expert/explorer/testnet/tx/52b0ee48f66abd57657f343334c227acfe7773cd5c07bc7854c6a9a34762fa7e) |
+| Same-address self-upgrade | [`3c0d627a…d7dac`](https://stellar.expert/explorer/testnet/tx/3c0d627a0d72ab2dcc896530c0a74a5e71d0a06631fc01c47b0341d80e9d7dac) |
+
+The disposable secret was generated in memory, never printed, and not retained.
+Re-run the same check with `npm run smoke:testnet --prefix web`; every run creates
+and funds a fresh account and deploys a fresh contract.
+
 ## Fixed inputs
 
 Use Stellar CLI `27.0.0` and record all public values in a release ticket.

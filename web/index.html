@@ -9,19 +9,48 @@
   <body>
     <main>
       <header>
-        <span class="eyebrow">ACKRATE · MAINNET · RPC ONLY</span>
+        <span class="eyebrow">ACKRATE · STELLAR DEPLOY + UPGRADE</span>
         <h1>Upgrade signer</h1>
-        <p>Prepare one exact contract upgrade, hand it to two cosigners as a self-contained URL, and submit it through Stellar RPC.</p>
+        <p>Deploy the reviewed SimpleContract, or prepare one exact upgrade and hand it to cosigners as a self-contained URL.</p>
       </header>
 
       <section class="warning">
-        <strong>Verify out of band.</strong> Every signer must compare the contract ID, WASM hash, source, transaction hash, and RPC with the release record. URL fragments are never sent to Vercel.
+        <strong>Production moves real XLM and contract authority.</strong> Verify the network, contract ID, WASM hash, source, transaction hash, Horizon, and RPC with the release record. URL fragments are never sent to Vercel.
+      </section>
+
+      <section class="card">
+        <h2>Network</h2>
+        <label>Environment
+          <select id="environment">
+            <option value="mainnet">Production / Mainnet</option>
+            <option value="testnet">Testnet</option>
+          </select>
+        </label>
+        <dl class="endpoints">
+          <div><dt>Horizon</dt><dd id="horizon-url"></dd></div>
+          <div><dt>Stellar RPC</dt><dd id="rpc-url"></dd></div>
+        </dl>
+        <button id="check-network">Check Horizon + RPC</button>
+      </section>
+
+      <section class="card">
+        <h2>Initial deployment</h2>
+        <p>The WASM is fetched from the public <code>v3mainnet</code> GitHub branch, hash-checked, uploaded, and deployed through two ordinary Freighter approvals. The constructor receives only the future admin wallet.</p>
+        <label>Future admin / multisig G-account<input id="deploy-admin" spellcheck="false" placeholder="G…" /></label>
+        <div class="actions">
+          <button id="fund-testnet" class="hidden">Fund connected testnet wallet</button>
+          <button id="deploy" class="primary">Deploy reviewed SimpleContract</button>
+        </div>
+        <dl id="deployment-result" class="hidden">
+          <div><dt>Contract ID</dt><dd id="deployed-contract"></dd></div>
+          <div><dt>WASM SHA-256</dt><dd id="deployed-hash"></dd></div>
+          <div><dt>Deployment transaction</dt><dd id="deployment-tx"></dd></div>
+        </dl>
       </section>
 
       <section class="card" id="prepare-card">
-        <h2>1 · Prepare</h2>
+        <h2>Upgrade · Prepare</h2>
         <div class="grid">
-          <label>Stellar RPC URL<input id="rpc" type="url" value="https://mainnet.sorobanrpc.com" /></label>
           <label>2-of-3 admin G-account<input id="admin" spellcheck="false" placeholder="G…" /></label>
           <label>SimpleContract ID<input id="contract-input" spellcheck="false" placeholder="C…" /></label>
           <label>Uploaded WASM hash (hex)<input id="hash-input" spellcheck="false" maxlength="64" placeholder="64 hexadecimal characters" /></label>
@@ -30,7 +59,7 @@
       </section>
 
       <section class="card">
-        <h2>2 · Review</h2>
+        <h2>Upgrade · Review</h2>
         <label for="xdr">Prepared transaction envelope XDR</label>
         <textarea id="xdr" rows="7" spellcheck="false" placeholder="Build above, open a cosigner URL, or paste XDR…"></textarea>
         <div class="actions">
@@ -55,7 +84,7 @@
       </section>
 
       <section id="share" class="card hidden">
-        <h2>3 · Share or submit</h2>
+        <h2>Upgrade · Share or submit</h2>
         <label for="share-url">Self-contained cosigner URL</label>
         <textarea id="share-url" rows="5" readonly></textarea>
         <div class="actions">
