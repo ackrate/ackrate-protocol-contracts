@@ -3,29 +3,43 @@
 ## Status
 
 `0.4.1` is ACKRATE's condensed MandateRegistry review candidate on `main`.
-It is not deployed to Stellar mainnet. This directory has no deployment
-configuration or runner, and `contracts/simple` remains unchanged.
+It is not deployed to Stellar mainnet. A secret-free preparation workflow can
+build and inspect unsigned Mainnet transactions, but it cannot sign anything
+and broadcasting requires a separate hash-bound confirmation. V2 release tags
+remain disabled, and `contracts/simple` remains unchanged.
 
 V2 is one contract with one payment path. The contract—not the SDK, agent,
 cache, x402 adapter, or merchant server—is the enforcement layer.
 
-## 1,000-Agent Gate-Check Record
+## 1,000-Review Campaign: Completed Evidence
 
-> [!IMPORTANT]
-> **Latest completed cycle — cycle 6**
-> One evidence-wording issue found. One fixed. Contract and administration
-> reviewers found no new contract-logic issue. The repaired revision passed
-> 12,561 deterministic checks/actions, all 49 required tests, and one direct
-> execution smoke of the exact optimized release file.
+> [!NOTE]
+> **Latest completed cycle — cycle 8**
+> Contract source: unchanged from cycle 7 and the full gate remains green.
+> Deployment controls: one issue found and fixed. Documentation accuracy: two
+> issues found and fixed. The repaired revision passed 12,561 deterministic
+> checks/actions and all 49 required tests: 48 native-host tests plus one
+> direct execution smoke of the exact optimized release file.
+
+| Proof at a glance | Completed result |
+|---|---:|
+| Independent reviewers | 24 across 8 rounds |
+| Contract-source changes in cycle 8 | 0 |
+| Deployment-control issues in cycle 8 | 1 found / 1 fixed |
+| Documentation issues in cycle 8 | 2 found / 2 fixed |
+| Deterministic cases/actions per full run | 12,561 |
+| Required executable tests | 48 native + 1 exact optimized-WASM smoke |
+| Public interface locked | 18 functions / 9 events |
+| Exact optimized contract exercised | Yes |
 
 ### Why this process is different
 
 ACKRATE is treating agentic review as a cumulative engineering system, not a
-one-time report. Independent agents attempt to break a fixed revision. A result
+one-time report. Independent reviewers challenge a fixed revision. A result
 enters this record only after it is reproduced. Every confirmed issue is fixed
-in code or in the release gate, converted into permanent regression evidence,
-paired with direct execution evidence for the exact compiled contract,
-published to `main`, and attacked again in the next round.
+in code, the release gate, or the public evidence; contract and release defects
+become permanent regression checks. The exact compiled contract is exercised,
+the repaired revision is published to `main`, and a new review round begins.
 
 The differentiator is the closed loop and its public evidence: **discover →
 reproduce → repair → lock the regression → execute the release bytes → publish
@@ -33,22 +47,43 @@ the result → repeat**.
 
 | Campaign evidence | Current result |
 |---|---:|
-| Independent reviewers completed | 18 across 6 rounds |
+| Independent reviewers completed | 24 across 8 rounds |
 | Executable contract checks/actions per full run | 12,561 |
 | Required executable tests | 49 |
-| Confirmed issues in the latest cycle | 1 found / 1 fixed |
+| Confirmed issues in the latest cycle | 3 found / 3 fixed |
 | Release artifact exercised directly | Yes |
 
 ### Latest findings and repairs
 
 | What the agents caught | What we fixed |
 |---|---|
+| A two-signature transaction could pass the broadcast guard without proving it was the same unsigned transaction the team reviewed. | Submission now requires both files, rejects a signed “unsigned” file, and proves both transaction hashes are identical before broadcast. |
+| The public deployment helper used named team roles while the README said V2 custodian identities stay private. | Public inputs and messages now use neutral signer numbers; names and real V2 signer addresses remain private. |
+| The README described recovery procedures that the simplified private signing guide no longer contains. | The README now separates the five-transaction signing guide from the still-required private custody, rotation, and loss-response record. |
+
+Separately, ACKRATE maintains a private five-transaction signing guide for the
+named 2-of-3 team. V2 custodian identities, V2 signer addresses, and the private
+V2 playbook are not kept in this public repository. A separate written custody,
+rotation, and loss-response record remains a deployment requirement.
+
+<details>
+<summary><strong>Cycle 7 documentation fixes</strong></summary>
+
+| What the agents caught | What we fixed |
+|---|---|
+| The cycle summary read as if the optimized-WASM smoke ran in addition to 49 tests. | The summary now states the exact total: 48 native-host tests plus one optimized-WASM smoke equals 49. |
+| The V2 README said no wallet address existed anywhere in the public repository, but older contract-family deployment records contain public governance addresses. | The privacy statement is now precise: V2 custodian identities, V2 signer addresses, and the private V2 playbook are not published here. |
+
+</details>
+
+<details>
+<summary><strong>Cycle 6 evidence-wording fix</strong></summary>
+
+| What the agents caught | What we fixed |
+|---|---|
 | The gate log implied that every test loaded the optimized WASM, while 48 tests exercise the native contract and one separately loads the exact optimized file. | The public record and gate now state the evidence precisely: 48 native-host tests plus one exact optimized-WASM execution smoke. |
 
-The same cycle completed a private 2-of-3 operator playbook for holder custody,
-two-signature approvals, pause/policy/upgrade order, signer rotation, and
-one-key-loss recovery. Custodian identities and wallet addresses are not kept
-in this public repository.
+</details>
 
 <details>
 <summary><strong>Cycle 5 release-gate fixes</strong></summary>
@@ -102,9 +137,10 @@ in this public repository.
 
 </details>
 
-The campaign scales through repeated independent rounds toward the 1,000-review
-target. Counts above state completed work only; unconfirmed agent suggestions
-are excluded.
+The campaign continues through repeated independent rounds toward the
+1,000-review target. The number 12,561 is the deterministic case/action count,
+not a reviewer count. Counts above state completed work only; unconfirmed
+suggestions are excluded.
 
 ```mermaid
 flowchart LR
@@ -235,16 +271,17 @@ The contract has no timelock. `upgrade` calls Soroban's native same-address
 WASM replacement only after current-administrator authorization and an
 already-paused state.
 
-The private 2-of-3 operator playbook defines the holder roles, two-signature
-ceremony, pause/policy/upgrade order, signer rotation, one-key-loss recovery,
-and the no-recovery boundary when two keys are lost.
+The private signing guide explains the five Mainnet transactions and the
+two-person Freighter handoff in plain language. Custody separation, signer
+rotation, loss response, and the two-key-loss boundary require a separate
+private governance record before deployment.
 
 Production policy is a native Stellar 2-of-3 account at the administrator
 address. Deployment remains blocked until the private authority record names
 all three public signers, organizational holders, separate custody locations,
 rotation steps, and one-key-loss recovery. Two lost keys have no hidden
-recovery path. No custodian identity or wallet address belongs in this public
-repository.
+recovery path. V2 custodian identities, V2 signer addresses, and its private
+signing guide do not belong in this public directory.
 
 Version `0.4.1` is **fresh-create only**. It must be constructed at a new
 contract address and must not be installed over schema `1` predecessor state.
@@ -272,7 +309,7 @@ unexpected warnings, and accepted host-only code entering deployed WASM.
 
 | Evidence | Current result |
 |---|---:|
-| Independent reviewers completed across six rounds | 18 |
+| Independent reviewers completed across eight rounds | 24 |
 | Amount/expiry boundary cases | 10,001 |
 | Authenticated state-machine actions | 2,560 |
 | Deterministic host cases/actions per full V2 gate | 12,561 |
@@ -294,6 +331,25 @@ Exact artifact facts are updated only after the repaired gate completes:
 | Optimized WASM size | 15,405 bytes |
 | Canonical Linux WASM SHA-256 | `acf5a71b86ad0d92f4f1249f827838e70a3bee5b5e56e6d2e50f047670037fc1` |
 | Canonical full-interface SHA-256 | `69c201ce1fb089ccfef06f125826b0aeba72af1b1536cb0b19e8cb05970ee805` |
+
+## Guarded Mainnet preparation
+
+`scripts/deploy-mainnet-v2.sh` prepares the account setup, upload, and fresh
+deployment without accepting or storing any signing secret. Its four
+preparation paths are build-only. The workflow enforces:
+
+- one reviewed account as source, 2-of-3 authority, and contract admin;
+- exactly three distinct weight-1 signers with thresholds `2/2/2`;
+- the reviewed V2 byte hash and canonical Circle Stellar Mainnet USDC SAC;
+- exactly two distinct signatures for upload and deployment;
+- an exact match between the signed XDR and its reviewed unsigned XDR;
+- a separate confirmation containing the exact Mainnet transaction hash; and
+- read-only post-deployment checks for code hash, admin, pending admin, schema,
+  initial pause state, and asset policy.
+
+The workflow cannot sign. CI publishes the exact canonical candidate only from
+a push to `main`, after both dependency security and the complete contract gate
+pass. V2 release tags remain disabled, and no step automatically deploys.
 
 ## Remaining release blockers
 

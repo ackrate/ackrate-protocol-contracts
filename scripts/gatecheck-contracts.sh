@@ -3,6 +3,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+echo "==> mainnet-v2 deployment workflow offline self-test"
+bash "$ROOT/scripts/test-deploy-mainnet-v2.sh"
+
 echo "==> unambiguous release tag routing"
 bash "$ROOT/scripts/release-tag-route.sh" --self-test
 

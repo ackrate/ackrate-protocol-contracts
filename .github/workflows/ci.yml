@@ -22,6 +22,7 @@ jobs:
         run: ./scripts/security-scan.sh
 
   contracts:
+    needs: security
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -45,6 +46,34 @@ jobs:
         env:
           ACKRATE_CANONICAL_RELEASE_BUILD: '1'
         run: ./scripts/gatecheck-contracts.sh
+      - name: Stage exact verified mainnet-v2 candidate
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/mainnet-v2-candidate"
+          wasm='contracts/mainnet-v2/mandate-registry/target/wasm32v1-none/release/mandate_registry.wasm'
+          expected='acf5a71b86ad0d92f4f1249f827838e70a3bee5b5e56e6d2e50f047670037fc1'
+          mkdir -p "$output"
+          cp "$wasm" "$output/mandate_registry.wasm"
+          actual="$(sha256sum "$output/mandate_registry.wasm" | awk '{print $1}')"
+          test "$actual" = "$expected"
+          printf '%s  %s\n' "$actual" 'mandate_registry.wasm' > "$output/SHA256SUMS"
+          printf '%s\n' "$GITHUB_SHA" > "$output/SOURCE_COMMIT"
+          stellar contract info interface \
+            --wasm "$output/mandate_registry.wasm" \
+            --output json > "$output/mandate_registry.interface.json"
+      - name: Publish exact verified mainnet-v2 candidate
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: mainnet-v2-candidate-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/mainnet-v2-candidate/mandate_registry.wasm
+            ${{ runner.temp }}/mainnet-v2-candidate/mandate_registry.interface.json
+            ${{ runner.temp }}/mainnet-v2-candidate/SHA256SUMS
+            ${{ runner.temp }}/mainnet-v2-candidate/SOURCE_COMMIT
+          if-no-files-found: error
+          retention-days: 90
 
   mainnet-candidate:
     runs-on: ubuntu-24.04
