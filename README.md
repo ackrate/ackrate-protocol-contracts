@@ -12,6 +12,10 @@ Mainnet canary deployment: [`docs/mainnet-canary-deployment.md`](docs/mainnet-ca
 
 Mainnet planning: [`docs/mainnet-roadmap.md`](docs/mainnet-roadmap.md)
 
+Mainnet v2 refactor work is tracked on the
+[`mainnet-v2` branch](https://github.com/ackrate/ackrate-protocol-contracts/tree/mainnet-v2).
+It has not been deployed to Stellar mainnet.
+
 Mainnet security review:
 
 - [Threat model and control-to-test matrix](docs/security-threat-model.md)
