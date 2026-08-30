@@ -154,9 +154,10 @@ deployment, co-signing, self-upgrade, verification, and rollback playbook.
 
 The browser-only multisig review/signing helper is published at
 [`ackrate-ackrate-protocol-contracts-f85d4451.vercel.app`](https://ackrate-ackrate-protocol-contracts-f85d4451.vercel.app).
-It accepts mainnet transaction XDR, requires exactly one `upgrade(BytesN<32>)`
-invocation, displays the security-sensitive fields, and asks Freighter to append
-a signature. It does not accept secret keys or submit transactions.
+It uses only a signer-selected Stellar RPC to build, simulate, submit, and poll
+one exact `upgrade(BytesN<32>)` invocation. Each Freighter signature produces a
+self-contained URL-fragment link for the next cosigner; no transaction data,
+secret key, or coordination state is sent to an application backend.
 
 ---
 

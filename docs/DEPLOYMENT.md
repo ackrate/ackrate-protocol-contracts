@@ -79,18 +79,15 @@ stellar tx new set-options \
 
 When using `--source-account` as a public key, add the CLI's preferred signing
 option (`--sign-with-key`, `--sign-with-ledger`, or `--sign-with-lab`) rather
-than exposing a seed. After the final transaction, query Horizon and require:
+than exposing a seed. After the final transaction, query the selected Stellar
+RPC with `getLedgerEntries` for the account ledger key, decode the returned
+`AccountEntry` XDR, and require:
 
 - master key weight `1`;
 - signer 2 weight `1`;
 - signer 3 weight `1`;
 - low, medium, and high thresholds all `2`;
 - no unknown signers.
-
-```sh
-curl --fail --silent --show-error \
-  "https://horizon.stellar.org/accounts/$ADMIN_ACCOUNT" | jq '{id, thresholds, signers}'
-```
 
 Stop if any value differs. A threshold of `1` is not 2-of-3. Do not disable the
 master key; it is one of the three intended signers.
@@ -149,16 +146,11 @@ export NEW_WASM_HASH="$(stellar contract upload \
 ```
 
 Confirm the returned hash against the reviewed artifact. Freeze release inputs.
-Build—but do not submit—the admin invocation:
-
-```sh
-stellar contract invoke \
-  --source-account "$ADMIN_ACCOUNT" --id "$CONTRACT_ID" \
-  --rpc-url "$RPC_URL" --network-passphrase "$NETWORK_PASSPHRASE" \
-  --build-only \
-  -- upgrade --new_wasm_hash "$NEW_WASM_HASH" \
-  > upgrade-unsigned.xdr
-```
+Open the published Upgrade Signer, enter `RPC_URL`, `ADMIN_ACCOUNT`,
+`CONTRACT_ID`, and `NEW_WASM_HASH`, then press **Build and simulate via RPC**.
+The app reads the source account, validates the RPC network passphrase, builds
+the sole `upgrade(BytesN<32>)` invocation, and prepares its Soroban resources by
+simulation. All network interaction uses that RPC endpoint.
 
 The XDR is time- and sequence-sensitive. Do not submit any other transaction
 from `ADMIN_ACCOUNT` while signatures are being collected. If it expires or the
@@ -166,10 +158,12 @@ sequence changes, discard every copy and build a new envelope.
 
 ## 6. Collect two signatures
 
-Open the published Upgrade Signer. Signer A pastes `upgrade-unsigned.xdr`,
-presses **Inspect**, verifies every displayed field, signs with Freighter, and
-sends only the resulting signed XDR to signer B. Signer B repeats inspection and
-signing on that envelope. Existing signatures remain attached.
+The prepared transaction creates a self-contained cosigner URL. Its fragment
+contains the RPC URL and complete envelope XDR; URL fragments are not sent to
+Vercel or another application server. Send this URL to signer A over the agreed
+channel. Signer A verifies the fields and appends a Freighter signature, then
+copies the newly generated URL to signer B. Signer B repeats the same process.
+Existing signatures remain attached to each next URL.
 
 Both signers independently verify:
 
@@ -182,19 +176,18 @@ Both signers independently verify:
 - argument is `NEW_WASM_HASH`;
 - fee, sequence, and validity window are expected.
 
-The mini dapp never accepts a secret key and never submits transactions. It only
-decodes an XDR locally and asks Freighter to append a signature. A signer may
-instead use Stellar Lab, a Ledger, or `stellar tx sign` offline.
+The app never accepts a secret key. It decodes locally and asks Freighter to
+append a signature. The link is durable and serverless, but its embedded
+transaction still expires and becomes invalid if the source sequence advances.
+Rebuild rather than editing an expired transaction.
 
 ## 7. Submit once and verify
 
-The coordinator submits the twice-signed envelope:
-
-```sh
-stellar tx send \
-  --rpc-url "$RPC_URL" --network-passphrase "$NETWORK_PASSPHRASE" \
-  < upgrade-2-of-3-signed.xdr
-```
+After the UI reports two attached signatures, either signer or the coordinator
+presses **Submit through RPC**. The browser calls `sendTransaction` and polls
+`getTransaction` on the exact RPC embedded in the URL until success or failure.
+There is no Horizon, application API, database, relayer, or Vercel function in
+the prepare, signing, sharing, submission, or confirmation path.
 
 Never add a third signature: surplus valid signatures can produce
 `TX_BAD_AUTH_EXTRA`. Wait for final success, then verify the executable hash at

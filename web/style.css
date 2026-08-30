@@ -10,14 +10,18 @@ p { color: #9ba7b4; line-height: 1.6; }
 .warning, .card { border: 1px solid #29313b; border-radius: 14px; background: rgba(15, 20, 27, .92); padding: 20px; margin: 16px 0; }
 .warning { border-color: #6b5730; color: #e8d49b; }
 label, dt { display: block; color: #aeb8c3; font-size: 13px; font-weight: 650; margin-bottom: 8px; }
-textarea, pre { width: 100%; border: 1px solid #343f4c; border-radius: 9px; background: #090d12; color: #dce5ed; padding: 14px; font: 12px/1.55 ui-monospace, monospace; overflow: auto; }
+input, textarea, pre { width: 100%; border: 1px solid #343f4c; border-radius: 9px; background: #090d12; color: #dce5ed; padding: 14px; font: 12px/1.55 ui-monospace, monospace; overflow: auto; }
+input { display: block; margin-top: 8px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
 .actions { display: flex; gap: 10px; margin-top: 12px; }
 button { border: 1px solid #3d4957; border-radius: 8px; background: #1c242e; color: white; padding: 11px 16px; font-weight: 700; cursor: pointer; }
 button.primary { background: #63e6be; border-color: #63e6be; color: #07120e; }
+button.danger { border-color: #9c5d62; color: #ffd5d8; }
 button:disabled { cursor: not-allowed; opacity: .4; }
 dl { display: grid; gap: 10px; }
 dl div { border-bottom: 1px solid #242d36; padding-bottom: 10px; }
 dd { margin: 0; overflow-wrap: anywhere; font: 13px/1.5 ui-monospace, monospace; }
 .hidden { display: none; }
 #status { min-height: 24px; color: #63e6be; }
-@media (max-width: 520px) { main { padding-top: 38px; } .actions { flex-direction: column; } }
+.fine { margin-bottom: 0; font-size: 12px; }
+@media (max-width: 620px) { main { padding-top: 38px; } .actions { flex-direction: column; } .grid { grid-template-columns: 1fr; } }

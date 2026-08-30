@@ -3,49 +3,66 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Review and co-sign an Ackrate mainnet upgrade transaction with Freighter." />
+    <meta name="description" content="Build, review, co-sign, share, and submit an Ackrate mainnet upgrade through Stellar RPC." />
     <title>Ackrate Upgrade Signer</title>
   </head>
   <body>
     <main>
       <header>
-        <span class="eyebrow">ACKRATE · MAINNET</span>
+        <span class="eyebrow">ACKRATE · MAINNET · RPC ONLY</span>
         <h1>Upgrade signer</h1>
-        <p>Inspect an encoded transaction, verify its network and operation, then add your signature with Freighter.</p>
+        <p>Prepare one exact contract upgrade, hand it to two cosigners as a self-contained URL, and submit it through Stellar RPC.</p>
       </header>
 
       <section class="warning">
-        <strong>Verify out of band.</strong> Compare the contract ID, WASM SHA-256, source account, sequence, and transaction hash with the release coordinator before signing.
+        <strong>Verify out of band.</strong> Every signer must compare the contract ID, WASM hash, source, transaction hash, and RPC with the release record. URL fragments are never sent to Vercel.
+      </section>
+
+      <section class="card" id="prepare-card">
+        <h2>1 · Prepare</h2>
+        <div class="grid">
+          <label>Stellar RPC URL<input id="rpc" type="url" value="https://mainnet.sorobanrpc.com" /></label>
+          <label>2-of-3 admin G-account<input id="admin" spellcheck="false" placeholder="G…" /></label>
+          <label>SimpleContract ID<input id="contract-input" spellcheck="false" placeholder="C…" /></label>
+          <label>Uploaded WASM hash (hex)<input id="hash-input" spellcheck="false" maxlength="64" placeholder="64 hexadecimal characters" /></label>
+        </div>
+        <button id="prepare" class="primary">Build and simulate via RPC</button>
       </section>
 
       <section class="card">
-        <label for="xdr">Transaction envelope XDR</label>
-        <textarea id="xdr" rows="8" spellcheck="false" placeholder="Paste the base64 transaction envelope…"></textarea>
+        <h2>2 · Review</h2>
+        <label for="xdr">Prepared transaction envelope XDR</label>
+        <textarea id="xdr" rows="7" spellcheck="false" placeholder="Build above, open a cosigner URL, or paste XDR…"></textarea>
         <div class="actions">
           <button id="inspect">Inspect</button>
-          <button id="sign" class="primary" disabled>Sign with Freighter</button>
+          <button id="sign" class="primary" disabled>Append Freighter signature</button>
         </div>
       </section>
 
       <section id="review" class="card hidden" aria-live="polite">
-        <h2>Review</h2>
         <dl>
           <div><dt>Network</dt><dd id="network"></dd></div>
+          <div><dt>RPC</dt><dd id="review-rpc"></dd></div>
           <div><dt>Source</dt><dd id="source"></dd></div>
           <div><dt>Sequence</dt><dd id="sequence"></dd></div>
           <div><dt>Fee</dt><dd id="fee"></dd></div>
-          <div><dt>Signatures</dt><dd id="signatures"></dd></div>
-          <div><dt>Transaction hash</dt><dd id="hash"></dd></div>
+          <div><dt>Signatures attached</dt><dd id="signatures"></dd></div>
+          <div><dt>Transaction hash</dt><dd id="tx-hash"></dd></div>
           <div><dt>Contract</dt><dd id="contract"></dd></div>
           <div><dt>Function</dt><dd id="function"></dd></div>
           <div><dt>New WASM hash</dt><dd id="wasm-hash"></dd></div>
         </dl>
       </section>
 
-      <section id="result" class="card hidden">
-        <label for="signed-xdr">Signed envelope XDR</label>
-        <textarea id="signed-xdr" rows="8" readonly></textarea>
-        <button id="copy">Copy signed XDR</button>
+      <section id="share" class="card hidden">
+        <h2>3 · Share or submit</h2>
+        <label for="share-url">Self-contained cosigner URL</label>
+        <textarea id="share-url" rows="5" readonly></textarea>
+        <div class="actions">
+          <button id="copy-url">Copy cosigner URL</button>
+          <button id="submit" class="danger">Submit through RPC</button>
+        </div>
+        <p class="fine">Each signature produces a new URL. Send signer 1’s URL to signer 2; submit only after the required two signatures are attached. Prepared transactions retain their ledger sequence and time bounds, so rebuild expired links.</p>
       </section>
       <p id="status" role="status"></p>
     </main>
