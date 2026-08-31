@@ -42,6 +42,7 @@ let inspectedXdr = "";
 
 const network = () => NETWORKS[byId("environment").value];
 const rpcServer = () => new rpc.Server(network().rpc, { allowHttp: false });
+const explorerTransactionUrl = (hash) => `https://stellar.expert/explorer/${byId("environment").value === "mainnet" ? "public" : "testnet"}/tx/${hash}`;
 const toHex = (bytes) => [...bytes]
   .map((byte) => byte.toString(16).padStart(2, "0")).join("");
 
@@ -49,6 +50,27 @@ function fromHex(value) {
   const normalized = value.trim().toLowerCase();
   if (!/^[0-9a-f]{64}$/.test(normalized)) throw new Error("WASM hash must be exactly 64 hexadecimal characters.");
   return Uint8Array.from(normalized.match(/.{2}/g), (byte) => Number.parseInt(byte, 16));
+}
+
+function setStatus(message, transactionHash = "") {
+  const status = byId("status");
+  status.replaceChildren(document.createTextNode(message));
+  status.setAttribute("aria-busy", transactionHash ? "false" : /…$/.test(message) ? "true" : "false");
+  if (transactionHash) {
+    status.append(document.createTextNode(" "));
+    const link = document.createElement("a");
+    link.href = explorerTransactionUrl(transactionHash);
+    link.target = "_blank";
+    link.rel = "noreferrer";
+    link.textContent = `View transaction ${transactionHash.slice(0, 10)}…`;
+    status.append(link);
+  }
+}
+
+function setTransactionLink(id, hash) {
+  const link = byId(id);
+  link.href = explorerTransactionUrl(hash);
+  link.textContent = hash;
 }
 
 function setNetworkUi() {
@@ -77,7 +99,7 @@ function loadShareUrl() {
     byId("policy-account").value = transaction.source;
     byId("policy-result").textContent = JSON.stringify(policy, null, 2);
   }).catch(() => {});
-  byId("status").textContent = "Cosigner transaction loaded from this URL. Verify every field before signing.";
+  setStatus("Cosigner transaction loaded from this URL. Verify every field before signing.");
   return true;
 }
 
@@ -138,6 +160,7 @@ function inspect(raw) {
 }
 
 async function assertNetwork() {
+  setStatus(`Checking ${network().label} Horizon and Stellar RPC…`);
   const selected = network();
   const [rpcNetwork, horizonResponse] = await Promise.all([
     rpcServer().getNetwork(),
@@ -149,6 +172,7 @@ async function assertNetwork() {
 }
 
 async function connectedWallet() {
+  setStatus(`Waiting for Freighter on ${network().label}…`);
   const connected = await isConnected();
   if (!connected.isConnected) throw new Error("Freighter is not installed or available.");
   const access = await requestAccess();
@@ -205,6 +229,7 @@ function assertTwoOfThree(policy) {
 }
 
 async function waitForTransaction(server, hash) {
+  setStatus(`Transaction ${hash.slice(0, 10)}… submitted; waiting for RPC confirmation…`);
   for (let attempt = 0; attempt < 45; attempt += 1) {
     await new Promise((resolve) => setTimeout(resolve, 2000));
     const result = await server.getTransaction(hash);
@@ -223,7 +248,7 @@ async function freighterTransaction(operation, wallet, message) {
     networkPassphrase: selected.passphrase,
   }).addOperation(operation).setTimeout(900).build();
   const prepared = await server.prepareTransaction(transaction);
-  byId("status").textContent = message;
+  setStatus(message);
   const signed = await signTransaction(prepared.toXDR(), {
     networkPassphrase: selected.passphrase,
     address: wallet,
@@ -245,7 +270,7 @@ async function freighterClassicTransaction(operations, wallet, message) {
   }).setTimeout(900);
   operations.forEach((operation) => builder.addOperation(operation));
   const transaction = builder.build();
-  byId("status").textContent = message;
+  setStatus(message);
   const signed = await signTransaction(transaction.toXDR(), {
     networkPassphrase: selected.passphrase,
     address: wallet,
@@ -339,15 +364,15 @@ byId("environment").addEventListener("change", () => {
   setNetworkUi();
   inspectedXdr = "";
   signButton.disabled = true;
-  byId("status").textContent = `Selected ${network().label}. Check Freighter is on the same network.`;
+  setStatus(`Selected ${network().label}. Check Freighter is on the same network.`);
 });
 
 byId("check-network").addEventListener("click", async () => {
   try {
     await assertNetwork();
-    byId("status").textContent = `${network().label} Horizon and Stellar RPC are reachable and agree on the expected network.`;
+    setStatus(`${network().label} Horizon and Stellar RPC are reachable and agree on the expected network.`);
   } catch (error) {
-    byId("status").textContent = `Network check failed: ${error.message}`;
+    setStatus(`Network check failed: ${error.message}`);
   }
 });
 
@@ -356,44 +381,47 @@ byId("fund-testnet").addEventListener("click", async () => {
     if (byId("environment").value !== "testnet") throw new Error("Faucet funding is testnet-only.");
     await assertNetwork();
     const wallet = await connectedWallet();
-    byId("status").textContent = `Requesting testnet faucet funds for ${wallet}…`;
-    await rpcServer().fundAddress(wallet);
-    byId("status").textContent = `Testnet wallet funded: ${wallet}`;
+    setStatus(`Requesting testnet faucet funds for ${wallet}…`);
+    const funding = await rpcServer().fundAddress(wallet);
+    setStatus(`Testnet wallet funded: ${wallet}.`, funding.txHash);
   } catch (error) {
-    byId("status").textContent = `Testnet funding failed: ${error.message}`;
+    setStatus(`Testnet funding failed: ${error.message}`);
   }
 });
 
 byId("verify-artifact").addEventListener("click", async () => {
   try {
+    setStatus("Resolving the Git ref and verifying its GitHub build attestation…");
     const artifact = await reviewedWasm();
     showArtifact(artifact);
-    byId("status").textContent = `Artifact verified: ${toHex(artifact.hash)} from attested source ${artifact.sourceCommit}.`;
+    setStatus(`Artifact verified: ${toHex(artifact.hash)} from attested source ${artifact.sourceCommit}.`);
   } catch (error) {
-    byId("status").textContent = `Artifact verification failed: ${error.message}`;
+    setStatus(`Artifact verification failed: ${error.message}`);
   }
 });
 
 byId("read-policy").addEventListener("click", async () => {
   try {
+    setStatus("Reading the account signer policy from Stellar RPC…");
     await assertNetwork();
     const policy = await readAccountPolicy(byId("policy-account").value.trim());
     byId("policy-result").textContent = JSON.stringify(policy, null, 2);
     try {
       assertTwoOfThree(policy);
-      byId("status").textContent = "RPC confirms an exact 2-of-3 account policy.";
+      setStatus("RPC confirms an exact 2-of-3 account policy.");
       byId("admin").value = policy.account;
       byId("deploy-admin").value = policy.account;
     } catch (error) {
-      byId("status").textContent = `Policy loaded, but not ready: ${error.message}`;
+      setStatus(`Policy loaded, but not ready: ${error.message}`);
     }
   } catch (error) {
-    byId("status").textContent = `Policy read failed: ${error.message}`;
+    setStatus(`Policy read failed: ${error.message}`);
   }
 });
 
 byId("configure-policy").addEventListener("click", async () => {
   try {
+    setStatus("Checking the network and account before opening Freighter…");
     await assertNetwork();
     const account = byId("policy-account").value.trim();
     const signer2 = byId("signer-2").value.trim();
@@ -414,16 +442,19 @@ byId("configure-policy").addEventListener("click", async () => {
     ], wallet, "Approve the atomic 2-of-3 account policy in Freighter…");
     const policy = assertTwoOfThree(await readAccountPolicy(account));
     byId("policy-result").textContent = JSON.stringify({ ...policy, transaction: result.txHash }, null, 2);
+    setTransactionLink("policy-transaction", result.txHash);
+    byId("policy-transaction-row").classList.remove("hidden");
     byId("admin").value = account;
     byId("deploy-admin").value = account;
-    byId("status").textContent = "2-of-3 account configured and independently verified through RPC.";
+    setStatus("2-of-3 account configured and independently verified through RPC.", result.txHash);
   } catch (error) {
-    byId("status").textContent = `2-of-3 setup failed: ${error.message}`;
+    setStatus(`2-of-3 setup failed: ${error.message}`);
   }
 });
 
 byId("deploy").addEventListener("click", async () => {
   try {
+    setStatus("Checking network, wallet, artifact, and future admin before deployment…");
     const admin = byId("deploy-admin").value.trim();
     if (!StrKey.isValidEd25519PublicKey(admin)) throw new Error("Future admin must be a valid G-account.");
     const selected = await assertNetwork();
@@ -434,7 +465,7 @@ byId("deploy").addEventListener("click", async () => {
     showArtifact(artifact);
     const { wasm, hash, sourceUrl, attestationUrl } = artifact;
 
-    await freighterTransaction(
+    const upload = await freighterTransaction(
       Operation.uploadContractWasm({ wasm }),
       wallet,
       "Approve the reviewed WASM upload in Freighter…",
@@ -458,14 +489,15 @@ byId("deploy").addEventListener("click", async () => {
     byId("deployed-source").textContent = sourceUrl;
     byId("deployed-attestation").href = attestationUrl;
     byId("deployed-attestation").textContent = "GitHub build attestations for this WASM hash";
-    byId("deployment-tx").textContent = deployment.txHash;
+    setTransactionLink("upload-tx", upload.txHash);
+    setTransactionLink("deployment-tx", deployment.txHash);
     byId("deployment-result").classList.remove("hidden");
     byId("contract-input").value = contractId;
     byId("admin").value = admin;
     byId("hash-input").value = toHex(hash);
-    byId("status").textContent = `Initial SimpleContract deployed on ${selected.label}: ${contractId}`;
+    setStatus(`Initial SimpleContract deployed on ${selected.label}: ${contractId}.`, deployment.txHash);
   } catch (error) {
-    byId("status").textContent = `Deployment failed: ${error.message}`;
+    setStatus(`Deployment failed: ${error.message}`);
   }
 });
 
@@ -478,6 +510,7 @@ byId("admin-operation").addEventListener("change", () => {
 
 byId("use-git-wasm").addEventListener("click", async () => {
   try {
+    setStatus("Checking network, wallet, GitHub artifact, and attestation before upload…");
     await assertNetwork();
     const wallet = await connectedWallet();
     const artifact = await reviewedWasm();
@@ -489,14 +522,15 @@ byId("use-git-wasm").addEventListener("click", async () => {
       `Approve the ${ref} WASM upload in Freighter…`,
     );
     byId("hash-input").value = toHex(hash);
-    byId("status").textContent = `WASM from ${ref} uploaded. Hash ${toHex(hash)}. Source ${sourceUrl}. Attestation ${attestationUrl}. Transaction ${result.txHash}`;
+    setStatus(`WASM from ${ref} uploaded. Hash ${toHex(hash)}. Source ${sourceUrl}. Attestation ${attestationUrl}.`, result.txHash);
   } catch (error) {
-    byId("status").textContent = `WASM upload failed: ${error.message}`;
+    setStatus(`WASM upload failed: ${error.message}`);
   }
 });
 
 byId("read-contract").addEventListener("click", async () => {
   try {
+    setStatus("Reading contract admin and pause state through RPC simulation…");
     await assertNetwork();
     const source = byId("admin").value.trim();
     const contractId = byId("contract-input").value.trim();
@@ -513,14 +547,15 @@ byId("read-contract").addEventListener("click", async () => {
     };
     byId("contract-state").textContent = JSON.stringify(state, null, 2);
     byId("admin").value = state.admin;
-    byId("status").textContent = "Contract admin and pause state read through RPC simulation.";
+    setStatus("Contract admin and pause state read through RPC simulation.");
   } catch (error) {
-    byId("status").textContent = `Contract read failed: ${error.message}`;
+    setStatus(`Contract read failed: ${error.message}`);
   }
 });
 
 byId("prepare").addEventListener("click", async () => {
   try {
+    setStatus("Checking network and on-chain 2-of-3 policy before simulation…");
     const admin = byId("admin").value.trim();
     const contractId = byId("contract-input").value.trim();
     const action = byId("admin-operation").value;
@@ -530,7 +565,7 @@ byId("prepare").addEventListener("click", async () => {
     const policy = assertTwoOfThree(await readAccountPolicy(admin));
     byId("policy-account").value = admin;
     byId("policy-result").textContent = JSON.stringify(policy, null, 2);
-    byId("status").textContent = `Building ${action} for the verified 2-of-3 admin…`;
+    setStatus(`Building ${action} for the verified 2-of-3 admin…`);
     const server = rpcServer();
     const account = await server.getAccount(admin);
     const contract = new Contract(contractId);
@@ -555,27 +590,29 @@ byId("prepare").addEventListener("click", async () => {
     xdrInput.value = xdr;
     inspect(xdr);
     history.replaceState(null, "", makeShareUrl(xdr));
-    byId("status").textContent = `${action} simulation succeeded. Review, add the first signature, then copy the next cosigner URL.`;
+    setStatus(`${action} simulation succeeded. Review, add the first signature, then copy the next cosigner URL.`);
   } catch (error) {
-    byId("status").textContent = `Preparation failed: ${error.message}`;
+    setStatus(`Preparation failed: ${error.message}`);
   }
 });
 
 byId("inspect").addEventListener("click", () => {
   try {
     inspect(xdrInput.value);
-    byId("status").textContent = `Decoded as one ${network().label} SimpleContract upgrade. Verify every field before signing.`;
+    const method = byId("function").textContent;
+    setStatus(`Decoded as one ${network().label} SimpleContract ${method} operation. Verify every field before signing.`);
   } catch (error) {
     inspectedXdr = "";
     signButton.disabled = true;
     byId("review").classList.add("hidden");
     byId("share").classList.add("hidden");
-    byId("status").textContent = `Invalid upgrade transaction: ${error.message}`;
+    setStatus(`Invalid admin transaction: ${error.message}`);
   }
 });
 
 signButton.addEventListener("click", async () => {
   try {
+    setStatus("Checking the connected Freighter signer and current account policy…");
     if (xdrInput.value.trim() !== inspectedXdr) throw new Error("XDR changed after inspection; inspect it again.");
     const wallet = await connectedWallet();
     const transaction = inspect(inspectedXdr);
@@ -596,15 +633,15 @@ signButton.addEventListener("click", async () => {
     const shareUrl = makeShareUrl(signed.signedTxXdr);
     byId("share-url").value = shareUrl;
     history.replaceState(null, "", shareUrl);
-    byId("status").textContent = `Signature appended by ${wallet}. Copy this new URL for the next cosigner.`;
+    setStatus(`Signature appended by ${wallet}. Copy this new URL for the next cosigner.`);
   } catch (error) {
-    byId("status").textContent = `Signing failed: ${error.message}`;
+    setStatus(`Signing failed: ${error.message}`);
   }
 });
 
 byId("copy-url").addEventListener("click", async () => {
   await navigator.clipboard.writeText(byId("share-url").value);
-  byId("status").textContent = "Cosigner URL copied. It contains the network, transaction, and signatures in its fragment.";
+  setStatus("Cosigner URL copied. It contains the network, transaction, and signatures in its fragment.");
 });
 
 byId("submit").addEventListener("click", async () => {
@@ -612,14 +649,14 @@ byId("submit").addEventListener("click", async () => {
     const transaction = inspect(xdrInput.value);
     if (transaction.signatures.length < 2) throw new Error("Two signatures are required before submission.");
     await assertNetwork();
-    byId("status").textContent = "Submitting the signed envelope through RPC…";
+    setStatus("Submitting the signed envelope through RPC…");
     const sent = await rpcServer().sendTransaction(transaction);
     if (sent.status === "ERROR") throw new Error(sent.errorResult?.toString() || "RPC rejected the transaction.");
     const txHash = sent.hash || toHex(transaction.hash());
     const result = await waitForTransaction(rpcServer(), txHash);
-    byId("status").textContent = `Upgrade confirmed on ${network().label}. Transaction: ${result.txHash}`;
+    setStatus(`Admin operation confirmed on ${network().label}.`, result.txHash);
   } catch (error) {
-    byId("status").textContent = `Submission failed: ${error.message}`;
+    setStatus(`Submission failed: ${error.message}`);
   }
 });
 
@@ -627,5 +664,5 @@ setNetworkUi();
 try {
   loadShareUrl();
 } catch (error) {
-  byId("status").textContent = `Could not load cosigner URL: ${error.message}`;
+  setStatus(`Could not load cosigner URL: ${error.message}`);
 }
