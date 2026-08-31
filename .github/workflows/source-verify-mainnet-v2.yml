@@ -71,3 +71,48 @@ jobs:
       home_domain: 'ackrate.xyz'
     secrets:
       release_token: ${{ secrets.GITHUB_TOKEN }}
+
+  requeue-explorer-match-after-proof:
+    needs: publish-canonical-source-proof
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      attestations: read
+    steps:
+      - name: Wait for the exact attestation to be readable
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EXPECTED_WASM_SHA256: 982809197d35d44c7b0fce6bd117fb2fec09b728c64c146c1f803b01faacff62
+        run: |
+          set -euo pipefail
+          endpoint="repos/${GITHUB_REPOSITORY}/attestations/sha256:${EXPECTED_WASM_SHA256}"
+          for attempt in $(seq 1 20); do
+            payload="$(gh api "$endpoint" --jq '.attestations[0].bundle.dsseEnvelope.payload')"
+            commit="$(printf '%s' "$payload" | base64 --decode | jq -r '.predicate.buildDefinition.resolvedDependencies[0].digest.gitCommit')"
+            if [ "$commit" = "$GITHUB_SHA" ]; then
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "The expected canonical attestation did not become readable in time." >&2
+          exit 1
+      - name: Requeue the StellarExpert source match after attestation
+        env:
+          CONTRACT_HASH: 982809197d35d44c7b0fce6bd117fb2fec09b728c64c146c1f803b01faacff62
+        run: |
+          set -euo pipefail
+          jq -n \
+            --arg repository "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
+            --arg commitHash "$GITHUB_SHA" \
+            --arg jobId "build" \
+            --arg runId "$GITHUB_RUN_ID" \
+            --arg contractHash "$CONTRACT_HASH" \
+            --arg relativePath "contracts/mainnet-v2/mandate-registry" \
+            --arg packageName "mandate-registry" \
+            '{repository: $repository, commitHash: $commitHash, jobId: $jobId, runId: $runId, contractHash: $contractHash, relativePath: $relativePath, packageName: $packageName}' \
+            > "$RUNNER_TEMP/source-match.json"
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header 'content-type: application/json' \
+            --data-binary "@$RUNNER_TEMP/source-match.json" \
+            'https://api.stellar.expert/explorer/public/contract-validation/match'
