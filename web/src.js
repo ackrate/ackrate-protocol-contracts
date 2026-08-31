@@ -39,6 +39,19 @@ const byId = (id) => document.getElementById(id);
 const xdrInput = byId("xdr");
 const signButton = byId("sign");
 let inspectedXdr = "";
+const LOCAL_IDS_KEY = "ackrate-simple-contract-ids-v1";
+const REMEMBERED_IDS = [
+  "environment",
+  "deploy-admin",
+  "git-ref",
+  "policy-account",
+  "signer-2",
+  "signer-3",
+  "admin",
+  "contract-input",
+  "hash-input",
+  "new-admin",
+];
 
 const network = () => NETWORKS[byId("environment").value];
 const rpcServer = () => new rpc.Server(network().rpc, { allowHttp: false });
@@ -72,6 +85,30 @@ function setTransactionLink(id, hash) {
   link.href = explorerTransactionUrl(hash);
   link.textContent = hash;
 }
+
+function persistPublicIds() {
+  try {
+    const values = Object.fromEntries(REMEMBERED_IDS.map((id) => [id, byId(id).value.trim()]));
+    localStorage.setItem(LOCAL_IDS_KEY, JSON.stringify(values));
+  } catch {
+    // Storage can be disabled; the app remains fully usable without persistence.
+  }
+}
+
+function restorePublicIds() {
+  try {
+    const values = JSON.parse(localStorage.getItem(LOCAL_IDS_KEY) || "{}");
+    REMEMBERED_IDS.forEach((id) => {
+      if (typeof values[id] === "string" && values[id]) byId(id).value = values[id];
+    });
+  } catch {
+    localStorage.removeItem(LOCAL_IDS_KEY);
+  }
+}
+
+REMEMBERED_IDS.forEach((id) => {
+  byId(id).addEventListener(id === "environment" ? "change" : "input", persistPublicIds);
+});
 
 function setNetworkUi() {
   const selected = network();
@@ -151,6 +188,7 @@ function inspect(raw) {
   byId("contract-input").value ||= contractId;
   if (functionName === "upgrade") byId("hash-input").value ||= operationArgument;
   if (functionName === "set_admin") byId("new-admin").value ||= operationArgument;
+  persistPublicIds();
   byId("review").classList.remove("hidden");
   byId("share").classList.remove("hidden");
   byId("share-url").value = makeShareUrl(raw.trim());
@@ -443,6 +481,7 @@ byId("read-policy").addEventListener("click", async () => {
       setStatus("RPC confirms an exact 2-of-3 account policy.");
       byId("admin").value = policy.account;
       byId("deploy-admin").value = policy.account;
+      persistPublicIds();
     } catch (error) {
       setStatus(`Policy loaded, but not ready: ${error.message}`);
     }
@@ -478,6 +517,7 @@ byId("configure-policy").addEventListener("click", async () => {
     byId("policy-transaction-row").classList.remove("hidden");
     byId("admin").value = account;
     byId("deploy-admin").value = account;
+    persistPublicIds();
     setStatus("2-of-3 account configured and independently verified through RPC.", result.txHash);
   } catch (error) {
     setStatus(`2-of-3 setup failed: ${error.message}`);
@@ -527,6 +567,7 @@ byId("deploy").addEventListener("click", async () => {
     byId("contract-input").value = contractId;
     byId("admin").value = admin;
     byId("hash-input").value = toHex(hash);
+    persistPublicIds();
     setStatus(`Initial SimpleContract deployed on ${selected.label}: ${contractId}.`, deployment.txHash);
   } catch (error) {
     setStatus(`Deployment failed: ${error.message}`);
@@ -554,6 +595,7 @@ byId("use-git-wasm").addEventListener("click", async () => {
       `Approve the ${ref} WASM upload in Freighter…`,
     );
     byId("hash-input").value = toHex(hash);
+    persistPublicIds();
     setStatus(`WASM from ${ref} uploaded. Hash ${toHex(hash)}. Source ${sourceUrl}. Attestation ${attestationUrl}.`, result.txHash);
   } catch (error) {
     setStatus(`WASM upload failed: ${error.message}`);
@@ -672,6 +714,7 @@ byId("submit").addEventListener("click", async () => {
   }
 });
 
+restorePublicIds();
 setNetworkUi();
 try {
   loadShareUrl();
