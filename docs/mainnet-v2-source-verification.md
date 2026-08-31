@@ -1,6 +1,6 @@
 # Mainnet V2 source verification
 
-Status as of 2026-08-31 16:18 UTC: the deployed bytecode is reproducibly
+Status as of 2026-08-31 21:17 UTC: the deployed bytecode is reproducibly
 matched to this repository and has canonical GitHub provenance, but
 StellarExpert still reports `validation.status = unverified`. The remaining
 failure is at StellarExpert's public validation-queue intake, after the source,
@@ -17,10 +17,10 @@ byte-for-byte build, release, and attestation checks have succeeded.
 | Source directory | `contracts/mainnet-v2/mandate-registry` |
 | Cargo package | `mandate-registry` |
 | Package version | `0.4.1` |
-| Source commit | [`02a01b89638b291ff6e03697ec98d175cc117b59`](https://github.com/ackrate/ackrate-protocol-contracts/commit/02a01b89638b291ff6e03697ec98d175cc117b59) |
-| Verification run | [`33412027817`](https://github.com/ackrate/ackrate-protocol-contracts/actions/runs/33412027817) |
-| GitHub attestation | [`44188903`](https://github.com/ackrate/ackrate-protocol-contracts/attestations/44188903) |
-| Release artifact | [`mandate-registry_v0.4.1.wasm`](https://github.com/ackrate/ackrate-protocol-contracts/releases/download/v2-source-verify-v0.4.1.5_contracts_mainnet_v2_mandate_registry_mandate-registry_pkg0.4.1_cli27.0.0/mandate-registry_v0.4.1.wasm) |
+| Source commit | [`9c48453fffccc8827361070aeb84c0341f7e9d27`](https://github.com/ackrate/ackrate-protocol-contracts/commit/9c48453fffccc8827361070aeb84c0341f7e9d27) |
+| Verification run | [`33439290427`](https://github.com/ackrate/ackrate-protocol-contracts/actions/runs/33439290427) |
+| GitHub attestation | [`44255234`](https://github.com/ackrate/ackrate-protocol-contracts/attestations/44255234) |
+| Release artifact | [`mandate-registry_v0.4.1.wasm`](https://github.com/ackrate/ackrate-protocol-contracts/releases/download/v2-source-verify-v0.4.1.6_mandate-registry_pkg0.4.1_cli27.0.0/mandate-registry_v0.4.1.wasm) |
 | Upstream incident | [`stellar-expert/soroban-build-workflow#9`](https://github.com/stellar-expert/soroban-build-workflow/issues/9) |
 
 The deployed WASM embeds both expected metadata entries:
@@ -32,7 +32,7 @@ home_domain=ackrate.xyz
 
 ## What passed
 
-The `v2-source-verify-v0.4.1.5` run used the official reusable workflow at the
+The `v2-source-verify-v0.4.1.6` run used the official reusable workflow at the
 canonical builder identity:
 
 ```text
@@ -45,14 +45,15 @@ the reviewed workflow commit
 
 1. installed Rust `1.98.0`, the `wasm32v1-none` target, and Stellar CLI
    `27.0.0` from a SHA-256-pinned release archive;
-2. rebuilt `contracts/mainnet-v2/mandate-registry` with the same optimization
-   and metadata arguments used for the deployment;
+2. rebuilt the `mandate-registry` package through a repository-root Cargo
+   workspace, matching Reflector's verified repository layout, with the same
+   optimization and metadata arguments used for the deployment;
 3. ran the reviewed test suite, including the ignored release-byte test;
 4. required the rebuilt artifact to equal the deployed hash
    `98280919...faacff62` exactly;
 5. published a GitHub release whose asset digest is the same hash; and
 6. generated SLSA provenance tying that exact artifact to source commit
-   `02a01b89...117b59` and the official StellarExpert builder.
+   `9c48453f...e9d27` and the official StellarExpert builder.
 
 The exact-source-and-byte gate and official release/attestation job both
 completed successfully. This establishes the source-to-bytecode relationship
@@ -66,14 +67,18 @@ attestation:
 ```json
 {
   "repository": "https://github.com/ackrate/ackrate-protocol-contracts",
-  "commitHash": "02a01b89638b291ff6e03697ec98d175cc117b59",
+  "commitHash": "9c48453fffccc8827361070aeb84c0341f7e9d27",
   "jobId": "build",
-  "runId": "33412027817",
+  "runId": "33439290427",
   "contractHash": "982809197d35d44c7b0fce6bd117fb2fec09b728c64c146c1f803b01faacff62",
-  "relativePath": "contracts/mainnet-v2/mandate-registry",
   "packageName": "mandate-registry"
 }
 ```
+
+This is the same six-field, package-only request shape used by Reflector's
+verified Mainnet Pulse contract. In particular, the Ackrate run uses no
+`relativePath`. The official build output still matched the deployed hash
+exactly, so moving the workspace entry point did not change the contract bytes.
 
 The repository workflow then waited until GitHub's attestation API returned the
 new proof and resubmitted the same match. It made 20 attempts at 30-second
@@ -177,7 +182,7 @@ repair the intake allowlist or reprocess the existing hash.
    {
      "status": "verified",
      "repository": "https://github.com/ackrate/ackrate-protocol-contracts",
-     "commit": "02a01b89638b291ff6e03697ec98d175cc117b59",
+     "commit": "9c48453fffccc8827361070aeb84c0341f7e9d27",
      "package": "mandate-registry"
    }
    ```
@@ -192,7 +197,7 @@ deployment would not repair a broken verifier intake.
 ## Independent verification
 
 ```bash
-curl -LO https://github.com/ackrate/ackrate-protocol-contracts/releases/download/v2-source-verify-v0.4.1.5_contracts_mainnet_v2_mandate_registry_mandate-registry_pkg0.4.1_cli27.0.0/mandate-registry_v0.4.1.wasm
+curl -LO https://github.com/ackrate/ackrate-protocol-contracts/releases/download/v2-source-verify-v0.4.1.6_mandate-registry_pkg0.4.1_cli27.0.0/mandate-registry_v0.4.1.wasm
 sha256sum mandate-registry_v0.4.1.wasm
 gh attestation verify mandate-registry_v0.4.1.wasm \
   --repo ackrate/ackrate-protocol-contracts
