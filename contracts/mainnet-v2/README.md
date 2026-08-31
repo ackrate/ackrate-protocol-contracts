@@ -6,11 +6,21 @@
 
 This repository's active milestone is **T3 Step 1**.
 
-`0.4.1` is ACKRATE's condensed MandateRegistry review candidate on `main`.
-It is not deployed to Stellar mainnet. A secret-free preparation workflow can
-build and inspect unsigned Mainnet transactions, but it cannot sign anything
-and broadcasting requires a separate hash-bound confirmation. V2 releases use
-one dedicated source-verification route, and `contracts/simple` remains unchanged.
+`0.4.1` is ACKRATE's condensed MandateRegistry deployed on Stellar Mainnet.
+The exact attested Linux release artifact was uploaded and instantiated through
+the reviewed 2-of-3 authority workflow. `contracts/simple` remains unchanged.
+
+| Mainnet evidence | Verified value |
+|---|---|
+| Contract | [`CCLZEBJXG4YVJEPBCR5F27N733BCK5HQJWZZGB3K54JVODY3VAGP4HWR`](https://stellar.expert/explorer/public/contract/CCLZEBJXG4YVJEPBCR5F27N733BCK5HQJWZZGB3K54JVODY3VAGP4HWR) |
+| Deployment transaction | [`28df0baa…61cd`](https://stellar.expert/explorer/public/tx/28df0baad437bde0409cebe002c528d3f6a3306dd1e0671a15fa1c4c47b961cd) |
+| WASM upload transaction | [`f7596369…9368`](https://stellar.expert/explorer/public/tx/f7596369a41218fbb55114a84322feb0b705d80864edca48657e2dbc6a209368) |
+| WASM SHA-256 | `982809197d35d44c7b0fce6bd117fb2fec09b728c64c146c1f803b01faacff62` |
+| Source revision | [`02d43f5`](https://github.com/ackrate/ackrate-protocol-contracts/commit/02d43f5358aa567447447e44407546b6c7de1683) / `mainnet-v2-v0.4.1` |
+| GitHub provenance | [Published attestations](https://github.com/ackrate/ackrate-protocol-contracts/attestations) |
+| Administrator | 2-of-3 Mainnet account `GCIU…7TXG` |
+| Initial asset | Canonical Circle Stellar Mainnet USDC `CCW6…MI75` |
+| Live verification | code hash exact; admin exact; no pending admin; schema `2`; unpaused; USDC allowed |
 
 V2 is one contract with one payment path. The contract—not the SDK, agent,
 cache, x402 adapter, or merchant server—is the enforcement layer.
