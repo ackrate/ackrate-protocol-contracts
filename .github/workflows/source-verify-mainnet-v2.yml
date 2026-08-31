@@ -45,11 +45,6 @@ jobs:
         run: |
           set -euo pipefail
           contract=contracts/mainnet-v2/mandate-registry
-          cargo test \
-            --manifest-path "$contract/Cargo.toml" \
-            --locked \
-            --all-features \
-            -- --include-ignored
           stellar contract build \
             --manifest-path "$contract/Cargo.toml" \
             --package mandate-registry \
@@ -59,6 +54,11 @@ jobs:
             --meta home_domain=ackrate.xyz
           wasm="$contract/target/wasm32v1-none/release/mandate_registry.wasm"
           echo "$EXPECTED_WASM_SHA256  $wasm" | sha256sum --check --strict
+          MAINNET_V2_RELEASE_WASM="$wasm" cargo test \
+            --manifest-path "$contract/Cargo.toml" \
+            --locked \
+            --all-features \
+            -- --include-ignored
 
   publish-canonical-source-proof:
     needs: exact-source-and-byte-gate
