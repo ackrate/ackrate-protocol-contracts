@@ -69,16 +69,18 @@ for variant in simple mainnet-v2 composites; do
       --manifest-path "$contract/Cargo.toml" \
       --package mandate-registry \
       --locked \
-      --optimize
+      --optimize \
+      --meta source_repo=github:ackrate/ackrate-protocol-contracts \
+      --meta home_domain=ackrate.xyz
 
     wasm="$contract/target/wasm32v1-none/release/mandate_registry.wasm"
-    expected_wasm_size='15405'
+    expected_wasm_size='15510'
     actual_wasm_size="$(wc -c <"$wasm" | tr -d '[:space:]')"
     if [[ "$actual_wasm_size" != "$expected_wasm_size" ]]; then
       echo "mainnet-v2 optimized WASM size changed: $actual_wasm_size" >&2
       exit 1
     fi
-    expected_wasm_hash='acf5a71b86ad0d92f4f1249f827838e70a3bee5b5e56e6d2e50f047670037fc1'
+    expected_wasm_hash='b74bafdeab2399d03b596b8267c16b717be06225616d2196f11a02b308e1cee5'
     actual_wasm_hash="$(shasum -a 256 "$wasm" | awk '{print $1}')"
     if [[ "${ACKRATE_CANONICAL_RELEASE_BUILD:-0}" == "1" ]]; then
       if [[ "$actual_wasm_hash" != "$expected_wasm_hash" ]]; then

@@ -104,7 +104,7 @@ stellar() {
       case "${2:-}" in
         info)
           [[ "${3:-}" == "hash" ]] || return 93
-          printf 'acf5a71b86ad0d92f4f1249f827838e70a3bee5b5e56e6d2e50f047670037fc1\n'
+          printf 'b74bafdeab2399d03b596b8267c16b717be06225616d2196f11a02b308e1cee5\n'
           ;;
         invoke)
           local function_name=""
@@ -226,7 +226,7 @@ assert_fails_with "public Stellar C-contract" \
   --source "$SIGNER_1_G" \
   --admin "$SIGNER_1_G" \
   --initial-asset "$SOURCE_G" \
-  --observed-wasm-hash acf5a71b86ad0d92f4f1249f827838e70a3bee5b5e56e6d2e50f047670037fc1 \
+  --observed-wasm-hash b74bafdeab2399d03b596b8267c16b717be06225616d2196f11a02b308e1cee5 \
   --rpc-url https://rpc.example.org \
   --out "$TMP_DIR/deploy.xdr"
 
@@ -244,7 +244,7 @@ assert_fails_with "canonical Circle Stellar Mainnet USDC SAC" \
   --source "$SIGNER_1_G" \
   --admin "$SIGNER_1_G" \
   --initial-asset "$CONTRACT_C" \
-  --observed-wasm-hash acf5a71b86ad0d92f4f1249f827838e70a3bee5b5e56e6d2e50f047670037fc1 \
+  --observed-wasm-hash b74bafdeab2399d03b596b8267c16b717be06225616d2196f11a02b308e1cee5 \
   --rpc-url https://rpc.example.org \
   --out "$TMP_DIR/deploy.xdr"
 
@@ -253,7 +253,7 @@ assert_fails_with "--source and --admin must be the same" \
   --source "$SOURCE_G" \
   --admin "$SIGNER_1_G" \
   --initial-asset "$CANONICAL_USDC" \
-  --observed-wasm-hash acf5a71b86ad0d92f4f1249f827838e70a3bee5b5e56e6d2e50f047670037fc1 \
+  --observed-wasm-hash b74bafdeab2399d03b596b8267c16b717be06225616d2196f11a02b308e1cee5 \
   --rpc-url https://rpc.example.org \
   --out "$TMP_DIR/deploy.xdr"
 
@@ -410,6 +410,13 @@ if grep -Eq -- 'stellar .*tx sign|stellar .*contract (upload|deploy).*(--sign-wi
   echo "Deployment workflow contains an automated signing path." >&2
   exit 1
 fi
+
+grep -Eq 'tx hash .*--rpc-url https://rpc.invalid' "$CALL_LOG" \
+  || { echo "Offline transaction hashing lost its fail-closed RPC placeholder." >&2; exit 1; }
+grep -Eq -- '--meta source_repo=github:ackrate/ackrate-protocol-contracts' "$SCRIPT" \
+  || { echo "V2 build lost source-repository metadata." >&2; exit 1; }
+grep -Eq -- '--meta home_domain=ackrate.xyz' "$SCRIPT" \
+  || { echo "V2 build lost home-domain metadata." >&2; exit 1; }
 
 echo "Mainnet V2 deployment workflow offline self-test passed."
 echo "  secret/phrase/address validation: fail closed"

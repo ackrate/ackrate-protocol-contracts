@@ -52,7 +52,7 @@ jobs:
           set -euo pipefail
           output="$RUNNER_TEMP/mainnet-v2-candidate"
           wasm='contracts/mainnet-v2/mandate-registry/target/wasm32v1-none/release/mandate_registry.wasm'
-          expected='acf5a71b86ad0d92f4f1249f827838e70a3bee5b5e56e6d2e50f047670037fc1'
+          expected='b74bafdeab2399d03b596b8267c16b717be06225616d2196f11a02b308e1cee5'
           mkdir -p "$output"
           cp "$wasm" "$output/mandate_registry.wasm"
           actual="$(sha256sum "$output/mandate_registry.wasm" | awk '{print $1}')"

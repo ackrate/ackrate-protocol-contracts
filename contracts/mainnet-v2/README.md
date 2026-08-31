@@ -9,8 +9,8 @@ This repository's active milestone is **T3 Step 1**.
 `0.4.1` is ACKRATE's condensed MandateRegistry review candidate on `main`.
 It is not deployed to Stellar mainnet. A secret-free preparation workflow can
 build and inspect unsigned Mainnet transactions, but it cannot sign anything
-and broadcasting requires a separate hash-bound confirmation. V2 release tags
-remain disabled, and `contracts/simple` remains unchanged.
+and broadcasting requires a separate hash-bound confirmation. V2 releases use
+one dedicated source-verification route, and `contracts/simple` remains unchanged.
 
 V2 is one contract with one payment path. The contract—not the SDK, agent,
 cache, x402 adapter, or merchant server—is the enforcement layer.
@@ -56,6 +56,14 @@ The result is a five-file production kernel with one money-moving function,
   the exact repaired revision to `main`.
 
 The 12,561 figure counts executable cases and state actions, not agents.
+
+> [!NOTE]
+> **Live Mainnet rehearsal finding — fixed before contract upload**
+> Stellar CLI 27.0.0 requires an RPC URL value while calculating an otherwise
+> local transaction hash. The helper now supplies a deliberately non-routable
+> `.invalid` URL, so hashing stays local and fails closed if the CLI ever tries
+> to use the network. The release artifact now also carries the source-repository
+> and home-domain metadata required for StellarExpert source verification.
 
 > [!NOTE]
 > **Latest completed cycle — cycle 8**
@@ -372,9 +380,11 @@ Exact artifact facts are updated only after the repaired gate completes:
 
 | Artifact | Reviewed value |
 |---|---|
-| Optimized WASM size | 15,405 bytes |
-| Canonical Linux WASM SHA-256 | `acf5a71b86ad0d92f4f1249f827838e70a3bee5b5e56e6d2e50f047670037fc1` |
+| Optimized WASM size | 15,510 bytes |
+| Canonical Linux WASM SHA-256 | `b74bafdeab2399d03b596b8267c16b717be06225616d2196f11a02b308e1cee5` |
 | Canonical full-interface SHA-256 | `69c201ce1fb089ccfef06f125826b0aeba72af1b1536cb0b19e8cb05970ee805` |
+| Embedded source metadata | `github:ackrate/ackrate-protocol-contracts` |
+| Embedded home domain | `ackrate.xyz` |
 
 ## Guarded Mainnet preparation
 
@@ -393,12 +403,14 @@ preparation paths are build-only. The workflow enforces:
 
 The workflow cannot sign. CI publishes the exact canonical candidate only from
 a push to `main`, after both dependency security and the complete contract gate
-pass. V2 release tags remain disabled, and no step automatically deploys.
+pass. The dedicated `mainnet-v2-v*` route uses the commit-pinned official
+StellarExpert build workflow to create the attested release used for deployment.
+No step automatically deploys.
 
 ## Remaining release blockers
 
 Passing tests cannot prove the absence of unknown defects. Before any V2
-mainnet action, all of these remain mandatory:
+contract upload or deployment, all of these remain mandatory:
 
 - finish repeated independent review, property/fuzz, mutation, differential,
   and resource-cost lanes;

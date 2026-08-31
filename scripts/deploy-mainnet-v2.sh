@@ -8,8 +8,8 @@ NETWORK_PASSPHRASE="Public Global Stellar Network ; September 2015"
 LAB_SIGN_URL="https://lab.stellar.org/transaction/import"
 CANONICAL_USDC_SAC="CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75"
 
-EXPECTED_WASM_SIZE="15405"
-EXPECTED_WASM_HASH="acf5a71b86ad0d92f4f1249f827838e70a3bee5b5e56e6d2e50f047670037fc1"
+EXPECTED_WASM_SIZE="15510"
+EXPECTED_WASM_HASH="b74bafdeab2399d03b596b8267c16b717be06225616d2196f11a02b308e1cee5"
 EXPECTED_INTERFACE_HASH="69c201ce1fb089ccfef06f125826b0aeba72af1b1536cb0b19e8cb05970ee805"
 EXPECTED_FUNCTIONS=$'__constructor\naccept_admin\nderive_mandate_id\nexecute_payment\nget_admin\nget_mandate\nget_pending_admin\nget_schema_version\nis_asset_allowed\nis_paused\npause\npropose_admin\nregister_mandate\nrevoke_mandate\nset_asset_allowed\nunpause\nupgrade\nvalidate_mandate'
 EXPECTED_EVENTS=$'AdminSet\nAdminTransferProposed\nAssetPolicyChanged\nMandateRegistered\nMandateRevoked\nPaused\nPaymentExecuted\nUnpaused\nUpgraded'
@@ -191,6 +191,7 @@ xdr_hash() {
   local hash
   hash="$(stellar tx hash \
     --network-passphrase "$NETWORK_PASSPHRASE" \
+    --rpc-url https://rpc.invalid \
     "$xdr_file")"
   hash="$(tr -d '[:space:]' <<<"$hash")"
   assert_hash "Transaction hash" "$hash"
@@ -273,7 +274,9 @@ build_contract() {
     --manifest-path "$CONTRACT_DIR/Cargo.toml" \
     --package mandate-registry \
     --locked \
-    --optimize
+    --optimize \
+    --meta source_repo=github:ackrate/ackrate-protocol-contracts \
+    --meta home_domain=ackrate.xyz
   verify_wasm "$DEFAULT_WASM"
 }
 

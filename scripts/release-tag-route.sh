@@ -3,8 +3,9 @@ set -euo pipefail
 
 route_tag() {
   case "$1" in
+    mainnet-v2-v*) echo "mainnet-v2" ;;
     mainnet-v2*)
-      echo "mainnet-v2 release tags are reserved but disabled until a dedicated V2 release path is reviewed" >&2
+      echo "invalid mainnet-v2 release tag: $1" >&2
       return 1
       ;;
     simple-v*|v0.1.*) echo "simple" ;;
@@ -30,6 +31,7 @@ if [[ "${1:-}" == "--self-test" ]]; then
     "mainnet-registry-v1.2.3:mainnet-registry"
     "source-verify-v1.2.3:source-bundle"
     "source-verify-registry-v1.2.3:source-registry"
+    "mainnet-v2-v0.4.1:mainnet-v2"
   )
   for item in "${cases[@]}"; do
     tag="${item%%:*}"
@@ -41,14 +43,14 @@ if [[ "${1:-}" == "--self-test" ]]; then
     }
   done
 
-  rejected=("v0.4.1" "mainnet-v2-v0.4.1" "mainnet-v2" "unknown-v1")
+  rejected=("v0.4.1" "mainnet-v2" "mainnet-v2-0.4.1" "unknown-v1")
   for tag in "${rejected[@]}"; do
     if route_tag "$tag" >/dev/null 2>&1; then
       echo "unsafe release tag was accepted: $tag" >&2
       exit 1
     fi
   done
-  echo "Release tag routing passed: accepted tags are unambiguous and V2 releases fail closed."
+  echo "Release tag routing passed: accepted tags are unambiguous and V2 uses its dedicated source-verification path."
   exit 0
 fi
 
