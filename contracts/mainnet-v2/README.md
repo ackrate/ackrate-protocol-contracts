@@ -57,6 +57,19 @@ The result is a five-file production kernel with one money-moving function,
 
 The 12,561 figure counts executable cases and state actions, not agents.
 
+> [!WARNING]
+> **Cycle 9 release-identity finding — deployment blocked and repaired**
+> The contract behavior suite passed, but the GitHub release gate rejected the
+> candidate because the fingerprint recorded from a macOS build did not match
+> the pinned Linux release build. No contract was uploaded, deployed, or signed.
+> Deployment is now locked to the exact GitHub Linux artifact used by the
+> StellarExpert source-verification release; local builds may verify behavior,
+> size, and interface, but cannot substitute their bytes for that artifact.
+
+| What the release gate caught | What we changed |
+|---|---|
+| The recorded file fingerprint came from the wrong build platform, even though the contract tests and public interface matched. | The canonical fingerprint now comes only from the pinned GitHub Linux build. Upload preparation rejects every other file, and deployment remains blocked until that exact release artifact is downloaded and verified. |
+
 > [!NOTE]
 > **Live Mainnet rehearsal finding — fixed before contract upload**
 > Stellar CLI 27.0.0 requires an RPC URL value while calculating an otherwise
@@ -381,7 +394,7 @@ Exact artifact facts are updated only after the repaired gate completes:
 | Artifact | Reviewed value |
 |---|---|
 | Optimized WASM size | 15,510 bytes |
-| Canonical Linux WASM SHA-256 | `b74bafdeab2399d03b596b8267c16b717be06225616d2196f11a02b308e1cee5` |
+| Canonical Linux WASM SHA-256 | `982809197d35d44c7b0fce6bd117fb2fec09b728c64c146c1f803b01faacff62` |
 | Canonical full-interface SHA-256 | `69c201ce1fb089ccfef06f125826b0aeba72af1b1536cb0b19e8cb05970ee805` |
 | Embedded source metadata | `github:ackrate/ackrate-protocol-contracts` |
 | Embedded home domain | `ackrate.xyz` |

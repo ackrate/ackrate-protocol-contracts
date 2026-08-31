@@ -104,7 +104,7 @@ stellar() {
       case "${2:-}" in
         info)
           [[ "${3:-}" == "hash" ]] || return 93
-          printf 'b74bafdeab2399d03b596b8267c16b717be06225616d2196f11a02b308e1cee5\n'
+          printf '982809197d35d44c7b0fce6bd117fb2fec09b728c64c146c1f803b01faacff62\n'
           ;;
         invoke)
           local function_name=""
@@ -226,7 +226,7 @@ assert_fails_with "public Stellar C-contract" \
   --source "$SIGNER_1_G" \
   --admin "$SIGNER_1_G" \
   --initial-asset "$SOURCE_G" \
-  --observed-wasm-hash b74bafdeab2399d03b596b8267c16b717be06225616d2196f11a02b308e1cee5 \
+  --observed-wasm-hash 982809197d35d44c7b0fce6bd117fb2fec09b728c64c146c1f803b01faacff62 \
   --rpc-url https://rpc.example.org \
   --out "$TMP_DIR/deploy.xdr"
 
@@ -244,7 +244,7 @@ assert_fails_with "canonical Circle Stellar Mainnet USDC SAC" \
   --source "$SIGNER_1_G" \
   --admin "$SIGNER_1_G" \
   --initial-asset "$CONTRACT_C" \
-  --observed-wasm-hash b74bafdeab2399d03b596b8267c16b717be06225616d2196f11a02b308e1cee5 \
+  --observed-wasm-hash 982809197d35d44c7b0fce6bd117fb2fec09b728c64c146c1f803b01faacff62 \
   --rpc-url https://rpc.example.org \
   --out "$TMP_DIR/deploy.xdr"
 
@@ -253,7 +253,7 @@ assert_fails_with "--source and --admin must be the same" \
   --source "$SOURCE_G" \
   --admin "$SIGNER_1_G" \
   --initial-asset "$CANONICAL_USDC" \
-  --observed-wasm-hash b74bafdeab2399d03b596b8267c16b717be06225616d2196f11a02b308e1cee5 \
+  --observed-wasm-hash 982809197d35d44c7b0fce6bd117fb2fec09b728c64c146c1f803b01faacff62 \
   --rpc-url https://rpc.example.org \
   --out "$TMP_DIR/deploy.xdr"
 

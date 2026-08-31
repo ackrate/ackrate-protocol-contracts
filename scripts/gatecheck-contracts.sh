@@ -80,7 +80,7 @@ for variant in simple mainnet-v2 composites; do
       echo "mainnet-v2 optimized WASM size changed: $actual_wasm_size" >&2
       exit 1
     fi
-    expected_wasm_hash='b74bafdeab2399d03b596b8267c16b717be06225616d2196f11a02b308e1cee5'
+    expected_wasm_hash='982809197d35d44c7b0fce6bd117fb2fec09b728c64c146c1f803b01faacff62'
     actual_wasm_hash="$(shasum -a 256 "$wasm" | awk '{print $1}')"
     if [[ "${ACKRATE_CANONICAL_RELEASE_BUILD:-0}" == "1" ]]; then
       if [[ "$actual_wasm_hash" != "$expected_wasm_hash" ]]; then
