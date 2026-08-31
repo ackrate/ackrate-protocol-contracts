@@ -85,7 +85,7 @@
               <option value="set_admin">Rotate admin</option>
             </select>
           </label>
-          <label>Configured admin G-account<input id="admin" spellcheck="false" placeholder="G…" /></label>
+          <label>Your signer G-account (admin is read from contract)<input id="admin" spellcheck="false" placeholder="G…" /></label>
           <label>SimpleContract ID<input id="contract-input" spellcheck="false" placeholder="C…" /></label>
           <label id="upgrade-hash-field">Uploaded WASM hash (hex)<input id="hash-input" spellcheck="false" maxlength="64" placeholder="64 hexadecimal characters" /></label>
           <label id="new-admin-field" class="hidden">New admin G-account<input id="new-admin" spellcheck="false" placeholder="G…" /></label>
@@ -93,7 +93,7 @@
         <div class="actions">
           <button id="use-git-wasm">Upload Git-ref WASM</button>
           <button id="read-contract">Read admin + pause state</button>
-          <button id="prepare" class="primary">Build and simulate via RPC</button>
+          <button id="prepare" class="primary">Build via RPC + sign in Freighter</button>
         </div>
         <pre id="contract-state">No contract state loaded.</pre>
       </section>

@@ -346,9 +346,23 @@ function showArtifact(artifact) {
   byId("artifact-result").classList.remove("hidden");
 }
 
-async function simulateRead(contractId, source, method) {
+async function readSimulationAccount(preferredSource) {
   const server = rpcServer();
-  const account = await server.getAccount(source);
+  try {
+    return { account: await server.getAccount(preferredSource), usedFallback: false };
+  } catch (preferredError) {
+    setStatus(`The entered G-account is absent on ${network().label}; selecting a funded account for unauthenticated read simulation…`);
+    const response = await fetch(`${network().horizon}/accounts?order=desc&limit=1`, { cache: "no-store" });
+    if (!response.ok) throw preferredError;
+    const payload = await response.json();
+    const fallback = payload?._embedded?.records?.[0]?.account_id;
+    if (!StrKey.isValidEd25519PublicKey(fallback)) throw preferredError;
+    return { account: await server.getAccount(fallback), usedFallback: true };
+  }
+}
+
+async function simulateRead(contractId, account, method) {
+  const server = rpcServer();
   const transaction = new TransactionBuilder(account, {
     fee: "100",
     networkPassphrase: network().passphrase,
@@ -358,6 +372,45 @@ async function simulateRead(contractId, source, method) {
     throw new Error(`${method} simulation failed.`);
   }
   return simulation.result.retval;
+}
+
+async function readContractState(contractId, preferredSource) {
+  const { account, usedFallback } = await readSimulationAccount(preferredSource);
+  const [adminValue, pausedValue] = await Promise.all([
+    simulateRead(contractId, account, "get_admin"),
+    simulateRead(contractId, account, "is_paused"),
+  ]);
+  return {
+    admin: Address.fromScVal(adminValue).toString(),
+    paused: scValToNative(pausedValue),
+    usedFallback,
+  };
+}
+
+async function appendFreighterSignature() {
+  if (xdrInput.value.trim() !== inspectedXdr) throw new Error("XDR changed after inspection; inspect it again.");
+  const wallet = await connectedWallet();
+  const transaction = inspect(inspectedXdr);
+  const policy = assertTwoOfThree(await readAccountPolicy(transaction.source));
+  const eligible = [policy.account, ...policy.signers.map((signer) => signer.key)];
+  if (!eligible.includes(wallet)) throw new Error("Connected Freighter key is not a signer on this admin account.");
+  const walletHint = toHex(Keypair.fromPublicKey(wallet).signatureHint());
+  if (transaction.signatures.some((signature) => toHex(signature.hint()) === walletHint)) {
+    throw new Error("This signer appears to have already signed the envelope.");
+  }
+  setStatus(`Waiting for ${wallet} to approve this exact transaction in Freighter…`);
+  const signed = await signTransaction(inspectedXdr, {
+    networkPassphrase: network().passphrase,
+    address: wallet,
+  });
+  if (signed.error) throw new Error(signed.error);
+  xdrInput.value = signed.signedTxXdr;
+  inspect(signed.signedTxXdr);
+  const shareUrl = makeShareUrl(signed.signedTxXdr);
+  byId("share-url").value = shareUrl;
+  history.replaceState(null, "", shareUrl);
+  setStatus(`Signature appended by ${wallet}. Copy this new URL for the next cosigner.`);
+  return wallet;
 }
 
 byId("environment").addEventListener("change", () => {
@@ -537,17 +590,9 @@ byId("read-contract").addEventListener("click", async () => {
     if (!StrKey.isValidEd25519PublicKey(source) || !StrKey.isValidContract(contractId)) {
       throw new Error("Enter a valid configured admin and contract ID.");
     }
-    const [adminValue, pausedValue] = await Promise.all([
-      simulateRead(contractId, source, "get_admin"),
-      simulateRead(contractId, source, "is_paused"),
-    ]);
-    const state = {
-      admin: Address.fromScVal(adminValue).toString(),
-      paused: scValToNative(pausedValue),
-    };
+    const state = await readContractState(contractId, source);
     byId("contract-state").textContent = JSON.stringify(state, null, 2);
-    byId("admin").value = state.admin;
-    setStatus("Contract admin and pause state read through RPC simulation.");
+    setStatus(`Contract admin and pause state read through RPC simulation${state.usedFallback ? " using an unrelated funded simulation source" : ""}. Admin: ${state.admin}.`);
   } catch (error) {
     setStatus(`Contract read failed: ${error.message}`);
   }
@@ -556,13 +601,19 @@ byId("read-contract").addEventListener("click", async () => {
 byId("prepare").addEventListener("click", async () => {
   try {
     setStatus("Checking network and on-chain 2-of-3 policy before simulation…");
-    const admin = byId("admin").value.trim();
+    const signer = byId("admin").value.trim();
     const contractId = byId("contract-input").value.trim();
     const action = byId("admin-operation").value;
-    if (!StrKey.isValidEd25519PublicKey(admin)) throw new Error("Admin must be a valid G-account.");
+    if (!StrKey.isValidEd25519PublicKey(signer)) throw new Error("Signer must be a valid G-account.");
     if (!StrKey.isValidContract(contractId)) throw new Error("Contract must be a valid C-address.");
     await assertNetwork();
+    setStatus("Reading the authoritative admin from the contract…");
+    const state = await readContractState(contractId, signer);
+    const admin = state.admin;
+    if (!StrKey.isValidEd25519PublicKey(admin)) throw new Error("Contract admin is not a G-account.");
     const policy = assertTwoOfThree(await readAccountPolicy(admin));
+    const eligible = [policy.account, ...policy.signers.map((entry) => entry.key)];
+    if (!eligible.includes(signer)) throw new Error("Entered signer is not part of the contract admin's 2-of-3 policy.");
     byId("policy-account").value = admin;
     byId("policy-result").textContent = JSON.stringify(policy, null, 2);
     setStatus(`Building ${action} for the verified 2-of-3 admin…`);
@@ -590,7 +641,12 @@ byId("prepare").addEventListener("click", async () => {
     xdrInput.value = xdr;
     inspect(xdr);
     history.replaceState(null, "", makeShareUrl(xdr));
-    setStatus(`${action} simulation succeeded. Review, add the first signature, then copy the next cosigner URL.`);
+    setStatus(`${action} preparation succeeded. Opening Freighter for the first signature…`);
+    try {
+      await appendFreighterSignature();
+    } catch (signingError) {
+      setStatus(`${action} is prepared, but the first signature was not added: ${signingError.message}. You can retry with “Append Freighter signature”.`);
+    }
   } catch (error) {
     setStatus(`Preparation failed: ${error.message}`);
   }
@@ -613,27 +669,7 @@ byId("inspect").addEventListener("click", () => {
 signButton.addEventListener("click", async () => {
   try {
     setStatus("Checking the connected Freighter signer and current account policy…");
-    if (xdrInput.value.trim() !== inspectedXdr) throw new Error("XDR changed after inspection; inspect it again.");
-    const wallet = await connectedWallet();
-    const transaction = inspect(inspectedXdr);
-    const policy = assertTwoOfThree(await readAccountPolicy(transaction.source));
-    const eligible = [policy.account, ...policy.signers.map((signer) => signer.key)];
-    if (!eligible.includes(wallet)) throw new Error("Connected Freighter key is not a signer on this admin account.");
-    const walletHint = toHex(Keypair.fromPublicKey(wallet).signatureHint());
-    if (transaction.signatures.some((signature) => toHex(signature.hint()) === walletHint)) {
-      throw new Error("This signer appears to have already signed the envelope.");
-    }
-    const signed = await signTransaction(inspectedXdr, {
-      networkPassphrase: network().passphrase,
-      address: wallet,
-    });
-    if (signed.error) throw new Error(signed.error);
-    xdrInput.value = signed.signedTxXdr;
-    inspect(signed.signedTxXdr);
-    const shareUrl = makeShareUrl(signed.signedTxXdr);
-    byId("share-url").value = shareUrl;
-    history.replaceState(null, "", shareUrl);
-    setStatus(`Signature appended by ${wallet}. Copy this new URL for the next cosigner.`);
+    await appendFreighterSignature();
   } catch (error) {
     setStatus(`Signing failed: ${error.message}`);
   }
