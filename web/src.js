@@ -262,16 +262,19 @@ async function reviewedWasm() {
   if (!ref || ref.includes("..") || !/^[A-Za-z0-9._/-]+$/.test(ref)) {
     throw new Error("Git ref contains unsupported characters.");
   }
-  const wasmUrl = `https://raw.githubusercontent.com/ackrate/ackrate-protocol-contracts/${ref}/web/public/mandate_registry.wasm`;
-  const [response, commitResponse] = await Promise.all([
-    fetch(wasmUrl, { cache: "no-store" }),
-    fetch(`https://api.github.com/repos/ackrate/ackrate-protocol-contracts/commits/${encodeURIComponent(ref)}`, { cache: "no-store" }),
-  ]);
-  if (!response.ok) throw new Error(`GitHub WASM download returned HTTP ${response.status}.`);
+  const commitResponse = await fetch(
+    `https://api.github.com/repos/ackrate/ackrate-protocol-contracts/commits/${encodeURIComponent(ref)}`,
+    { cache: "no-store" },
+  );
   if (!commitResponse.ok) throw new Error(`GitHub source resolution returned HTTP ${commitResponse.status}.`);
-  const wasm = new Uint8Array(await response.arrayBuffer());
   const commit = await commitResponse.json();
   if (!/^[0-9a-f]{40}$/.test(commit.sha)) throw new Error("GitHub did not return an immutable source commit.");
+  // Fetch by immutable SHA, never a mutable branch. This avoids stale/negative
+  // raw.githubusercontent.com branch caches and binds the bytes to the resolved ref.
+  const wasmUrl = `https://raw.githubusercontent.com/ackrate/ackrate-protocol-contracts/${commit.sha}/web/public/mandate_registry.wasm`;
+  const response = await fetch(wasmUrl, { cache: "no-store" });
+  if (!response.ok) throw new Error(`GitHub WASM download returned HTTP ${response.status}.`);
+  const wasm = new Uint8Array(await response.arrayBuffer());
   const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", wasm));
   const hashHex = toHex(hash);
   if (ref === "v3mainnet" && hashHex !== EXPECTED_WASM_HASH) {
@@ -308,6 +311,14 @@ async function reviewedWasm() {
     sourceUrl: `https://github.com/ackrate/ackrate-protocol-contracts/tree/${sourceCommit}/contracts/simple/mandate-registry`,
     attestationUrl: `https://github.com/ackrate/ackrate-protocol-contracts/attestations?query=subject-digest%3A${hashHex}`,
   };
+}
+
+function showArtifact(artifact) {
+  byId("artifact-commit").textContent = artifact.requestedCommit;
+  byId("artifact-hash").textContent = toHex(artifact.hash);
+  byId("artifact-source").href = artifact.sourceUrl;
+  byId("artifact-source").textContent = artifact.sourceUrl;
+  byId("artifact-result").classList.remove("hidden");
 }
 
 async function simulateRead(contractId, source, method) {
@@ -350,6 +361,16 @@ byId("fund-testnet").addEventListener("click", async () => {
     byId("status").textContent = `Testnet wallet funded: ${wallet}`;
   } catch (error) {
     byId("status").textContent = `Testnet funding failed: ${error.message}`;
+  }
+});
+
+byId("verify-artifact").addEventListener("click", async () => {
+  try {
+    const artifact = await reviewedWasm();
+    showArtifact(artifact);
+    byId("status").textContent = `Artifact verified: ${toHex(artifact.hash)} from attested source ${artifact.sourceCommit}.`;
+  } catch (error) {
+    byId("status").textContent = `Artifact verification failed: ${error.message}`;
   }
 });
 
@@ -409,7 +430,9 @@ byId("deploy").addEventListener("click", async () => {
     const wallet = await connectedWallet();
     const accountResponse = await fetch(`${selected.horizon}/accounts/${wallet}`);
     if (!accountResponse.ok) throw new Error(`Freighter account is not funded on ${selected.label}.`);
-    const { wasm, hash, sourceUrl, attestationUrl } = await reviewedWasm();
+    const artifact = await reviewedWasm();
+    showArtifact(artifact);
+    const { wasm, hash, sourceUrl, attestationUrl } = artifact;
 
     await freighterTransaction(
       Operation.uploadContractWasm({ wasm }),
@@ -457,7 +480,9 @@ byId("use-git-wasm").addEventListener("click", async () => {
   try {
     await assertNetwork();
     const wallet = await connectedWallet();
-    const { wasm, hash, ref, sourceUrl, attestationUrl } = await reviewedWasm();
+    const artifact = await reviewedWasm();
+    showArtifact(artifact);
+    const { wasm, hash, ref, sourceUrl, attestationUrl } = artifact;
     const result = await freighterTransaction(
       Operation.uploadContractWasm({ wasm }),
       wallet,

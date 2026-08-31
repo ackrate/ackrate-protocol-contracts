@@ -71,26 +71,26 @@ two. A signed future URL cannot be generated before that signer approves it.
 
 ### Verified public testnet smoke deployment
 
-The complete flow was executed on 2026-08-30 with disposable, Friendbot-funded
+The complete flow was re-executed on 2026-08-31 with disposable, Friendbot-funded
 accounts: atomic 2-of-3 setup → one-signature WASM upload and constructor
 deployment → RPC policy/admin verification → two-signature pause → two-signature
 unpause → two-signature self-upgrade at the unchanged address.
 
 | Evidence | Value |
 | --- | --- |
-| Contract | [`CCZKTGYVWSPZ2NLXVSLO57SGXG3YSITVQIF2GPDBLI35Q4F3I22YQDSO`](https://stellar.expert/explorer/testnet/contract/CCZKTGYVWSPZ2NLXVSLO57SGXG3YSITVQIF2GPDBLI35Q4F3I22YQDSO) |
-| One-signature deployer | `GDNAAPKQB4TFBFGX6JBAUN6DV32AIJKV74GXPLZK45GHTRXFVLZOPFGC` |
-| 2-of-3 admin account | `GBPCUP2TYSETAZU352CGZ2F5OJ4XG4WWYL55L7PMNBBTBDJB3N3AYF27` |
-| Secondary signers | `GB434L6F5P67SEIM7PMWZ2TSUZVQSSKLR4DCNT765A3XIX4S7FANXZLO`, `GC5CAV55GMASD3FFGBBWZRY4OBZWCEXW2Z4YWMSVRNZHQO3MPGKXA2C2` |
+| Contract | [`CCDOKSIFASFM6WS2ONXB5TX6JCJKDOGMORQCYUE33HCJIS6I7ZM6N32D`](https://stellar.expert/explorer/testnet/contract/CCDOKSIFASFM6WS2ONXB5TX6JCJKDOGMORQCYUE33HCJIS6I7ZM6N32D) |
+| One-signature deployer | `GDLHJSY3CGPIFMIU4GXU43ADVD23MMUDWT44MKXDOVO6TZFFKIAVBY3W` |
+| 2-of-3 admin account | `GBNNVARH5MUPOYZJVZB7B42MM2EV4U6465VD4KB7JXXVZT5ZTK7DTBEG` |
+| Secondary signers | `GDSOJW7IJ3XNED6BOXDM2T7OWADP7ZWOIBNO2Q4TPFDTCYVWT63EPZPY`, `GCK2HNMSRYQ73GL3DVZLFRH2AWYHUJLY373CGFMMM62PAO6THRUMVGPY` |
 | GitHub source | [`03b6af079e07b5e2efd6c31a2bdefa834c0e4c4d`](https://github.com/ackrate/ackrate-protocol-contracts/tree/03b6af079e07b5e2efd6c31a2bdefa834c0e4c4d/contracts/simple/mandate-registry) |
 | Build release | [CLI 27.0.0 verified release](https://github.com/ackrate/ackrate-protocol-contracts/releases/tag/simple-v0.2.3-mainnet.1_contracts_simple_mandate_registry_mandate-registry_pkg0.2.3_cli27.0.0) |
 | Build attestation | [`5b0173d4…c32cad`](https://github.com/ackrate/ackrate-protocol-contracts/attestations/43965366) |
-| Atomic account policy | [`62e1ba7c…1b96`](https://stellar.expert/explorer/testnet/tx/62e1ba7cb96e61b366efed7514f148d58dc9ef7318df91f826f3215044dc1b96) |
-| WASM upload | [`4783611c…29c8`](https://stellar.expert/explorer/testnet/tx/4783611ca0ad6ee833b969fc2300f871d4481cc857a94fac822ec5d8dda129c8) |
-| Initial deployment | [`daf8547f…57f8`](https://stellar.expert/explorer/testnet/tx/daf8547f316f442d765823406d7b58885a1119ddbf2bcee06fed5bfbbfae57f8) |
-| Two-signature pause | [`795b2b2d…0f9a`](https://stellar.expert/explorer/testnet/tx/795b2b2db0155c218fc3f0f840101af2500c9ef483c8677ed5dc327bf9b10f9a) |
-| Two-signature unpause | [`95ab8598…41f9`](https://stellar.expert/explorer/testnet/tx/95ab8598a3beaee8a75553c313e15b0734d2a7578c0852f0fc00127c10e241f9) |
-| Two-signature self-upgrade | [`ae3c37b4…07f5`](https://stellar.expert/explorer/testnet/tx/ae3c37b4e8c1f8265a3536388f9e8740a05bdd66a50e09bfd90e052fd84a07f5) |
+| Atomic account policy | [`a6dc024c…9364`](https://stellar.expert/explorer/testnet/tx/a6dc024ca5eb2ff394515984e7bac6f7ce20d7d56d9c98e00ff58f27e0c29364) |
+| WASM upload | [`c43e34fb…48a8`](https://stellar.expert/explorer/testnet/tx/c43e34fbbed068a143e3ec9c1a3d9eaf7d4e788587e68a510a868264db7248a8) |
+| Initial deployment | [`51e96a83…712e`](https://stellar.expert/explorer/testnet/tx/51e96a83a31b04a8133d64fc0c2e7b78171563fc58cf2ff2da6ff7b57096712e) |
+| Two-signature pause | [`6136ea36…0d46`](https://stellar.expert/explorer/testnet/tx/6136ea3646bcb5e873f6fbd38b24c424ef06a466edfd340684a63622c4c80d46) |
+| Two-signature unpause | [`91c3cb2c…d8f8`](https://stellar.expert/explorer/testnet/tx/91c3cb2ce80a1daa3eded9c6e86c643cbff1a328892a2c8f91840438b921d8f8) |
+| Two-signature self-upgrade | [`e51b9dbe…9760`](https://stellar.expert/explorer/testnet/tx/e51b9dbe54261f8e22c3b34f82951932586e970f8f1c1a40e9be98997f6e9760) |
 
 The disposable secret was generated in memory, never printed, and not retained.
 Re-run the same check with `npm run smoke:testnet --prefix web`; every run creates

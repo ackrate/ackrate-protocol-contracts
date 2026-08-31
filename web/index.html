@@ -39,9 +39,15 @@
         <label>Future admin / multisig G-account<input id="deploy-admin" spellcheck="false" placeholder="G…" /></label>
         <label>Git branch, tag, or commit SHA<input id="git-ref" spellcheck="false" value="v3mainnet" /></label>
         <div class="actions">
+          <button id="verify-artifact">Verify GitHub artifact</button>
           <button id="fund-testnet" class="hidden">Fund connected testnet wallet</button>
           <button id="deploy" class="primary">Deploy reviewed SimpleContract</button>
         </div>
+        <dl id="artifact-result" class="hidden">
+          <div><dt>Resolved commit</dt><dd id="artifact-commit"></dd></div>
+          <div><dt>WASM SHA-256</dt><dd id="artifact-hash"></dd></div>
+          <div><dt>Attested source</dt><dd><a id="artifact-source" target="_blank" rel="noreferrer"></a></dd></div>
+        </dl>
         <dl id="deployment-result" class="hidden">
           <div><dt>Contract ID</dt><dd id="deployed-contract"></dd></div>
           <div><dt>WASM SHA-256</dt><dd id="deployed-hash"></dd></div>
