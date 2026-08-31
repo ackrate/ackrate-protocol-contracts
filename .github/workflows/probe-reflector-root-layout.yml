@@ -1,0 +1,63 @@
+name: Probe Reflector Root Layout
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-byte-probe:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Create the Reflector-shaped root workspace
+        run: |
+          set -euo pipefail
+          cp contracts/mainnet-v2/mandate-registry/Cargo.lock Cargo.lock
+          printf '%s\n' \
+            '[workspace]' \
+            'resolver = "2"' \
+            'members = ["contracts/mainnet-v2/mandate-registry"]' \
+            '' \
+            '[profile.release]' \
+            'opt-level = "z"' \
+            'overflow-checks = true' \
+            'debug = 0' \
+            'strip = "symbols"' \
+            'debug-assertions = false' \
+            'lto = true' \
+            'panic = "abort"' \
+            'codegen-units = 1' > Cargo.toml
+      - name: Install the deployment toolchain
+        run: rustup toolchain install 1.98.0 --profile minimal --target wasm32v1-none
+      - name: Install the verified Stellar CLI 27.0.0 release
+        env:
+          STELLAR_CLI_SHA256: 357bf712f6353c28cd33c794402a3c87231757a5b305e6ef1604365af4fdd556
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/stellar-cli-27.0.0.tar.gz"
+          bin_dir="$RUNNER_TEMP/stellar-cli-bin"
+          curl --fail --location --silent --show-error \
+            --output "$archive" \
+            https://github.com/stellar/stellar-cli/releases/download/v27.0.0/stellar-cli-27.0.0-x86_64-unknown-linux-gnu.tar.gz
+          echo "$STELLAR_CLI_SHA256  $archive" | sha256sum --check --strict
+          mkdir -p "$bin_dir"
+          tar -xzf "$archive" -C "$bin_dir"
+          echo "$bin_dir" >> "$GITHUB_PATH"
+      - name: Build from the root package selector
+        env:
+          DEPLOYED_WASM_SHA256: 982809197d35d44c7b0fce6bd117fb2fec09b728c64c146c1f803b01faacff62
+        run: |
+          set -euo pipefail
+          stellar contract build \
+            --package mandate-registry \
+            --locked \
+            --optimize \
+            --meta source_repo=github:ackrate/ackrate-protocol-contracts \
+            --meta home_domain=ackrate.xyz
+          wasm=target/wasm32v1-none/release/mandate_registry.wasm
+          actual="$(sha256sum "$wasm" | cut -d ' ' -f 1)"
+          echo "Reflector-shaped root hash: $actual"
+          echo "Deployed hash:              $DEPLOYED_WASM_SHA256"
+          test "$actual" = "$DEPLOYED_WASM_SHA256"
