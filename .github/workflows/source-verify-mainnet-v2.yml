@@ -52,7 +52,7 @@ jobs:
             --optimize \
             --meta source_repo=github:ackrate/ackrate-protocol-contracts \
             --meta home_domain=ackrate.xyz
-          wasm="$contract/target/wasm32v1-none/release/mandate_registry.wasm"
+          wasm="$GITHUB_WORKSPACE/$contract/target/wasm32v1-none/release/mandate_registry.wasm"
           echo "$EXPECTED_WASM_SHA256  $wasm" | sha256sum --check --strict
           MAINNET_V2_RELEASE_WASM="$wasm" cargo test \
             --manifest-path "$contract/Cargo.toml" \
