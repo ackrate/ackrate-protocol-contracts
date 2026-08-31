@@ -16,6 +16,9 @@ Mainnet V2 deployment:
 single-contract T3 Step 1 enforcement layer documented in
 [`contracts/mainnet-v2/README.md`](contracts/mainnet-v2/README.md).
 
+Mainnet V2 source proof and StellarExpert verification status:
+[`docs/mainnet-v2-source-verification.md`](docs/mainnet-v2-source-verification.md)
+
 Mainnet security review:
 
 - [Threat model and control-to-test matrix](docs/security-threat-model.md)
