@@ -346,44 +346,23 @@ function showArtifact(artifact) {
   byId("artifact-result").classList.remove("hidden");
 }
 
-async function readSimulationAccount(preferredSource) {
-  const server = rpcServer();
-  try {
-    return { account: await server.getAccount(preferredSource), usedFallback: false };
-  } catch (preferredError) {
-    setStatus(`The entered G-account is absent on ${network().label}; selecting a funded account for unauthenticated read simulation…`);
-    const response = await fetch(`${network().horizon}/accounts?order=desc&limit=1`, { cache: "no-store" });
-    if (!response.ok) throw preferredError;
-    const payload = await response.json();
-    const fallback = payload?._embedded?.records?.[0]?.account_id;
-    if (!StrKey.isValidEd25519PublicKey(fallback)) throw preferredError;
-    return { account: await server.getAccount(fallback), usedFallback: true };
-  }
-}
-
-async function simulateRead(contractId, account, method) {
-  const server = rpcServer();
-  const transaction = new TransactionBuilder(account, {
-    fee: "100",
-    networkPassphrase: network().passphrase,
-  }).addOperation(new Contract(contractId).call(method)).setTimeout(300).build();
-  const simulation = await server.simulateTransaction(transaction);
-  if (!rpc.Api.isSimulationSuccess(simulation) || !simulation.result?.retval) {
-    throw new Error(`${method} simulation failed.`);
-  }
-  return simulation.result.retval;
-}
-
-async function readContractState(contractId, preferredSource) {
-  const { account, usedFallback } = await readSimulationAccount(preferredSource);
-  const [adminValue, pausedValue] = await Promise.all([
-    simulateRead(contractId, account, "get_admin"),
-    simulateRead(contractId, account, "is_paused"),
-  ]);
+async function readContractState(contractId) {
+  const ledgerKey = xdr.LedgerKey.contractData(new xdr.LedgerKeyContractData({
+    contract: new Address(contractId).toScAddress(),
+    key: xdr.ScVal.scvLedgerKeyContractInstance(),
+    durability: xdr.ContractDataDurability.persistent(),
+  }));
+  const response = await rpcServer().getLedgerEntries(ledgerKey);
+  if (response.entries.length !== 1) throw new Error(`Contract was not found on ${network().label}.`);
+  const storage = response.entries[0].val.contractData().val().instance().storage() || [];
+  const values = new Map(storage.map((entry) => {
+    const key = scValToNative(entry.key());
+    return [Array.isArray(key) ? key[0] : key, scValToNative(entry.val())];
+  }));
+  if (!values.has("Admin")) throw new Error("Contract instance has no Admin storage entry.");
   return {
-    admin: Address.fromScVal(adminValue).toString(),
-    paused: scValToNative(pausedValue),
-    usedFallback,
+    admin: String(values.get("Admin")),
+    paused: values.get("Paused") ?? false,
   };
 }
 
@@ -585,14 +564,11 @@ byId("read-contract").addEventListener("click", async () => {
   try {
     setStatus("Reading contract admin and pause state through RPC simulation…");
     await assertNetwork();
-    const source = byId("admin").value.trim();
     const contractId = byId("contract-input").value.trim();
-    if (!StrKey.isValidEd25519PublicKey(source) || !StrKey.isValidContract(contractId)) {
-      throw new Error("Enter a valid configured admin and contract ID.");
-    }
-    const state = await readContractState(contractId, source);
+    if (!StrKey.isValidContract(contractId)) throw new Error("Enter a valid contract ID.");
+    const state = await readContractState(contractId);
     byId("contract-state").textContent = JSON.stringify(state, null, 2);
-    setStatus(`Contract admin and pause state read through RPC simulation${state.usedFallback ? " using an unrelated funded simulation source" : ""}. Admin: ${state.admin}.`);
+    setStatus(`Contract admin and pause state read directly from RPC ledger state. Admin: ${state.admin}.`);
   } catch (error) {
     setStatus(`Contract read failed: ${error.message}`);
   }
@@ -608,7 +584,7 @@ byId("prepare").addEventListener("click", async () => {
     if (!StrKey.isValidContract(contractId)) throw new Error("Contract must be a valid C-address.");
     await assertNetwork();
     setStatus("Reading the authoritative admin from the contract…");
-    const state = await readContractState(contractId, signer);
+    const state = await readContractState(contractId);
     const admin = state.admin;
     if (!StrKey.isValidEd25519PublicKey(admin)) throw new Error("Contract admin is not a G-account.");
     const policy = assertTwoOfThree(await readAccountPolicy(admin));
