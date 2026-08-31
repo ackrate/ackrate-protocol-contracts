@@ -663,7 +663,7 @@ byId("prepare").addEventListener("click", async () => {
     try {
       await appendFreighterSignature();
     } catch (signingError) {
-      setStatus(`${action} is prepared, but the first signature was not added: ${signingError.message}. You can retry with “Append Freighter signature”.`);
+      setStatus(`${action} is prepared, but the first signature was not added: ${signingError.message} You can retry with “Append Freighter signature”.`);
     }
   } catch (error) {
     setStatus(`Preparation failed: ${error.message}`);
