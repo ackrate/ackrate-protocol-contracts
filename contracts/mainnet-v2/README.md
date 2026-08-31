@@ -165,7 +165,7 @@ rotation, and loss-response record remains a deployment requirement.
 
 | What the agents caught | What we fixed |
 |---|---|
-| The action-pin rule blocked a few familiar mutable names but could miss a different branch name or a shortened commit. | Every external action reference must now be a complete immutable commit digest; a permanent fixture challenges it with branches, tags, short commits, and unpinned containers. |
+| The action-pin rule blocked a few familiar mutable names but could miss a different branch name or a shortened commit. | Every normal external action reference must now be a complete immutable commit digest. StellarExpert's one required canonical `@main` identity is isolated in a source-proof-only workflow, first checked against the reviewed builder SHA, and cannot deploy or sign the contract. |
 | A future feature-gated test could appear in the required list without running. | The gate now executes the entire all-feature manifest, including ignored tests, and separately executes the exact optimized release file. |
 
 </details>

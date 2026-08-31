@@ -2,6 +2,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CANONICAL_VALIDATION_WORKFLOW="$ROOT/.github/workflows/source-verify-mainnet-v2.yml"
+CANONICAL_VALIDATOR='stellar-expert/soroban-build-workflow/.github/workflows/release.yml@main'
 
 is_immutable_uses_value() {
   local value="$1"
@@ -55,8 +57,13 @@ self_test() {
 self_test
 
 failed=0
+canonical_validator_count=0
 while IFS= read -r workflow; do
   while IFS= read -r value; do
+    if [[ "$workflow" == "$CANONICAL_VALIDATION_WORKFLOW" && "$value" == "$CANONICAL_VALIDATOR" ]]; then
+      canonical_validator_count=$((canonical_validator_count + 1))
+      continue
+    fi
     if ! is_immutable_uses_value "$value"; then
       echo "$workflow: external action is not pinned to an immutable digest: $value" >&2
       failed=1
@@ -68,8 +75,13 @@ while IFS= read -r workflow; do
   )
 done < <(find "$ROOT/.github/workflows" -type f \( -name '*.yml' -o -name '*.yaml' \) -print)
 
+if [[ "$canonical_validator_count" -ne 1 ]]; then
+  echo "The isolated StellarExpert source-validation workflow must contain exactly one canonical @main builder reference." >&2
+  failed=1
+fi
+
 if [[ "$failed" -ne 0 ]]; then
   exit 1
 fi
 
-echo "GitHub Action pin check passed: every external action uses an immutable digest."
+echo "GitHub Action pin check passed: every normal external action uses an immutable digest; the single StellarExpert canonical identity is isolated behind an exact-head and exact-byte gate."

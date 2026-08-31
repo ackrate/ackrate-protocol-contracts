@@ -1,0 +1,73 @@
+name: Mainnet V2 Source Verification
+
+on:
+  push:
+    tags:
+      - 'v2-source-verify-v*'
+
+permissions:
+  id-token: write
+  contents: write
+  attestations: write
+
+jobs:
+  exact-source-and-byte-gate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Require the reviewed StellarExpert builder behind its canonical identity
+        env:
+          EXPECTED_BUILDER_SHA: 88068ec50cba931a96436869727ed08edeb76ade
+        run: |
+          set -euo pipefail
+          actual="$(git ls-remote https://github.com/stellar-expert/soroban-build-workflow.git refs/heads/main | awk '{print $1}')"
+          test "$actual" = "$EXPECTED_BUILDER_SHA"
+      - name: Install the reviewed Rust contract toolchain
+        run: rustup toolchain install 1.98.0 --profile minimal --component clippy,rustfmt --target wasm32v1-none
+      - name: Install the verified Stellar CLI 27.0.0 release
+        env:
+          STELLAR_CLI_SHA256: 357bf712f6353c28cd33c794402a3c87231757a5b305e6ef1604365af4fdd556
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/stellar-cli-27.0.0.tar.gz"
+          bin_dir="$RUNNER_TEMP/stellar-cli-bin"
+          curl --fail --location --silent --show-error \
+            --output "$archive" \
+            https://github.com/stellar/stellar-cli/releases/download/v27.0.0/stellar-cli-27.0.0-x86_64-unknown-linux-gnu.tar.gz
+          echo "$STELLAR_CLI_SHA256  $archive" | sha256sum --check --strict
+          mkdir -p "$bin_dir"
+          tar -xzf "$archive" -C "$bin_dir"
+          echo "$bin_dir" >> "$GITHUB_PATH"
+          "$bin_dir/stellar" --version
+      - name: Require the reviewed tests and exact Mainnet V2 bytes
+        env:
+          EXPECTED_WASM_SHA256: 982809197d35d44c7b0fce6bd117fb2fec09b728c64c146c1f803b01faacff62
+        run: |
+          set -euo pipefail
+          contract=contracts/mainnet-v2/mandate-registry
+          cargo test \
+            --manifest-path "$contract/Cargo.toml" \
+            --locked \
+            --all-features \
+            -- --include-ignored
+          stellar contract build \
+            --manifest-path "$contract/Cargo.toml" \
+            --package mandate-registry \
+            --locked \
+            --optimize \
+            --meta source_repo=github:ackrate/ackrate-protocol-contracts \
+            --meta home_domain=ackrate.xyz
+          wasm="$contract/target/wasm32v1-none/release/mandate_registry.wasm"
+          echo "$EXPECTED_WASM_SHA256  $wasm" | sha256sum --check --strict
+
+  publish-canonical-source-proof:
+    needs: exact-source-and-byte-gate
+    uses: stellar-expert/soroban-build-workflow/.github/workflows/release.yml@main
+    with:
+      release_name: ${{ github.ref_name }}
+      release_description: 'Canonical StellarExpert source proof for ACKRATE T3 Step 1 Mainnet V2 MandateRegistry'
+      relative_path: 'contracts/mainnet-v2/mandate-registry'
+      package: 'mandate-registry'
+      home_domain: 'ackrate.xyz'
+    secrets:
+      release_token: ${{ secrets.GITHUB_TOKEN }}

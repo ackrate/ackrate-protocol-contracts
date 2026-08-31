@@ -2,7 +2,6 @@
 
 **The on-chain enforcement layer for ACKRATE — published so anyone can prove the bytecode on Stellar matches this source.**
 
-[![Stellar](https://img.shields.io/badge/Stellar-Mainnet-7B73FF?logo=stellar&logoColor=white)](https://stellar.expert/explorer/public/contract/CCLZEBJXG4YVJEPBCR5F27N733BCK5HQJWZZGB3K54JVODY3VAGP4HWR)
 [![Soroban](https://img.shields.io/badge/Soroban-Smart%20Contracts-0F0F23)](https://soroban.stellar.org)
 [![Rust](https://img.shields.io/badge/Rust-wasm32v1--none-orange?logo=rust)](https://www.rust-lang.org)
 [![Build](https://img.shields.io/badge/Build-Reproducible-brightgreen)](https://github.com/stellar-expert/soroban-build-workflow)
