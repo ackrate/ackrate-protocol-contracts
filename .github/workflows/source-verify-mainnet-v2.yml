@@ -111,8 +111,18 @@ jobs:
             --arg packageName "mandate-registry" \
             '{repository: $repository, commitHash: $commitHash, jobId: $jobId, runId: $runId, contractHash: $contractHash, relativePath: $relativePath, packageName: $packageName}' \
             > "$RUNNER_TEMP/source-match.json"
-          curl --fail-with-body --silent --show-error \
-            --request POST \
-            --header 'content-type: application/json' \
-            --data-binary "@$RUNNER_TEMP/source-match.json" \
-            'https://api.stellar.expert/explorer/public/contract-validation/match'
+          for attempt in $(seq 1 20); do
+            response="$(curl --fail-with-body --silent --show-error \
+              --request POST \
+              --header 'content-type: application/json' \
+              --data-binary "@$RUNNER_TEMP/source-match.json" \
+              'https://api.stellar.expert/explorer/public/contract-validation/match')"
+            if jq -e '.ok == 1' <<<"$response" >/dev/null; then
+              echo 'StellarExpert accepted the source match into its validation queue.'
+              exit 0
+            fi
+            echo "StellarExpert did not acknowledge queue insertion (attempt $attempt/20): $response" >&2
+            sleep 30
+          done
+          echo 'StellarExpert never returned the required {"ok":1} queue acknowledgment.' >&2
+          exit 1
