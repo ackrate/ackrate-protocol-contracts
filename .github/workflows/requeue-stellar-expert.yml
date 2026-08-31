@@ -1,0 +1,59 @@
+name: Requeue StellarExpert Mainnet Source Match
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  attestations: read
+
+jobs:
+  requeue:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-24.04
+          - ubuntu-22.04
+          - macos-14
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Require the exact canonical proof
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EXPECTED_BUILDER: https://github.com/stellar-expert/soroban-build-workflow/.github/workflows/release.yml@refs/heads/main
+          EXPECTED_COMMIT: fa02356835deb75008ebdb430691c27118f8906e
+          EXPECTED_WASM_SHA256: 982809197d35d44c7b0fce6bd117fb2fec09b728c64c146c1f803b01faacff62
+        run: |
+          set -euo pipefail
+          proof="$(gh api "repos/${GITHUB_REPOSITORY}/attestations/sha256:${EXPECTED_WASM_SHA256}")"
+          count="$(printf '%s' "$proof" | jq '.attestations | length')"
+          commit="$(printf '%s' "$proof" | jq -r '.attestations[0].bundle.dsseEnvelope.payload | @base64d | fromjson | .predicate.buildDefinition.resolvedDependencies[0].digest.gitCommit')"
+          builder="$(printf '%s' "$proof" | jq -r '.attestations[0].bundle.dsseEnvelope.payload | @base64d | fromjson | .predicate.runDetails.builder.id')"
+          test "$count" = "1"
+          test "$commit" = "$EXPECTED_COMMIT"
+          test "$builder" = "$EXPECTED_BUILDER"
+      - name: Submit the exact source match from this runner network
+        env:
+          CONTRACT_HASH: 982809197d35d44c7b0fce6bd117fb2fec09b728c64c146c1f803b01faacff62
+        run: |
+          set -euo pipefail
+          runner_ip="$(curl --fail --silent --show-error https://api.ipify.org)"
+          payload="$(jq -n \
+            --arg repository 'https://github.com/ackrate/ackrate-protocol-contracts' \
+            --arg commitHash 'fa02356835deb75008ebdb430691c27118f8906e' \
+            --arg jobId 'build' \
+            --arg runId '33406148458' \
+            --arg contractHash "$CONTRACT_HASH" \
+            --arg relativePath 'contracts/mainnet-v2/mandate-registry' \
+            --arg packageName 'mandate-registry' \
+            '{repository: $repository, commitHash: $commitHash, jobId: $jobId, runId: $runId, contractHash: $contractHash, relativePath: $relativePath, packageName: $packageName}')"
+          response="$(curl --fail --silent --show-error \
+            --request POST \
+            --header 'content-type: application/json' \
+            --data "$payload" \
+            'https://api.stellar.expert/explorer/public/contract-validation/match')"
+          echo "Runner: $RUNNER_OS $RUNNER_ARCH"
+          echo "Runner public IP: $runner_ip"
+          echo "StellarExpert response: $response"
+          printf '%s' "$response" | jq -e '.ok == 1'
