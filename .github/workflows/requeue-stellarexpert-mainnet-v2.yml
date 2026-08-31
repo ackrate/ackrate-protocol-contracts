@@ -1,0 +1,53 @@
+name: Requeue Mainnet V2 Source Match
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  requeue-from-windows-actions:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Submit the existing canonical proof from the Windows Actions pool
+        env:
+          PROOF_COMMIT: 02a01b89638b291ff6e03697ec98d175cc117b59
+          PROOF_RUN_ID: '33412027817'
+          CONTRACT_HASH: 982809197d35d44c7b0fce6bd117fb2fec09b728c64c146c1f803b01faacff62
+        run: |
+          set -euo pipefail
+          node -e '
+            const fs = require("fs");
+            const path = require("path");
+            fs.writeFileSync(path.join(process.env.RUNNER_TEMP, "source-match.json"), JSON.stringify({
+              repository: "https://github.com/ackrate/ackrate-protocol-contracts",
+              commitHash: process.env.PROOF_COMMIT,
+              jobId: "build",
+              runId: process.env.PROOF_RUN_ID,
+              contractHash: process.env.CONTRACT_HASH,
+              relativePath: "contracts/mainnet-v2/mandate-registry",
+              packageName: "mandate-registry"
+            }));
+          '
+          for attempt in $(seq 1 6); do
+            response="$(curl --fail-with-body --silent --show-error \
+              --request POST \
+              --header 'content-type: application/json' \
+              --data-binary "@$RUNNER_TEMP/source-match.json" \
+              'https://api.stellar.expert/explorer/public/contract-validation/match')"
+            if node -e '
+              const response = JSON.parse(process.argv[1]);
+              process.exit(response.ok === 1 ? 0 : 1);
+            ' "$response"; then
+              echo 'StellarExpert accepted the source match into its validation queue.'
+              exit 0
+            fi
+            echo "StellarExpert did not acknowledge queue insertion (attempt $attempt/6): $response" >&2
+            sleep 10
+          done
+          echo 'The Windows GitHub Actions egress pool was also rejected.' >&2
+          exit 1
