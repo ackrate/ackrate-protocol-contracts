@@ -93,6 +93,12 @@ The public contract API continued to return:
 This rules out a slow build or late attestation: the retry began only after the
 proof was readable and continued for more than ten minutes.
 
+A separate queue-rescue run then submitted the same existing proof from the
+Windows GitHub Actions egress pool. [`Run 33413998654`](https://github.com/ackrate/ackrate-protocol-contracts/actions/runs/33413998654)
+also received `{}` on all six attempts. Together with the earlier Linux and
+macOS probes, this rules out a single runner image or operating-system egress
+pool as the remedy.
+
 ## Mainnet control: Reflector
 
 The closest working comparison is Reflector's repository-built Pulse Oracle,
@@ -139,7 +145,9 @@ Confirmed facts:
 - the source commit, repository, package, and relative path are public;
 - the official StellarExpert builder completed successfully; and
 - the match endpoint returned `{}` from fresh GitHub-hosted runners and for a
-  known-good Reflector control.
+  known-good Reflector control; and
+- Linux, macOS, and Windows GitHub-hosted submissions all reproduced the empty
+  response.
 
 The leading service-side hypothesis is a failure in the GitHub Actions source-IP
 allowlist or queue deduplication/reprocessing path. A publicly indexed,
