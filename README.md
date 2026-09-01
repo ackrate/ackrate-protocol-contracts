@@ -19,13 +19,14 @@ single-contract T3 Step 1 enforcement layer documented in
 Mainnet V2 source proof and StellarExpert verification status:
 [`docs/mainnet-v2-source-verification.md`](docs/mainnet-v2-source-verification.md)
 
-Mainnet security review:
+Mainnet V2 security verification:
 
-- [Threat model and control-to-test matrix](docs/security-threat-model.md)
-- [Mainnet exported-function coverage matrix](docs/security-function-coverage.md)
-- [Trust boundaries and mandate lifecycle data flows](docs/security-data-flow.md)
-- [Published dependency scan and remediation report](docs/security-scan-report.md)
-- [Continuous security scan](scripts/security-scan.sh)
+- [Concise T3 Step 2 result, threat model, diagrams, function coverage, live state, and reproduction guide](docs/mainnet-v2-security-verification.md)
+- [Continuous dependency advisory scan](scripts/security-scan.sh)
+- [Complete contract gate check](scripts/gatecheck-contracts.sh)
+
+The older `docs/security-*` reports describe the previous Registry +
+TimelockController canary and are retained only as historical release evidence.
 
 Governed mainnet release candidate and deployment handoff:
 [`contracts/mainnet/README.md`](contracts/mainnet/README.md)

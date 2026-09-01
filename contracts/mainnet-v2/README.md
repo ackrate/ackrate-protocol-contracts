@@ -4,7 +4,7 @@
 
 ## Status
 
-This repository's active milestone is **T3 Step 1**.
+This repository's active milestone is **T3 Step 2 security verification**.
 
 `0.4.1` is ACKRATE's condensed MandateRegistry deployed on Stellar Mainnet.
 The exact attested Linux release artifact was uploaded and instantiated through
@@ -59,7 +59,7 @@ The result is a five-file production kernel with one money-moving function,
 - A campaign designed to continue toward **1,000 independent reviews**; 1,000
   is the target, not the completed-agent count.
 - **12,561 deterministic Soroban host checks/actions** in every full V2 run.
-- **49 required executable tests:** 48 native-host tests and one direct smoke
+- **53 required executable tests:** 52 native-host tests and one direct smoke
   of the exact optimized contract file.
 - A closed loop for every confirmed finding: reproduce it, repair it, add a
   permanent regression where applicable, rerun the entire gate, and publish
@@ -93,7 +93,7 @@ The 12,561 figure counts executable cases and state actions, not agents.
 > Contract source: unchanged from cycle 7 and the full gate remains green.
 > Deployment controls: one issue found and fixed. Documentation accuracy: two
 > issues found and fixed. The repaired revision passed 12,561 deterministic
-> checks/actions and all 49 required tests: 48 native-host tests plus one
+> checks/actions and all 49 required tests at that revision: 48 native-host tests plus one
 > direct execution smoke of the exact optimized release file.
 
 | Proof at a glance | Completed result |
@@ -103,7 +103,7 @@ The 12,561 figure counts executable cases and state actions, not agents.
 | Deployment-control issues in cycle 8 | 1 found / 1 fixed |
 | Documentation issues in cycle 8 | 2 found / 2 fixed |
 | Deterministic cases/actions per full run | 12,561 |
-| Required executable tests | 48 native + 1 exact optimized-WASM smoke |
+| Required executable tests | 52 native + 1 exact optimized-WASM smoke |
 | Public interface locked | 18 functions / 9 events |
 | Exact optimized contract exercised | Yes |
 
@@ -124,7 +124,7 @@ the result → repeat**.
 |---|---:|
 | Independent agent reviewers completed | 24 across 8 rounds |
 | Executable contract checks/actions per full run | 12,561 |
-| Required executable tests | 49 |
+| Required executable tests | 53 |
 | Confirmed issues in the latest cycle | 3 found / 3 fixed |
 | Release artifact exercised directly | Yes |
 
@@ -352,11 +352,10 @@ rotation, loss response, and the two-key-loss boundary require a separate
 private governance record before deployment.
 
 Production policy is a native Stellar 2-of-3 account at the administrator
-address. Deployment remains blocked until the private authority record names
-all three public signers, organizational holders, separate custody locations,
-rotation steps, and one-key-loss recovery. Two lost keys have no hidden
-recovery path. V2 custodian identities, V2 signer addresses, and its private
-signing guide do not belong in this public directory.
+address. Mainnet read-only verification confirms exactly three weight-1
+Ed25519 signers and low/medium/high thresholds of `2/2/2`. Custody locations,
+rotation steps, and key-loss response remain in the private operating record.
+Two lost keys have no hidden recovery path.
 
 Version `0.4.1` is **fresh-create only**. It must be constructed at a new
 contract address and must not be installed over schema `1` predecessor state.
@@ -387,8 +386,8 @@ unexpected warnings, and accepted host-only code entering deployed WASM.
 | Independent agent reviewers completed across eight rounds | 24 |
 | Amount/expiry boundary cases | 10,001 |
 | Authenticated state-machine actions | 2,560 |
-| Deterministic host cases/actions per full V2 gate | 12,561 |
-| Executable tests | 48 native-host + 1 exact optimized-WASM smoke |
+| High-volume host cases/actions | 12,561 |
+| Executable tests | 52 native-host + 1 exact optimized-WASM smoke |
 | Exported functions / typed events | 18 / 9 |
 
 The tests use executable Soroban contract principals and a registered Stellar
@@ -430,22 +429,17 @@ pass. The dedicated `mainnet-v2-v*` route uses the commit-pinned official
 StellarExpert build workflow to create the attested release used for deployment.
 No step automatically deploys.
 
-## Remaining release blockers
+## Post-deployment verification boundary
 
-Passing tests cannot prove the absence of unknown defects. Before any V2
-contract upload or deployment, all of these remain mandatory:
+The Mainnet deployment is complete. T3 Step 2 binds the live code hash and
+2-of-3 authority state to the expanded negative suite, exact-WASM smoke,
+dependency policy, threat model, and reviewer reproduction path in
+[`docs/mainnet-v2-security-verification.md`](../../docs/mainnet-v2-security-verification.md).
 
-- finish repeated independent review, property/fuzz, mutation, differential,
-  and resource-cost lanes;
-- complete and rehearse the named 2-of-3 custody and recovery record;
-- reconcile the supplied T3 Step 1 OpenZeppelin/timelock wording with the
-  explicitly no-timelock V2 governance profile before claiming that acceptance
-  line;
-- verify reference apps teach mandate registration plus authoritative on-chain
-  execution and warn against agent token allowances or cached approval; and
-- run testnet drills for rogue-agent spending within budget, merchant downtime
-  after settlement, and mid-flow expiry, preserving transaction evidence and
-  user-visible outcomes.
+The V2 governance profile has no timelock. Upgrades require the 2-of-3
+administrator and an already-paused money path. Reference-app migration and
+live payment drills belong to the later SDK/demo steps and are not claimed by
+this contract-security result.
 
 No claim of perfection, immutability, or readiness for billion-dollar custody
 is made by this candidate.
@@ -461,7 +455,8 @@ is made by this candidate.
 - [Differential testing](https://developers.stellar.org/docs/build/guides/testing/differential-tests)
 - [Fuzz testing](https://developers.stellar.org/docs/build/guides/testing/fuzzing)
 
-## Deployment boundary
+## Verification boundary
 
-This work performs no Stellar upload, install, invoke, deployment, or live-state
-mutation. Any future deployment is a separate, explicitly authorized release.
+The Step 2 live checks are read-only and do not sign, submit, install, invoke a
+mutator, or otherwise change Mainnet state. Any future mutation remains a
+separate, explicitly authorized operation.

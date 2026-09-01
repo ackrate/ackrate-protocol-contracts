@@ -1,4 +1,8 @@
-# Mainnet exported-function coverage
+# Legacy Mainnet canary exported-function coverage
+
+> Historical record for the earlier Registry + TimelockController canary. The
+> deployed Mainnet V2 security result is
+> [`mainnet-v2-security-verification.md`](mainnet-v2-security-verification.md).
 
 Status: release gate
 Last reviewed: 2026-08-27

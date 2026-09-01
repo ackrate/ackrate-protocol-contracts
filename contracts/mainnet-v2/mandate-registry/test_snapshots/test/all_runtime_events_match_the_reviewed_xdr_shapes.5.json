@@ -34,9 +34,6 @@
     [],
     [],
     [],
-    [],
-    [],
-    [],
     []
   ],
   "ledger": {
@@ -236,7 +233,7 @@
                       "symbol": "spent"
                     },
                     "val": {
-                      "i128": "-1"
+                      "i128": "0"
                     }
                   },
                   {
@@ -246,7 +243,7 @@
                     "val": {
                       "vec": [
                         {
-                          "symbol": "Active"
+                          "symbol": "Revoked"
                         }
                       ]
                     }
@@ -643,5 +640,26 @@
       }
     ]
   },
-  "events": []
+  "events": [
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4",
+        "type_": "contract",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "revoke"
+              }
+            ],
+            "data": {
+              "bytes": "0fbe91110192ccb99398199ede6dd085482d60762a2d78688aef786aadcd9164"
+            }
+          }
+        }
+      },
+      "failed_call": false
+    }
+  ]
 }

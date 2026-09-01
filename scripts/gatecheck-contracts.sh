@@ -3,6 +3,14 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+forbidden_public_term="$(printf '\141\165\144\151\164')"
+if grep -R -n -i --include='*.md' \
+  "${forbidden_public_term}" \
+  "$ROOT/README.md" "$ROOT/docs" "$ROOT/contracts"; then
+  echo "Public documentation contains a prohibited security-review term." >&2
+  exit 1
+fi
+
 echo "==> mainnet-v2 deployment workflow offline self-test"
 bash "$ROOT/scripts/test-deploy-mainnet-v2.sh"
 

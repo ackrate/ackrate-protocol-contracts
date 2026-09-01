@@ -1,4 +1,8 @@
-# Mainnet security threat model
+# Legacy Mainnet canary security threat model
+
+> Historical record for the earlier Registry + TimelockController canary. The
+> deployed Mainnet V2 security result is
+> [`mainnet-v2-security-verification.md`](mainnet-v2-security-verification.md).
 
 Status: release gate
 Last reviewed: 2026-08-27

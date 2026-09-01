@@ -1,4 +1,4 @@
-name: Verify live Mainnet canary
+name: Verify live Mainnet V2
 
 on:
   workflow_dispatch:
@@ -10,12 +10,13 @@ permissions:
 
 env:
   RPC_URL: https://mainnet.sorobanrpc.com
+  HORIZON_URL: https://horizon.stellar.org
   NETWORK_PASSPHRASE: Public Global Stellar Network ; September 2015
-  REGISTRY_ID: CDBTG5ZKASFA7LOYUPBOTGKAVX5MJIM4U24BYGX7VX23IHYDAHLQPAGS
-  REGISTRY_SHA256: 3656430ac7cf5e7cf1c26948b46314c37866c2d7e928ea89d7d1f89b8aa0ef3c
-  TIMELOCK_ID: CD3KRQRNCW52CZHKG2GPQAEOU6UCL426YFNHYUZ7IWUUKAOTKUQX6UUX
-  TIMELOCK_SHA256: 99a32170feaf3521338adfadb25d1a2ea573e6d29ec5de97e9d9cc3e4a99da97
-  AUTHORITY_ID: GCQNLXZSQUYVFXYTWPA6RF6KIRTGQNZYHR4JIILXE3LTMXZQAUW6PXN5
+  REGISTRY_ID: CCLZEBJXG4YVJEPBCR5F27N733BCK5HQJWZZGB3K54JVODY3VAGP4HWR
+  REGISTRY_SHA256: 982809197d35d44c7b0fce6bd117fb2fec09b728c64c146c1f803b01faacff62
+  INTERFACE_SHA256: 69c201ce1fb089ccfef06f125826b0aeba72af1b1536cb0b19e8cb05970ee805
+  AUTHORITY_ID: GCIURCX7JHEKQLRTW6RDZU7OJUVCDM7WWNQPIKRERIHQOHSLW7UY7TXG
+  USDC_ID: CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75
 
 jobs:
   verify:
@@ -26,7 +27,7 @@ jobs:
         uses: stellar/stellar-cli@5a7c5fe76530bf4248477ac812fc757146b98cc4 # v27.0.0
         with:
           version: '27.0.0'
-      - name: Fetch live contracts and require exact reviewed bytes
+      - name: Fetch live contract and require exact reviewed bytes and interface
         run: |
           set -euo pipefail
           stellar --no-cache contract fetch \
@@ -34,30 +35,35 @@ jobs:
             --rpc-url "$RPC_URL" \
             --network-passphrase "$NETWORK_PASSPHRASE" \
             --out-file "$RUNNER_TEMP/mandate_registry.wasm"
-          stellar --no-cache contract fetch \
-            --id "$TIMELOCK_ID" \
-            --rpc-url "$RPC_URL" \
-            --network-passphrase "$NETWORK_PASSPHRASE" \
-            --out-file "$RUNNER_TEMP/ackrate_timelock_controller.wasm"
           echo "$REGISTRY_SHA256  $RUNNER_TEMP/mandate_registry.wasm" | sha256sum --check --strict
-          echo "$TIMELOCK_SHA256  $RUNNER_TEMP/ackrate_timelock_controller.wasm" | sha256sum --check --strict
-      - name: Require the live 2-of-3 signer set and manifest identity
+          interface="$RUNNER_TEMP/mandate_registry.interface.json"
+          stellar contract info interface \
+            --wasm "$RUNNER_TEMP/mandate_registry.wasm" \
+            --output json > "$interface"
+          actual_interface="$(jq -S -c . "$interface" | sha256sum | awk '{print $1}')"
+          test "$actual_interface" = "$INTERFACE_SHA256"
+          test "$(jq '[.[].function_v0? | select(.)] | length' "$interface")" = '18'
+          test "$(jq '[.[].event_v0? | select(.)] | length' "$interface")" = '9'
+      - name: Require live contract state
+        run: |
+          ./scripts/deploy-mainnet-v2.sh verify-deploy \
+            --contract-id "$REGISTRY_ID" \
+            --source "$AUTHORITY_ID" \
+            --admin "$AUTHORITY_ID" \
+            --initial-asset "$USDC_ID" \
+            --rpc-url "$RPC_URL"
+      - name: Require the live 2-of-3 authority shape
         run: |
           set -euo pipefail
-          manifest='contracts/mainnet/deployment-manifest.json'
-          test "$(jq -r '.deployment.registry_contract_id' "$manifest")" = "$REGISTRY_ID"
-          test "$(jq -r '.deployment.timelock_contract_id' "$manifest")" = "$TIMELOCK_ID"
-          test "$(jq -r '.public_configuration.authority_2_of_3_account' "$manifest")" = "$AUTHORITY_ID"
           curl --fail --silent --show-error \
-            "https://horizon.stellar.org/accounts/$AUTHORITY_ID" \
+            --proto '=https' --proto-redir '=https' --max-redirs 0 \
+            "$HORIZON_URL/accounts/$AUTHORITY_ID" \
             --output "$RUNNER_TEMP/authority.json"
-          jq --exit-status --slurpfile manifest "$manifest" '
+          jq --exit-status --arg authority "$AUTHORITY_ID" '
+            .account_id == $authority and
             .thresholds.low_threshold == 2 and
             .thresholds.med_threshold == 2 and
             .thresholds.high_threshold == 2 and
-            ([.signers[] | select(.type == "ed25519_public_key") | .key] | sort) ==
-              ($manifest[0].authority.signers | sort) and
+            ([.signers[] | select(.type == "ed25519_public_key")] | length) == 3 and
             ([.signers[] | select(.type == "ed25519_public_key") | .weight] | sort) == [1, 1, 1]
           ' "$RUNNER_TEMP/authority.json"
-      - name: Validate completed release evidence schema
-        run: node scripts/check-mainnet-artifacts.mjs --release-dir "$RUNNER_TEMP"

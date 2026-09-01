@@ -1,6 +1,15 @@
 [workspace]
 resolver = "2"
 members = ["contracts/mainnet-v2/mandate-registry"]
+exclude = [
+  "contracts/simple/mandate-registry",
+  "contracts/composites/mandate-registry",
+  "contracts/mainnet/mandate-registry",
+  "contracts/mainnet/timelock-controller",
+  # CI checks the older reviewed release in this nested checkout. Keep it from
+  # inheriting the V2 workspace merely because it lives below the repository.
+  "reviewed-source",
+]
 
 [profile.release]
 opt-level = "z"
