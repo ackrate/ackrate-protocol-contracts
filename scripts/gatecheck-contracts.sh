@@ -81,7 +81,9 @@ for variant in simple mainnet-v2 composites; do
       --meta source_repo=github:ackrate/ackrate-protocol-contracts \
       --meta home_domain=ackrate.xyz
 
-    wasm="$contract/target/wasm32v1-none/release/mandate_registry.wasm"
+    # mainnet-v2 is a root workspace member, so Cargo writes its artifact to
+    # the workspace target directory on a clean runner.
+    wasm="$ROOT/target/wasm32v1-none/release/mandate_registry.wasm"
     expected_wasm_size='15510'
     actual_wasm_size="$(wc -c <"$wasm" | tr -d '[:space:]')"
     if [[ "$actual_wasm_size" != "$expected_wasm_size" ]]; then
