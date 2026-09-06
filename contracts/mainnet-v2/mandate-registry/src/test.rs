@@ -691,7 +691,10 @@ fn admin_methods_require_authorization() {
     let w = setup();
     let c = w.client();
     let replacement = Address::generate(&w.env);
-    let wasm_hash = BytesN::from_array(&w.env, &[42u8; 32]);
+    let wasm_hash = w
+        .env
+        .deployer()
+        .upload_contract_wasm(replacement_wasm(&w.env));
     assert!(c.try_pause().is_err());
     assert!(c.try_unpause().is_err());
     assert!(c.try_propose_admin(&replacement).is_err());
@@ -699,6 +702,30 @@ fn admin_methods_require_authorization() {
     assert!(c.try_set_asset_allowed(&replacement, &true).is_err());
     assert!(!c.is_paused());
     assert_eq!(c.get_admin(), w.admin);
+
+    // Satisfy every non-authorization precondition: an unpaused contract or
+    // unknown WASM could otherwise mask a missing governance auth check.
+    w.register();
+    let mandate_before = c.get_mandate(&w.id);
+    w.pause();
+    assert!(matches!(c.try_upgrade(&wasm_hash), Err(Err(_))));
+    assert!(matches!(
+        c.try_set_asset_allowed(&w.asset, &false),
+        Err(Err(_))
+    ));
+    assert_eq!(
+        w.env
+            .events()
+            .all()
+            .filter_by_contract(&w.contract)
+            .events()
+            .len(),
+        0
+    );
+    assert!(c.is_paused());
+    assert!(c.is_asset_allowed(&w.asset));
+    assert_eq!(c.get_admin(), w.admin);
+    assert_eq!(c.get_mandate(&w.id), mandate_before);
 }
 
 #[test]
@@ -706,7 +733,10 @@ fn wrong_contract_principals_cannot_use_governance_authority() {
     let w = setup();
     let attacker = w.env.register(Principal, ());
     let candidate = w.env.register(Principal, ());
-    let wasm_hash = BytesN::from_array(&w.env, &[0xA5; 32]);
+    let wasm_hash = w
+        .env
+        .deployer()
+        .upload_contract_wasm(replacement_wasm(&w.env));
 
     assert!(w.principal(&attacker).try_pause(&w.contract).is_err());
     assert!(w.principal(&attacker).try_unpause(&w.contract).is_err());
@@ -731,6 +761,33 @@ fn wrong_contract_principals_cannot_use_governance_authority() {
     assert_eq!(w.client().get_admin(), w.admin);
     assert_eq!(w.client().get_pending_admin(), Some(candidate));
     assert!(!w.client().is_paused());
+
+    // A hostile principal must still fail when pause and WASM prerequisites
+    // are valid. Rejection here must be host authorization, not pause policy.
+    w.register();
+    let mandate_before = w.client().get_mandate(&w.id);
+    w.pause();
+    assert!(w
+        .principal(&attacker)
+        .try_upgrade(&w.contract, &wasm_hash)
+        .is_err());
+    assert!(w
+        .principal(&attacker)
+        .try_set_asset_allowed(&w.contract, &w.asset, &false)
+        .is_err());
+    assert_eq!(
+        w.env
+            .events()
+            .all()
+            .filter_by_contract(&w.contract)
+            .events()
+            .len(),
+        0
+    );
+    assert!(w.client().is_paused());
+    assert!(w.client().is_asset_allowed(&w.asset));
+    assert_eq!(w.client().get_admin(), w.admin);
+    assert_eq!(w.client().get_mandate(&w.id), mandate_before);
 }
 
 #[test]
@@ -856,6 +913,8 @@ fn registration_rejects_non_positive_budget_without_consuming_credential() {
 #[test]
 fn unknown_mandate_not_found() {
     let w = setup();
+    w.register();
+    let mandate_before = w.client().get_mandate(&w.id);
     let unknown = BytesN::from_array(&w.env, &[9u8; 32]);
     assert_eq!(
         w.client().try_get_mandate(&unknown),
@@ -865,6 +924,22 @@ fn unknown_mandate_not_found() {
         w.client().try_execute_payment(&unknown, &SPEND, &0),
         Err(Ok(Error::NotFound))
     );
+    assert_eq!(
+        w.client().try_revoke_mandate(&unknown),
+        Err(Ok(Error::NotFound))
+    );
+    assert_eq!(
+        w.env
+            .events()
+            .all()
+            .filter_by_contract(&w.contract)
+            .events()
+            .len(),
+        0
+    );
+    assert_eq!(w.client().get_mandate(&w.id), mandate_before);
+    assert_eq!(w.balance(&w.merchant), 0);
+    assert_eq!(w.balance(&w.user), FUNDED);
 }
 
 #[test]

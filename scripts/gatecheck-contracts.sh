@@ -17,6 +17,9 @@ bash "$ROOT/scripts/test-deploy-mainnet-v2.sh"
 echo "==> unambiguous release tag routing"
 bash "$ROOT/scripts/release-tag-route.sh" --self-test
 
+echo "==> fail-closed security scanner offline regressions"
+bash "$ROOT/scripts/test-security-scan.sh"
+
 stellar_version="$(stellar --version | head -n 1)"
 if [[ "$stellar_version" != stellar\ 27.0.0* ]]; then
   echo "Stellar CLI 27.0.0 is required, found: $stellar_version" >&2

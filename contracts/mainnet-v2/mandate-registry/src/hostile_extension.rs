@@ -84,7 +84,9 @@ impl World {
             &registry, &extension, &merchant, &asset, &MAX, &EXPIRY, &vc_hash,
         );
         PrincipalClient::new(&env, &asset_admin).mint(&asset, &user, &(MAX * 2));
-        PrincipalClient::new(&env, &user).approve(&asset, &registry, &MAX, &100_000);
+        // Keep token funds and allowance above the mandate budget so token
+        // rejection cannot mask a missing protocol budget check.
+        PrincipalClient::new(&env, &user).approve(&asset, &registry, &(MAX * 2), &100_000);
 
         Self {
             env,
@@ -126,6 +128,11 @@ fn direct_caller_cannot_bypass_a_contract_agent() {
 #[test]
 fn hostile_extension_is_still_bounded_by_budget_and_sequence() {
     let world = World::new();
+
+    assert!(world.balance(&world.user) > MAX);
+    assert!(
+        TokenClient::new(&world.env, &world.asset).allowance(&world.user, &world.registry) > MAX
+    );
 
     assert!(world
         .hostile()

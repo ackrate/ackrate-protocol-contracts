@@ -1,0 +1,17 @@
+# Repository policy takes precedence over a developer's user-level settings.
+# The sole accepted maintenance advisory is supplied explicitly by the script.
+[advisories]
+ignore = []
+
+[database]
+fetch = true
+stale = false
+
+[output]
+quiet = false
+format = "terminal"
+deny = ["warnings"]
+
+[yanked]
+enabled = true
+update_index = true

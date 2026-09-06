@@ -18,6 +18,8 @@ jobs:
         run: rustup toolchain install 1.98.0 --profile minimal --target wasm32v1-none
       - name: Install pinned dependency scanner
         run: cargo install cargo-audit --version 0.22.2 --locked
+      - name: Verify fail-closed scanner behavior offline
+        run: bash scripts/test-security-scan.sh
       - name: Enforce Mainnet dependency security policy
         run: ./scripts/security-scan.sh
 

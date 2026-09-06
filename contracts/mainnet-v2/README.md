@@ -4,11 +4,14 @@
 
 ## Status
 
-The active milestone is **T3 Step 1 release gate and user approval**; Steps 2–4
-are paused. The [dated SDK release evidence](https://github.com/ackrate/ackrate-protocol/blob/main/docs/t3-step-1-gate-2026-09-07.md)
-records the published package checks. Existing Step 2 security evidence below is
-retained, not a claim that the remaining grant deliverables or revised scope
-have been accepted.
+The active milestone is **T3 Step 2 contract-security verification**; Steps 3–4
+remain paused. The [dated SDK release evidence](https://github.com/ackrate/ackrate-protocol/blob/main/docs/t3-step-1-gate-2026-09-07.md)
+records Step 1 package checks. The current
+[Step 2 verification](../../docs/mainnet-v2-security-verification.md),
+[threat model](../../docs/mainnet-v2-threat-model.md),
+[data flows](../../docs/mainnet-v2-data-flow.md), and
+[scan dispositions](../../docs/mainnet-v2-security-scan-report.md) cover this
+deployed V2 implementation, not the historical canary or all grant deliverables.
 
 `0.4.1` is ACKRATE's condensed MandateRegistry deployed on Stellar Mainnet.
 The exact attested Linux release artifact was uploaded and instantiated through
@@ -491,11 +494,13 @@ No step automatically deploys.
 
 ## Post-deployment verification boundary
 
-The Mainnet deployment is complete. The existing T3 Step 2 evidence binds the live code hash and
+The Mainnet deployment is complete. The current T3 Step 2 evidence binds the live code hash and
 2-of-3 authority state to the expanded negative suite, exact-WASM smoke,
 dependency policy, threat model, and reviewer reproduction path in
 [`docs/mainnet-v2-security-verification.md`](../../docs/mainnet-v2-security-verification.md).
-Step 2 work is currently paused while Step 1 is reviewed.
+It includes fresh adversarial test-sensitivity checks and fail-closed scanner
+regressions. Grant acceptance remains the reviewer's decision; this is a bounded
+technical verification, not external certification.
 
 The V2 governance profile has no timelock. Upgrades require the 2-of-3
 administrator and an already-paused money path. Reference-app migration and

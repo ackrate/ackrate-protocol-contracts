@@ -19,14 +19,17 @@ single-contract T3 Step 1 enforcement layer documented in
 Mainnet V2 source proof and StellarExpert verification status:
 [`docs/mainnet-v2-source-verification.md`](docs/mainnet-v2-source-verification.md)
 
-Current milestone: **T3 Step 1 release gate and user approval**. Steps 2–4 are
-paused. The [dated SDK Step 1 release evidence](https://github.com/ackrate/ackrate-protocol/blob/main/docs/t3-step-1-gate-2026-09-07.md)
+Current milestone: **T3 Step 2 contract-security gate**; Steps 3–4 remain paused.
+The [dated SDK Step 1 release evidence](https://github.com/ackrate/ackrate-protocol/blob/main/docs/t3-step-1-gate-2026-09-07.md)
 records the published package checks; it does not claim completion of all T3
 deliverables or acceptance of revised grant scope.
 
-Existing Mainnet V2 security verification evidence:
+Current Mainnet V2 security verification evidence:
 
 - [Concise T3 Step 2 result, threat model, diagrams, function coverage, live state, and reproduction guide](docs/mainnet-v2-security-verification.md)
+- [Current V2 threat model and attack-to-test mapping](docs/mainnet-v2-threat-model.md)
+- [Current V2 trust boundaries, data entities, and lifecycle diagrams](docs/mainnet-v2-data-flow.md)
+- [Dated V2 scan results, fixed verification gaps, and disclosed maintenance exception](docs/mainnet-v2-security-scan-report.md)
 - [Continuous dependency advisory scan](scripts/security-scan.sh)
 - [Complete contract gate check](scripts/gatecheck-contracts.sh)
 
