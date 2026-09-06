@@ -19,7 +19,12 @@ single-contract T3 Step 1 enforcement layer documented in
 Mainnet V2 source proof and StellarExpert verification status:
 [`docs/mainnet-v2-source-verification.md`](docs/mainnet-v2-source-verification.md)
 
-Mainnet V2 security verification:
+Current milestone: **T3 Step 1 release gate and user approval**. Steps 2–4 are
+paused. The [dated SDK Step 1 release evidence](https://github.com/ackrate/ackrate-protocol/blob/main/docs/t3-step-1-gate-2026-09-07.md)
+records the published package checks; it does not claim completion of all T3
+deliverables or acceptance of revised grant scope.
+
+Existing Mainnet V2 security verification evidence:
 
 - [Concise T3 Step 2 result, threat model, diagrams, function coverage, live state, and reproduction guide](docs/mainnet-v2-security-verification.md)
 - [Continuous dependency advisory scan](scripts/security-scan.sh)
@@ -28,7 +33,7 @@ Mainnet V2 security verification:
 The older `docs/security-*` reports describe the previous Registry +
 TimelockController canary and are retained only as historical release evidence.
 
-Governed mainnet release candidate and deployment handoff:
+Historical governed mainnet canary and deployment handoff:
 [`contracts/mainnet/README.md`](contracts/mainnet/README.md)
 
 The governed mainnet canary is live and independently read-verified. Its exact
@@ -41,6 +46,36 @@ wire format are treated as untrusted. Only the contract's atomic
 `execute_payment` path can consume a mandate and move value. The negative suite,
 threat model, data flows, dependency scan, and exact-byte artifact checks are
 release gates on every change.
+
+## Mainnet contract and npm configuration
+
+The current Mainnet V2 target is
+[`CCLZEBJXG4YVJEPBCR5F27N733BCK5HQJWZZGB3K54JVODY3VAGP4HWR`](https://stellar.expert/explorer/public/contract/CCLZEBJXG4YVJEPBCR5F27N733BCK5HQJWZZGB3K54JVODY3VAGP4HWR).
+The published coordinated npm releases—`@ackrate/stellar@0.3.0`,
+`@ackrate/core@0.4.0`, `@ackrate/ap2@0.4.0`,
+`@ackrate/express-middleware@0.3.0`, and `@ackrate/cli@0.2.0`—make this
+the official Mainnet default through the SDK configuration, dependency graph,
+and CLI bundle. All five passed a combined public clean-install check on
+**2026-09-07 at 04:25:11 Bangkok (UTC+7)**; public `latest` tags and downloaded
+archive SHA-512 integrity values matched at **04:25:38–04:25:45**.
+See the [dated Step 1 release evidence](https://github.com/ackrate/ackrate-protocol/blob/main/docs/t3-step-1-gate-2026-09-07.md),
+the [package-to-contract mapping](contracts/mainnet-v2/README.md#npm-package-to-contract-mapping),
+and the [SDK release status](https://github.com/ackrate/ackrate-protocol/blob/main/docs/ackrate-sdk-npm.md)
+for the exact package roles and publication evidence.
+
+The [canonical SDK deployment configuration](https://github.com/ackrate/ackrate-protocol/blob/main/packages/stellar/src/deployments.ts)
+exports this address as `DEPLOYMENTS.mainnet.mandateRegistryId` and provides the
+ready `MAINNET` configuration with its complete bundled deployment manifest.
+Core exposes it as `ackrate.mainnet`; the CLI no longer requires a manual
+manifest for this official deployment. The advanced
+`publishedMainnetNetworkFromDeploymentManifest(manifest)` helper validates a
+deliberately supplied record against the same pinned identity. Configuration is
+not a live-state check or permission to spend: signatures, user-approved limits,
+and explicit real-USDC CLI confirmation still apply. Authorized upgrades replace
+the implementation at the same contract address, subject to compatibility and
+release-evidence review. Current V2 uses native Stellar 2-of-3 administration
+without an integrated timelock. The older canary and Testnet upgrade controls
+below describe separate historical/development deployments.
 
 ---
 
@@ -67,7 +102,7 @@ flowchart LR
 
 ---
 
-## Contracts
+## Testnet contracts
 
 | Folder | Current testnet contract | Historical testnet contract |
 |---|---|---|
@@ -78,7 +113,7 @@ Both contracts keep the crate name `mandate-registry`, but their package version
 
 ---
 
-## Shared upgrade controls
+## Shared Testnet upgrade controls
 
 Both current contracts bolt on the same operational surface — **without touching existing mandate or pool encodings**.
 

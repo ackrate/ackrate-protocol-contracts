@@ -1,5 +1,21 @@
 # Mainnet MandateRegistry deployment
 
+> [!IMPORTANT]
+> **Historical canary profile, not the current npm Mainnet V2 target.**
+> The coordinated SDK release set maps to
+> [`CCLZEBJXG4YVJEPBCR5F27N733BCK5HQJWZZGB3K54JVODY3VAGP4HWR`](https://stellar.expert/explorer/public/contract/CCLZEBJXG4YVJEPBCR5F27N733BCK5HQJWZZGB3K54JVODY3VAGP4HWR),
+> using native Stellar 2-of-3 administration without an integrated timelock.
+> The published Mainnet-default packages use bundled `MAINNET` configuration
+> and its complete manifest; no manual manifest is needed for the current V2 target.
+> The coordinated set passed public clean-install checks on **2026-09-07 at
+> 04:25:11 Bangkok (UTC+7)**, followed by registry tag and archive-integrity
+> verification at **04:25:38–04:25:45**. See the
+> [dated Step 1 release evidence](https://github.com/ackrate/ackrate-protocol/blob/main/docs/t3-step-1-gate-2026-09-07.md).
+> See the [current V2 package-to-contract mapping](../mainnet-v2/README.md#npm-package-to-contract-mapping)
+> and [canonical SDK configuration](https://github.com/ackrate/ackrate-protocol/blob/main/packages/stellar/src/deployments.ts).
+> The contract IDs, timelock controls, and deployment records below belong to
+> the older canary and remain intact as historical evidence.
+
 The governed canary is live on Stellar mainnet. The canonical public record is
 [`deployment-manifest.json`](deployment-manifest.json), with a human-readable
 [deployment and verification report](../../docs/mainnet-canary-deployment.md).
