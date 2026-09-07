@@ -52,18 +52,13 @@ jobs:
             --admin "$AUTHORITY_ID" \
             --initial-asset "$USDC_ID" \
             --rpc-url "$RPC_URL"
-      - name: Require the live 2-of-3 authority shape
+      - name: Check authority policy rejection fixtures
+        run: bash scripts/test-mainnet-v2-authority.sh
+      - name: Require the exact reviewed live 2-of-3 authority
         run: |
           set -euo pipefail
           curl --fail --silent --show-error \
             --proto '=https' --proto-redir '=https' --max-redirs 0 \
             "$HORIZON_URL/accounts/$AUTHORITY_ID" \
             --output "$RUNNER_TEMP/authority.json"
-          jq --exit-status --arg authority "$AUTHORITY_ID" '
-            .account_id == $authority and
-            .thresholds.low_threshold == 2 and
-            .thresholds.med_threshold == 2 and
-            .thresholds.high_threshold == 2 and
-            ([.signers[] | select(.type == "ed25519_public_key")] | length) == 3 and
-            ([.signers[] | select(.type == "ed25519_public_key") | .weight] | sort) == [1, 1, 1]
-          ' "$RUNNER_TEMP/authority.json"
+          bash scripts/check-mainnet-v2-authority.sh < "$RUNNER_TEMP/authority.json"
