@@ -19,6 +19,7 @@ contracts=(
   "mainnet/mandate-registry"
   "mainnet/timelock-controller"
   "mainnet-v2/mandate-registry"
+  "wallet-setup"
 )
 
 for contract in "${contracts[@]}"; do

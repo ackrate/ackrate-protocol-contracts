@@ -66,11 +66,14 @@ run_scan() {
 }
 
 run_scan >"$TASK_TMP/clean.log" 2>&1
-[[ "$(wc -l <"$SECURITY_FIXTURE_LOG" | tr -d '[:space:]')" == "3" ]] || {
-  echo "Security regression: all three build lockfiles must be scanned." >&2; exit 1;
+[[ "$(wc -l <"$SECURITY_FIXTURE_LOG" | tr -d '[:space:]')" == "4" ]] || {
+  echo "Security regression: all four build lockfiles must be scanned." >&2; exit 1;
 }
 grep -Fq -- "--file $ROOT/Cargo.lock --deny warnings --ignore RUSTSEC-2024-0436" "$SECURITY_FIXTURE_LOG" || {
   echo "Security regression: V2 must scan the actual root workspace lockfile." >&2; exit 1;
+}
+grep -Fq -- "--file $ROOT/contracts/wallet-setup/Cargo.lock --deny warnings --ignore RUSTSEC-2024-0436" "$SECURITY_FIXTURE_LOG" || {
+  echo "Security regression: wallet setup must scan its separate locked dependency graph." >&2; exit 1;
 }
 if grep -Fq -- "$ROOT/contracts/mainnet-v2/mandate-registry/Cargo.lock" "$SECURITY_FIXTURE_LOG"; then
   echo "Security regression: V2 scanned the inactive member lockfile." >&2; exit 1
