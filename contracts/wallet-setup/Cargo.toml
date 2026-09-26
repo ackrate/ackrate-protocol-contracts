@@ -1,0 +1,26 @@
+[package]
+name = "ackrate-wallet-setup"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+doctest = false
+
+[dependencies]
+soroban-sdk = "=26.1.0"
+
+[dev-dependencies]
+soroban-sdk = { version = "=26.1.0", features = ["testutils"] }
+mandate-registry = { path = "../mainnet-v2/mandate-registry" }
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+strip = "symbols"
+lto = true
+panic = "abort"
+codegen-units = 1
