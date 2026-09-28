@@ -1,10 +1,7 @@
 name: Atomic Wallet Setup
 on:
+  # Required branch-protection check: run on every PR, including docs/layout changes.
   pull_request:
-    paths:
-      - 'contracts/wallet-setup/**'
-      - 'contracts/mainnet-v2/mandate-registry/**'
-      - '.github/workflows/wallet-setup.yml'
   push:
     branches: [main, feat/atomic-wallet-setup]
     paths:
