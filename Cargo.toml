@@ -2,6 +2,7 @@
 resolver = "2"
 members = ["contracts/mainnet-v2/mandate-registry"]
 exclude = [
+  "contracts/legacy-protocol/mandate-registry",
   "contracts/simple/mandate-registry",
   "contracts/composites/mandate-registry",
   "contracts/mainnet/mandate-registry",
