@@ -10,6 +10,19 @@ permissions:
   contents: read
 
 jobs:
+  legacy-protocol:
+    name: legacy protocol mandate-registry (Rust)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: contracts/legacy-protocol/mandate-registry
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --locked --all-targets -- -D warnings
+      - run: cargo test --locked
+
   security:
     runs-on: ubuntu-latest
     steps:

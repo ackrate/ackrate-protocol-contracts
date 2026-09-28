@@ -289,3 +289,9 @@ Every future release follows the same pipeline: tagged build → hash + interfac
 This repo is **just the enforcement contract**. The full protocol, SDK, x402 round-trip, reference apps, security gate checks, and clause-by-clause on-chain proof live in:
 
 **[`ackrate-protocol/ackrate-protocol`](https://github.com/ackrate/ackrate-protocol)**
+
+## Historical protocol checkout
+
+The former SDK-monorepo contract and its tests are preserved under
+[`contracts/legacy-protocol`](contracts/legacy-protocol/README.md). This is a
+historical testnet variant, not the Mainnet deployment source.
