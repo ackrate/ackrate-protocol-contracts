@@ -6,9 +6,9 @@ the older `security-threat-model.md` describes a different, historical canary.
 
 The target is [Mainnet MandateRegistry `CCLZEBJX…4HWR`](https://stellar.expert/explorer/public/contract/CCLZEBJXG4YVJEPBCR5F27N733BCK5HQJWZZGB3K54JVODY3VAGP4HWR),
 with WASM SHA-256 `982809197d35d44c7b0fce6bd117fb2fec09b728c64c146c1f803b01faacff62`.
-See the [verification record](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol-contracts/docs/mainnet-v2-security-verification.md),
+See the [verification record](https://github.com/ackrate/ackrate-protocol-contracts/blob/e0dc3a7e6a38058031bf2f6489a6604141c6a8aa/docs/mainnet-v2-security-verification.md),
 [data-flow diagrams](mainnet-v2-data-flow.md), and
-[scan findings and dispositions](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol-contracts/docs/mainnet-v2-security-scan-report.md).
+[scan findings and dispositions](https://github.com/ackrate/ackrate-protocol-contracts/blob/e0dc3a7e6a38058031bf2f6489a6604141c6a8aa/docs/mainnet-v2-security-scan-report.md).
 
 ## Protected assets and assumptions
 

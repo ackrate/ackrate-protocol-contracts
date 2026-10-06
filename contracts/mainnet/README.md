@@ -10,7 +10,7 @@
 > The coordinated set passed public clean-install checks on **2026-09-07 at
 > 04:25:11 Bangkok (UTC+7)**, followed by registry tag and archive-integrity
 > verification at **04:25:38–04:25:45**. See the
-> [dated Step 1 release evidence](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol/docs/t3-step-1-gate-2026-09-07.md).
+> [dated Step 1 release evidence](https://github.com/ackrate/ackrate-protocol/blob/8b6cca9e1385b54e786aeaabc32535b3e143c20d/docs/t3-step-1-gate-2026-09-07.md).
 > See the [current V2 package-to-contract mapping](../mainnet-v2/README.md#npm-package-to-contract-mapping)
 > and [canonical SDK configuration](https://github.com/ackrate/ackrate-protocol/blob/main/packages/stellar/src/deployments.ts).
 > The contract IDs, timelock controls, and deployment records below belong to
@@ -18,7 +18,7 @@
 
 The governed canary is live on Stellar mainnet. The canonical public record is
 [`deployment-manifest.json`](deployment-manifest.json), with a human-readable
-[deployment and verification report](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol-contracts/docs/mainnet-canary-deployment.md).
+[deployment and verification report](https://github.com/ackrate/ackrate-protocol-contracts/blob/e0dc3a7e6a38058031bf2f6489a6604141c6a8aa/docs/mainnet-canary-deployment.md).
 
 - TimelockController: [`CD3KRQRN...6UUX`](https://stellar.expert/explorer/public/contract/CD3KRQRNCW52CZHKG2GPQAEOU6UCL426YFNHYUZ7IWUUKAOTKUQX6UUX)
 - MandateRegistry: [`CDBTG5ZK...PAGS`](https://stellar.expert/explorer/public/contract/CDBTG5ZKASFA7LOYUPBOTGKAVX5MJIM4U24BYGX7VX23IHYDAHLQPAGS)
