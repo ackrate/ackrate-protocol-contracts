@@ -7,9 +7,9 @@
 [![Build](https://img.shields.io/badge/Build-Reproducible-brightgreen)](https://github.com/stellar-expert/soroban-build-workflow)
 [![Attested](https://img.shields.io/badge/Provenance-GitHub%20Attested-blue?logo=github)](https://github.com/ackrate/ackrate-protocol-contracts/attestations)
 
-Mainnet canary deployment: [`docs/mainnet-canary-deployment.md`](docs/mainnet-canary-deployment.md)
+Mainnet canary deployment: [[historical artifact](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol-contracts/docs/mainnet-canary-deployment.md)](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol-contracts/docs/mainnet-canary-deployment.md)
 
-Mainnet planning: [`docs/mainnet-roadmap.md`](docs/mainnet-roadmap.md)
+Mainnet planning: [[historical artifact](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol-contracts/docs/mainnet-roadmap.md)](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol-contracts/docs/mainnet-roadmap.md)
 
 Mainnet V2 deployment:
 [`CCLZEBJX…4HWR`](https://stellar.expert/explorer/public/contract/CCLZEBJXG4YVJEPBCR5F27N733BCK5HQJWZZGB3K54JVODY3VAGP4HWR) — the condensed,
@@ -17,19 +17,19 @@ single-contract T3 Step 1 enforcement layer documented in
 [`contracts/mainnet-v2/README.md`](contracts/mainnet-v2/README.md).
 
 Mainnet V2 source proof and StellarExpert verification status:
-[`docs/mainnet-v2-source-verification.md`](docs/mainnet-v2-source-verification.md)
+[[historical artifact](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol-contracts/docs/mainnet-v2-source-verification.md)](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol-contracts/docs/mainnet-v2-source-verification.md)
 
 Current milestone: **T3 Step 2 contract-security gate**; Steps 3–4 remain paused.
-The [dated SDK Step 1 release evidence](https://github.com/ackrate/ackrate-protocol/blob/main/docs/t3-step-1-gate-2026-09-07.md)
+The [dated SDK Step 1 release evidence](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol/docs/t3-step-1-gate-2026-09-07.md)
 records the published package checks; it does not claim completion of all T3
 deliverables or acceptance of revised grant scope.
 
 Current Mainnet V2 security verification evidence:
 
-- [Concise T3 Step 2 result, threat model, diagrams, function coverage, live state, and reproduction guide](docs/mainnet-v2-security-verification.md)
+- [Concise T3 Step 2 result, threat model, diagrams, function coverage, live state, and reproduction guide](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol-contracts/docs/mainnet-v2-security-verification.md)
 - [Current V2 threat model and attack-to-test mapping](docs/mainnet-v2-threat-model.md)
 - [Current V2 trust boundaries, data entities, and lifecycle diagrams](docs/mainnet-v2-data-flow.md)
-- [Dated V2 scan results, fixed verification gaps, and disclosed maintenance exception](docs/mainnet-v2-security-scan-report.md)
+- [Dated V2 scan results, fixed verification gaps, and disclosed maintenance exception](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol-contracts/docs/mainnet-v2-security-scan-report.md)
 - [Continuous dependency advisory scan](scripts/security-scan.sh)
 - [Complete contract gate check](scripts/gatecheck-contracts.sh)
 
@@ -61,7 +61,7 @@ the official Mainnet default through the SDK configuration, dependency graph,
 and CLI bundle. All five passed a combined public clean-install check on
 **2026-09-07 at 04:25:11 Bangkok (UTC+7)**; public `latest` tags and downloaded
 archive SHA-512 integrity values matched at **04:25:38–04:25:45**.
-See the [dated Step 1 release evidence](https://github.com/ackrate/ackrate-protocol/blob/main/docs/t3-step-1-gate-2026-09-07.md),
+See the [dated Step 1 release evidence](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol/docs/t3-step-1-gate-2026-09-07.md),
 the [package-to-contract mapping](contracts/mainnet-v2/README.md#npm-package-to-contract-mapping),
 and the [SDK release status](https://github.com/ackrate/ackrate-protocol/blob/main/docs/ackrate-sdk-npm.md)
 for the exact package roles and publication evidence.

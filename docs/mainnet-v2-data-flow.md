@@ -1,7 +1,7 @@
 # Mainnet V2 data flow and trust boundaries
 
 **Reviewed:** 2026-09-07 (Bangkok, UTC+7). Scope is the
-[deployed V2 contract](mainnet-v2-security-verification.md#exact-mainnet-target),
+[deployed V2 contract](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol-contracts/docs/mainnet-v2-security-verification.md#exact-mainnet-target),
 not the historical two-contract canary. See the
 [threat model](mainnet-v2-threat-model.md) for controls and residual risks.
 

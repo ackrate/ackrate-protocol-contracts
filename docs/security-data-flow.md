@@ -2,7 +2,7 @@
 
 > Historical record for the earlier Registry + TimelockController canary. The
 > deployed Mainnet V2 security result is
-> [`mainnet-v2-security-verification.md`](mainnet-v2-security-verification.md).
+> [`mainnet-v2-security-verification.md`](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol-contracts/docs/mainnet-v2-security-verification.md).
 
 Status: release gate
 Last reviewed: 2026-08-27

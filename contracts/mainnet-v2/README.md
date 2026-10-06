@@ -5,12 +5,12 @@
 ## Status
 
 The active milestone is **T3 Step 2 contract-security verification**; Steps 3–4
-remain paused. The [dated SDK release evidence](https://github.com/ackrate/ackrate-protocol/blob/main/docs/t3-step-1-gate-2026-09-07.md)
+remain paused. The [dated SDK release evidence](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol/docs/t3-step-1-gate-2026-09-07.md)
 records Step 1 package checks. The current
-[Step 2 verification](../../docs/mainnet-v2-security-verification.md),
+[Step 2 verification](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol-contracts/docs/mainnet-v2-security-verification.md),
 [threat model](../../docs/mainnet-v2-threat-model.md),
 [data flows](../../docs/mainnet-v2-data-flow.md), and
-[scan dispositions](../../docs/mainnet-v2-security-scan-report.md) cover this
+[scan dispositions](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol-contracts/docs/mainnet-v2-security-scan-report.md) cover this
 deployed V2 implementation, not the historical canary or all grant deliverables.
 
 `0.4.1` is ACKRATE's condensed MandateRegistry deployed on Stellar Mainnet.
@@ -44,7 +44,7 @@ not five independent address copies. All five passed a combined public
 clean-install check on **2026-09-07 at 04:25:11 Bangkok (UTC+7)**; public `latest`
 tags and downloaded archive SHA-512 integrity values matched at
 **04:25:38–04:25:45**. See the
-[dated Step 1 release evidence](https://github.com/ackrate/ackrate-protocol/blob/main/docs/t3-step-1-gate-2026-09-07.md)
+[dated Step 1 release evidence](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol/docs/t3-step-1-gate-2026-09-07.md)
 and the
 [SDK release status and registry-verification evidence](https://github.com/ackrate/ackrate-protocol/blob/main/docs/ackrate-sdk-npm.md)
 for the recorded checks; older package releases do not acquire these
@@ -497,7 +497,7 @@ No step automatically deploys.
 The Mainnet deployment is complete. The current T3 Step 2 evidence binds the live code hash and
 2-of-3 authority state to the expanded negative suite, exact-WASM smoke,
 dependency policy, threat model, and reviewer reproduction path in
-[`docs/mainnet-v2-security-verification.md`](../../docs/mainnet-v2-security-verification.md).
+[[historical artifact](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol-contracts/docs/mainnet-v2-security-verification.md)](https://github.com/ackrate/ackrate-project/blob/main/instance/artifacts/108-other-repository-artifacts/ackrate-protocol-contracts/docs/mainnet-v2-security-verification.md).
 It includes fresh adversarial test-sensitivity checks and fail-closed scanner
 regressions. Grant acceptance remains the reviewer's decision; this is a bounded
 technical verification, not external certification.
