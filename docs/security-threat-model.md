@@ -2,7 +2,7 @@
 
 > Historical record for the earlier Registry + TimelockController canary. The
 > deployed Mainnet V2 security result is
-> [`mainnet-v2-security-verification.md`](mainnet-v2-security-verification.md).
+> [`mainnet-v2-security-verification.md`](https://github.com/ackrate/ackrate-protocol-contracts/blob/e0dc3a7e6a38058031bf2f6489a6604141c6a8aa/docs/mainnet-v2-security-verification.md).
 
 Status: release gate
 Last reviewed: 2026-08-27
@@ -59,7 +59,7 @@ RPC provider, database, and model output are untrusted inputs.
 | Emergency key expands its authority | Separate pauser and unpauser roles; pauser can only stop | `emergency_pause_is_one_key_but_unpause_is_separate` |
 | Unauthorized or early upgrade | Registry upgrader is the timelock; operation hash binds target, function, args, predecessor, and salt; minimum delay enforced | `governance_functions_require_both_role_and_authorization`; `canonical_timelock_binds_and_executes_the_exact_policy_change`; `canonical_timelock_upgrades_registry_at_same_address_and_preserves_state`; `schedule_with_insufficient_delay`; `execute_before_ready`; `every_timelock_mutator_rejects_wrong_roles_and_missing_authorization` |
 | Artifact substitution | Pinned toolchain, exact hashes, GitHub provenance, and observed on-chain hashes | `gatecheck-mainnet.sh`; `deployment-manifest.json`; release workflow |
-| Vulnerable or yanked dependency | The lockfile dependency gate is a required CI job; actionable findings fail the build | `scripts/security-scan.sh`; `docs/security-scan-report.md` |
+| Vulnerable or yanked dependency | The lockfile dependency gate is a required CI job; actionable findings fail the build | `scripts/security-scan.sh`; [historical artifact](https://github.com/ackrate/ackrate-protocol-contracts/blob/e0dc3a7e6a38058031bf2f6489a6604141c6a8aa/docs/security-scan-report.md) |
 
 The executable sources are under
 `contracts/mainnet/mandate-registry/src/` and
