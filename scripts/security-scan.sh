@@ -16,7 +16,6 @@ if ! command -v "$CARGO_AUDIT" >/dev/null 2>&1; then
 fi
 
 contracts=(
-  "mainnet/mandate-registry"
   "mainnet/timelock-controller"
   "mainnet-v2/mandate-registry"
   "wallet-setup"

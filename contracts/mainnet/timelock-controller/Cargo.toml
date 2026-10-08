@@ -1,6 +1,6 @@
 [package]
 name = "ackrate-timelock-controller"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 license = "MIT"
 publish = false
@@ -11,12 +11,11 @@ doctest = false
 
 [features]
 testutils = ["soroban-sdk/testutils"]
+deployed-v2-test = []
 
 [dependencies]
-soroban-sdk = { version = "=26.1.0", features = ["experimental_spec_shaking_v2"] }
-stellar-access = "=0.7.2"
+soroban-sdk = { version = "=26.1.0", features = ["hazmat-address"] }
 stellar-governance = "=0.7.2"
-stellar-macros = "=0.7.2"
 
 [dev-dependencies]
 soroban-sdk = { version = "=26.1.0", features = ["testutils"] }

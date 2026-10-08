@@ -140,12 +140,17 @@ for variant in simple mainnet-v2 composites; do
   fi
 done
 
-for contract in mandate-registry timelock-controller; do
+for contract in timelock-controller; do
   manifest="$ROOT/contracts/mainnet/$contract/Cargo.toml"
+  export CARGO_TARGET_DIR="$ROOT/contracts/mainnet/$contract/target"
+  echo '92933ea27374242a45c2f97c4a47ffa1631063b156ae3e89cdcb74afc79145a4  '"$ROOT/contracts/mainnet/$contract/test-fixtures/hello.wasm" | shasum -a 256 --check --status
+  echo '982809197d35d44c7b0fce6bd117fb2fec09b728c64c146c1f803b01faacff62  '"$ROOT/contracts/mainnet/$contract/test-fixtures/mainnet-v2.wasm" | shasum -a 256 --check --status
+  echo "==> mainnet/$contract: build current controller for host tests"
+  stellar contract build --manifest-path "$manifest" --locked
   echo "==> mainnet/$contract: format"
   cargo fmt --manifest-path "$manifest" --all -- --check
   echo "==> mainnet/$contract: lint"
-  cargo clippy --manifest-path "$manifest" --locked --all-targets -- -D warnings
+  cargo clippy --manifest-path "$manifest" --locked --all-targets --all-features -- -D warnings
   echo "==> mainnet/$contract: tests"
-  cargo test --manifest-path "$manifest" --locked -- --include-ignored
+  cargo test --manifest-path "$manifest" --locked --all-features -- --include-ignored
 done
