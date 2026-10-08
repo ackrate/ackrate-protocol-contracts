@@ -23,12 +23,17 @@ The governed canary is live on Stellar mainnet. The canonical public record is
 - TimelockController: [`CD3KRQRN...6UUX`](https://stellar.expert/explorer/public/contract/CD3KRQRNCW52CZHKG2GPQAEOU6UCL426YFNHYUZ7IWUUKAOTKUQX6UUX)
 - MandateRegistry: [`CDBTG5ZK...PAGS`](https://stellar.expert/explorer/public/contract/CDBTG5ZKASFA7LOYUPBOTGKAVX5MJIM4U24BYGX7VX23IHYDAHLQPAGS)
 
-This directory contains the two contracts used by the governed mainnet
-deployment profile:
+The historical deployment uses the contracts at
+[reviewed source `51b93159`](https://github.com/ackrate/ackrate-protocol-contracts/tree/51b93159d5a4e29d9e48fe99f489d70271703494/contracts/mainnet):
 
 - `mandate-registry`: the sole mandate validation, state-consumption, and
   payment path; and
 - `timelock-controller`: the canonical OpenZeppelin-based delay authority.
+
+The current `timelock-controller` source is version 0.2.0 for the fixed-target V2
+administrator API. It is not the deployed canary source. Use its README and
+`scripts/gatecheck-admin.sh` for that controller. Historical canary tag release
+routes are frozen. Their published artifacts and exact-source CI reproduction remain available.
 
 The optional reference policy under `contracts/extensions` is not part of this
 deployment profile. The registry has no extension registry, callback, plugin
@@ -58,11 +63,10 @@ tracks that ceremony separately from the technical multisig state.
 
 ## Reproduce the release artifacts
 
-Run:
-
-```bash
-./scripts/gatecheck-mainnet.sh
-```
+Use the pinned reviewed-source checkout from the `mainnet-candidate` CI job.
+On Ubuntu x86_64, set `ACKRATE_MAINNET_SOURCE_ROOT` to that clean checkout and run
+`./scripts/gatecheck-mainnet.sh`. The gate requires source `51b93159`, Rust 1.96.0
+and Stellar CLI 27.0.0. It does not rebuild historical bytes from the revised controller.
 
 The script formats, lints, tests, and builds both contracts, inspects their
 interfaces, and writes the exact WASM files plus SHA-256 checksums beneath

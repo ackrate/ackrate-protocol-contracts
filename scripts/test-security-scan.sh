@@ -21,6 +21,8 @@ cargo() {
       if [[ "$SECURITY_FIXTURE_MODE" == "workspace-empty" ]]; then return 0; fi
       if [[ "$manifest" == "$SECURITY_FIXTURE_ROOT/contracts/mainnet-v2/mandate-registry/Cargo.toml" ]]; then
         printf '%s/Cargo.toml\n' "$SECURITY_FIXTURE_ROOT"
+      elif [[ "$manifest" == "$SECURITY_FIXTURE_ROOT/contracts/admin/"* ]]; then
+        printf '%s/contracts/admin/Cargo.toml\n' "$SECURITY_FIXTURE_ROOT"
       else
         printf '%s\n' "$manifest"
       fi
@@ -66,8 +68,11 @@ run_scan() {
 }
 
 run_scan >"$TASK_TMP/clean.log" 2>&1
-[[ "$(wc -l <"$SECURITY_FIXTURE_LOG" | tr -d '[:space:]')" == "4" ]] || {
-  echo "Security regression: all four build lockfiles must be scanned." >&2; exit 1;
+[[ "$(wc -l <"$SECURITY_FIXTURE_LOG" | tr -d '[:space:]')" == "5" ]] || {
+  echo "Security regression: all five contract graphs must be scanned." >&2; exit 1;
+}
+[[ "$(grep -Fc -- "--file $ROOT/contracts/admin/Cargo.lock --deny warnings --ignore RUSTSEC-2024-0436" "$SECURITY_FIXTURE_LOG")" == "1" ]] || {
+  echo "Security regression: the Hello graph must use their workspace lockfile." >&2; exit 1;
 }
 grep -Fq -- "--file $ROOT/Cargo.lock --deny warnings --ignore RUSTSEC-2024-0436" "$SECURITY_FIXTURE_LOG" || {
   echo "Security regression: V2 must scan the actual root workspace lockfile." >&2; exit 1;

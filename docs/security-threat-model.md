@@ -61,10 +61,11 @@ RPC provider, database, and model output are untrusted inputs.
 | Artifact substitution | Pinned toolchain, exact hashes, GitHub provenance, and observed on-chain hashes | `gatecheck-mainnet.sh`; `deployment-manifest.json`; release workflow |
 | Vulnerable or yanked dependency | The lockfile dependency gate is a required CI job; actionable findings fail the build | `scripts/security-scan.sh`; [historical artifact](https://github.com/ackrate/ackrate-protocol-contracts/blob/e0dc3a7e6a38058031bf2f6489a6604141c6a8aa/docs/security-scan-report.md) |
 
-The executable sources are under
-`contracts/mainnet/mandate-registry/src/` and
-`contracts/mainnet/timelock-controller/src/`. The test names above are stable
-reviewer entry points and run on every push and pull request.
+The deployed canary controller source and tests are pinned to
+[reviewed source `51b93159`](https://github.com/ackrate/ackrate-protocol-contracts/tree/51b93159d5a4e29d9e48fe99f489d70271703494/contracts/mainnet/timelock-controller).
+The current controller directory contains the fixed-target V2 controller with a
+new ABI. The historical canary gate checks the pinned source on pushes and pull
+requests. Registry integration tests also use the deployed canary WASM fixture.
 
 ## Contract surface review
 
@@ -86,7 +87,7 @@ reviewer entry points and run on every push and pull request.
   separated-authority, exact-operation, delay, same-address replacement, and
   storage-preservation cases.
 
-### TimelockController
+### Deployed canary TimelockController
 
 - Construction and read helpers are covered by initialization and operation
   state transitions.

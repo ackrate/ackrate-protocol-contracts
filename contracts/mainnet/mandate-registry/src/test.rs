@@ -4,11 +4,18 @@
 
 extern crate std;
 
-use ackrate_timelock_controller::{TimelockController, TimelockControllerClient};
+#[allow(clippy::too_many_arguments)]
+mod canary_timelock {
+    soroban_sdk::contractimport!(
+        file = "test-fixtures/timelock-canary-v0.1.0.wasm",
+        sha256 = "99a32170feaf3521338adfadb25d1a2ea573e6d29ec5de97e9d9cc3e4a99da97"
+    );
+}
+use canary_timelock::Client as TimelockControllerClient;
+use canary_timelock::OperationState;
 use soroban_sdk::testutils::{Address as _, Deployer as _, Ledger as _};
 use soroban_sdk::token::{StellarAssetClient, TokenClient};
 use soroban_sdk::{symbol_short, vec, Address, Bytes, BytesN, Env, IntoVal, Symbol, Val, Vec};
-use stellar_governance::timelock::OperationState;
 
 use crate::{
     Error, GovernanceConfig, MandateRegistry, MandateRegistryClient, ASSET_POLICY_ROLE,
@@ -403,7 +410,9 @@ fn asset_allowlist_and_lifetime_are_enforced_at_registration() {
 
 #[test]
 fn canonical_timelock_binds_and_executes_the_exact_policy_change() {
-    let env = Env::default();
+    let env = Env::new_with_config(soroban_sdk::testutils::EnvTestConfig {
+        capture_snapshot_at_drop: false,
+    });
     env.mock_all_auths();
     env.ledger().set_timestamp(NOW);
 
@@ -417,7 +426,7 @@ fn canonical_timelock_binds_and_executes_the_exact_policy_change() {
         .address();
 
     let timelock = env.register(
-        TimelockController,
+        canary_timelock::WASM,
         (
             10u32,
             vec![&env, proposer.clone()],
@@ -510,7 +519,9 @@ fn canonical_timelock_binds_and_executes_the_exact_policy_change() {
 
 #[test]
 fn canonical_timelock_upgrades_registry_at_same_address_and_preserves_state() {
-    let env = Env::default();
+    let env = Env::new_with_config(soroban_sdk::testutils::EnvTestConfig {
+        capture_snapshot_at_drop: false,
+    });
     env.mock_all_auths();
     env.ledger().set_timestamp(NOW);
 
@@ -525,7 +536,7 @@ fn canonical_timelock_upgrades_registry_at_same_address_and_preserves_state() {
     let mandate_id = BytesN::from_array(&env, &[11; 32]);
 
     let timelock = env.register(
-        TimelockController,
+        canary_timelock::WASM,
         (
             10u32,
             vec![&env, proposer.clone()],

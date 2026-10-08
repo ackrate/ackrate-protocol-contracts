@@ -140,6 +140,8 @@ for variant in simple mainnet-v2 composites; do
   fi
 done
 
+bash "$ROOT/scripts/build-admin-test-inputs.sh"
+
 for contract in mandate-registry timelock-controller; do
   manifest="$ROOT/contracts/mainnet/$contract/Cargo.toml"
   echo "==> mainnet/$contract: format"

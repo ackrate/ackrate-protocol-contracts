@@ -5,3 +5,15 @@ package-lock.json
 
 # Local agent/editor settings
 .claude/
+
+tools/admin/node_modules/
+# The operator frontend belongs to the private control repository.
+tools/admin/ui/
+tools/admin/dist/
+!tools/admin/package-lock.json
+private/
+
+# Local frontend credentials and generated provider state
+.env.local
+.vercel/
+web/dist/
